@@ -1,0 +1,33 @@
+name: 개선 요청
+description: 기획·디자인·개발이 함께 다룰 개선 과제
+title: "[개선] "
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: 사용자 문제와 사용 상황
+      description: 누가, 언제, 어떤 불편을 겪나요?
+    validations:
+      required: true
+  - type: textarea
+    id: result
+    attributes:
+      label: 원하는 결과와 완료 기준
+      description: 무엇이 달라지면 완료인가요?
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: 주요 담당 파트
+      options:
+        - 기획
+        - 디자인
+        - 개발
+        - QA
+        - 콘텐츠·운영
+  - type: textarea
+    id: scope
+    attributes:
+      label: 범위와 참고 사항
+      description: 관련 화면·백로그 ID·참고 링크가 있다면 적어주세요.

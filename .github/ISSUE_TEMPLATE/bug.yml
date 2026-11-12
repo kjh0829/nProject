@@ -1,0 +1,27 @@
+name: 오류 보고
+description: 재현 조건을 기록해 개발·QA가 확인할 오류
+title: "[오류] "
+body:
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: 재현 순서
+      description: 어느 탭에서 어떤 행동을 했나요? 개인정보와 자산 금액은 제외해주세요.
+    validations:
+      required: true
+  - type: textarea
+    id: behavior
+    attributes:
+      label: 기대한 결과와 실제 결과
+    validations:
+      required: true
+  - type: input
+    id: device
+    attributes:
+      label: 기기·운영체제·브라우저
+      placeholder: 예) iPhone / iOS / Safari
+  - type: textarea
+    id: impact
+    attributes:
+      label: 영향과 추가 정보
+      description: 반복 여부, 저장 내용 소실 여부 등을 적어주세요.
