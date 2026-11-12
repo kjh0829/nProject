@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Hello, World! · 우리의 첫 페이지</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100svh; background: #f5f3ed; color: #242b26; font-family: system-ui, sans-serif; display: flex; flex-direction: column; }
+    header, footer { padding: 28px 7vw; display: flex; justify-content: space-between; align-items: center; font-size: 13px; }
+    .brand { font-weight: 800; letter-spacing: -.5px; }
+    .status { display: flex; gap: 8px; align-items: center; }
+    .status::before { content: ''; width: 7px; height: 7px; background: #34815d; border-radius: 50%; }
+    main { flex: 1; width: min(100%, 1120px); margin: auto; padding: 90px 7vw; }
+    .eyebrow { font-size: 12px; letter-spacing: 3px; color: #68766b; }
+    h1 { font-size: clamp(64px, 12vw, 144px); line-height: 1; letter-spacing: -.075em; margin: 32px 0; font-weight: 650; }
+    h1 span { color: #39805c; }
+    p { color: #657067; font-size: 18px; line-height: 1.8; }
+    button { margin-top: 30px; border: 0; background: #263e30; color: white; padding: 18px 24px; border-radius: 9px; font: inherit; cursor: pointer; }
+    button:hover { background: #39734f; }
+    button:focus-visible { outline: 3px solid #6d9e77; outline-offset: 4px; }
+    #message { min-height: 32px; font-size: 15px; }
+    footer { border-top: 1px solid #dddfd5; color: #778176; gap: 16px; flex-wrap: wrap; }
+  </style>
+</head>
+<body>
+  <header><span class="brand">hello / project</span><span class="status">첫 번째 실험</span></header>
+  <main>
+    <div class="eyebrow">A SMALL START. A NEW POSSIBILITY.</div>
+    <h1>Hello,<br><span>World!</span></h1>
+    <p>작은 아이디어가 웹사이트가 되는 첫 순간.<br>우리의 첫 번째 페이지에 오신 것을 환영합니다.</p>
+    <button type="button" id="hello">인사해 보기 ↗</button>
+    <p id="message" role="status" aria-live="polite"></p>
+  </main>
+  <footer><span>01 — 시작을 위한 연습</span><span>Built with HTML, CSS & JavaScript</span></footer>
+  <script>
+    document.querySelector('#hello').addEventListener('click', () => {
+      document.querySelector('#message').textContent = '안녕하세요! 첫 번째 기능도 정상 작동합니다 👋';
+    });
+  </script>
+</body>
+</html>
