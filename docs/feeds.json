@@ -1,0 +1,45 @@
+{
+  "attemptedAt": "2026-11-12T13:45:46.535521+00:00",
+  "sources": {
+    "fire": {
+      "name": "Google 뉴스 · FIRE/경제적 자유",
+      "feedUrl": "https://news.google.com/rss/search?q=FIRE%20%EA%B2%BD%EC%A0%9C%EC%A0%81%EC%9E%90%EC%9C%A0%20when%3A30d&hl=ko&gl=KR&ceid=KR:ko",
+      "updatedAt": "2026-11-12T13:45:46.535521+00:00",
+      "stale": false,
+      "items": [
+        {
+          "title": "\"경제적 자유가 행복 보장하진 않아\"…파이어족 꿈 접은 이유 - 부산파이낸셜뉴스",
+          "url": "https://news.google.com/rss/articles/CBMiXEFVX3lxTE9JZUJpNDh6SnREV2RpLVVNcjFVZEhTOGJsQzNEQXpxbXgtcEViWXZISkF5WlNkRHZQbFNrdmhTZHIzU2Y5VjV4SnB3ZTdYbW5zNXo5OVJVa1Jma0N0?oc=5",
+          "publisher": "부산파이낸셜뉴스",
+          "published": "Sun, 25 Oct 2026 07:00:00 GMT"
+        },
+        {
+          "title": "\"회사 다닐 때 어떻게 살았나\"…14억 모아 은퇴한 삼성맨의 일상 - 머니투데이 - 머니투데이",
+          "url": "https://news.google.com/rss/articles/CBMiaEFVX3lxTE9hZm1YZ0JuUkxKRDAwSTdoNDdUZGtOMlJVaXVnZ01HZ25DTVNuOXA0YTU3Wlo1MHZWWXlpcG5EcXV2WjhldDJUeGJEbzJMbXc2T3NJOHZkT0c4Ulo4ZkY2YUFEWGVCb19w0gFuQVVfeXFMTnBXcDhtTWFHUmJwZmxNUDRXd0t6RWtja1IxSmhMc1R0VTFVMWFFOVloeVo5ZENJdEt4ZGpoOGVZU0JZbGNUcHJEeHhWUEd6UFdBOXI2b0NaRWZ4a0xFTVBBbTRTb3E1TG1xQmp0OHc?oc=5",
+          "publisher": "머니투데이",
+          "published": "Wed, 04 Nov 2026 08:00:00 GMT"
+        },
+        {
+          "title": "보증금 빼서 주식에...6억→13억, '파이어' 한 40대 투자 비결 - 머니투데이 - 머니투데이",
+          "url": "https://news.google.com/rss/articles/CBMiaEFVX3lxTE1sZVVWbjVqMmg0TVBZUExaOWhrczQ5VEV3S0JPX3ZFZmlIeGUyQnR5a3NVengxeE5hMnowWWRlSzRLMUNlRFIxSzFCaWJUMjBHVllfMi1lS21BNWFUY1BSaDg1X2ZNaFlt0gFuQVVfeXFMT05MQkZGSmRYWWtmaERsZW43S21tamUtTFR0RkVRd3FsQnVWSlVlU285ZHh1bVFYWjc1TzNPbzNndzk5MThtZUxIRlBfNjhkbW8yQjIzUGdXNFhRSWw3cy1GQTY5d3dNOHR0Yi1BNlE?oc=5",
+          "publisher": "머니투데이",
+          "published": "Wed, 28 Oct 2026 07:00:00 GMT"
+        }
+      ]
+    },
+    "discovery": {
+      "name": "NASA · Image of the Day (영문)",
+      "feedUrl": "https://www.nasa.gov/feeds/iotd-feed/",
+      "updatedAt": "2026-11-12T13:45:46.535521+00:00",
+      "stale": false,
+      "items": [
+        {
+          "title": "CHAPEA Crew Leaves a Mark",
+          "url": "https://www.nasa.gov/image-detail/photos-from-chapea-mission-2-arranged-around-boot-print/",
+          "publisher": "NASA Image of the Day",
+          "published": "Tue, 10 Nov 2026 15:39 GMT"
+        }
+      ]
+    }
+  }
+}
