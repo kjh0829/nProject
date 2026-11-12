@@ -1,0 +1,36 @@
+name: Check daily experience
+on:
+  push:
+    branches: [master]
+    paths:
+      - 'docs/**'
+      - 'tests/daily*'
+      - '.github/workflows/check-daily.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  mobile:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check daily logic and storage
+        run: node tests/daily.test.mjs
+      - name: Prepare browser testing
+        run: |
+          npm install --prefix "$RUNNER_TEMP/teum-qa" --no-package-lock playwright@1.56.1
+          "$RUNNER_TEMP/teum-qa/node_modules/.bin/playwright" install --with-deps chromium
+      - name: Check mobile flows
+        run: |
+          python3 -m http.server 8000 --directory docs > "$RUNNER_TEMP/teum-http.log" 2>&1 &
+          NODE_PATH="$RUNNER_TEMP/teum-qa/node_modules" node tests/daily-browser.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: mobile-screenshots
+          path: test-results/
+          if-no-files-found: ignore
