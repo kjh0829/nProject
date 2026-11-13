@@ -11,11 +11,12 @@ for symbol in SYMBOLS:
         result=None
         for host in ['query1.finance.yahoo.com','query2.finance.yahoo.com']:
             try:
-                url=f'https://{host}/v8/finance/chart/{urllib.parse.quote(symbol,safe="")}?range=max&interval=1d&events=div%2Csplits&includeAdjustedClose=true'
+                url=f'https://{host}/v8/finance/chart/{urllib.parse.quote(symbol,safe="")}?period1=0&period2={int(now.timestamp())}&interval=1d&events=div%2Csplits&includeAdjustedClose=true'
                 req=urllib.request.Request(url,headers={'User-Agent':'Mozilla/5.0'})
                 with urllib.request.urlopen(req,timeout=25) as response: result=json.load(response)['chart']['result'][0]
                 break
-            except Exception: continue
+            except Exception as exc:
+                print('Fetch failed',symbol,host,type(exc).__name__,getattr(exc,'code','no-code')); continue
         if not result: raise ValueError('source unavailable')
         prices=result['indicators']['adjclose'][0]['adjclose']
         pairs=[(dt.datetime.fromtimestamp(t,dt.timezone.utc).date(),float(p)) for t,p in zip(result['timestamp'],prices) if p is not None and math.isfinite(p) and p>0 and dt.datetime.fromtimestamp(t,dt.timezone.utc).date()<now.date()]
