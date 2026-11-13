@@ -15,6 +15,7 @@
 ## 현재 구현과 배포
 - `docs/`가 GitHub Pages 배포 디렉터리다. 현재 메인 앱은 `docs/index.html`이다.
 - 메뉴는 `#home`(기본), `#challenge`, `#story`, `#read`다. 이전 `#fire`, `#play`, `#community`도 홈과 더보기의 링크로 유지한다. 숨긴 화면의 입력값과 게임 진행을 유지한다.
+- 화면 전환과 탭별 스크롤 복원은 `docs/navigation.mjs`, 최근 7일 도전 표시는 `docs/challenge-history.mjs`에 둔다. 브라우저 기본 fragment 스크롤과 중복되지 않도록 내부 링크 경로를 유지한다.
 - 새 퍼즐 엔진은 `docs/puzzle-core.mjs`, UI는 `docs/puzzle.mjs`다. 이야기는 `docs/story-data.mjs`, `docs/story.mjs`에 둔다. 퍼즐 변경 시 `node tests/puzzle.test.mjs`와 관련 모바일 CI를 확인한다.
 - 외부 RSS 수집: `scripts/update-feeds.py`. 자동화: `.github/workflows/refresh-feeds.yml`.
 - `docs/feeds.json`은 자동 생성 결과다. 원본을 꾸며 넣지 않고 수집 스크립트를 수정한다.

@@ -20,3 +20,8 @@
 - tests/navigation-browser.cjs: 360px/390px에서 탭 위치 복원, 같은 탭 유지, 브라우저 뒤로 가기, 날짜 선택, 통과 결과 열기, 16px 입력 글씨, 44px 퍼즐 조각, 가로 넘침과 오류 확인.
 - 기존 일일 기록·게시판·5개 퍼즐·되돌리기·이야기 결말 검증도 유지한다.
 - iOS Safari의 실제 키보드·확대 동작은 실기기 후속 확인이 필요하다. Chromium 글씨·레이아웃 검증과 구분한다.
+
+## 결과
+- [모바일 CI](https://github.com/kjh0829/nProject/actions/runs/43398166047) 성공. 360px/390px에서 기존 기능과 신규 탐색·도전·입력 크기 검증 통과.
+- 고정 메뉴에 전역 scroll-padding-top이 적용되면 메뉴 조작 중 불필요한 스크롤이 생기는 문제를 확인해, 본문 대상의 scroll-margin-top으로 옮겼다. 내부 링크는 history.pushState와 화면 전환 이벤트로 처리해 기본 fragment 스크롤과 충돌하지 않도록 했다.
+- [Pages 배포](https://github.com/kjh0829/nProject/actions/runs/43398165707) 결과로 서비스 반영을 확인한다.
