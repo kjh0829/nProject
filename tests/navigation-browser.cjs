@@ -7,7 +7,7 @@ const fs=require('node:fs');
  const browser=await chromium.launch({headless:true});fs.mkdirSync('test-results',{recursive:true});
  try{for(const width of [360,390]){
   const context=await browser.newContext({viewport:{width,height:844},isMobile:true,hasTouch:true,reducedMotion:'reduce'});const page=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));
-  async function at(view,y){await page.waitForFunction(({view,y})=>document.body.dataset.view===view&&Math.abs(scrollY-y)<3,{view,y});}
+  async function at(view,y){try{await page.waitForFunction(({view,y})=>document.body.dataset.view===view&&Math.abs(scrollY-y)<3,{view,y},{timeout:8000});}catch(e){console.log('NAV STATE',JSON.stringify({expected:{view,y},actual:await page.evaluate(()=>({view:document.body.dataset.view,y:scrollY,hash:location.hash}))}));throw e;}}
   await page.goto('http://127.0.0.1:8000/');await page.waitForSelector('#challenge-history a');assert.equal(await page.locator('#challenge-history a').count(),7);await at('home',0);
   await page.evaluate(()=>window.scrollTo({top:520,behavior:'instant'}));await page.waitForFunction(()=>scrollY>450);const homeY=await page.evaluate(()=>scrollY);
   await page.locator('header nav a[href="#story"]').click();await at('story',0);await page.evaluate(()=>window.scrollTo({top:180,behavior:'instant'}));await page.waitForFunction(()=>scrollY>=170);const storyY=await page.evaluate(()=>scrollY);

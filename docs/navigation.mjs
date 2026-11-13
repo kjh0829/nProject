@@ -19,7 +19,7 @@ document.addEventListener('click',event=>{
  const a=event.target.closest?.('a[href^="#"]');if(!a||a.hasAttribute('download')||(a.target&&a.target!=='_self'))return;
  const hash=a.getAttribute('href'),name=hash.slice(1).split('?')[0];if(!views.includes(name))return;
  event.preventDefault();if(hash===location.hash||(!location.hash&&hash==='#home'))return;
- remember();transitioning=true;location.hash=hash;
+ remember();transitioning=true;const oldURL=location.href;history.pushState(null,'',hash);window.dispatchEvent(new HashChangeEvent('hashchange',{oldURL,newURL:location.href}));
 });
 window.addEventListener('scroll',remember,{passive:true});
 window.addEventListener('popstate',()=>{remember();transitioning=true;});
