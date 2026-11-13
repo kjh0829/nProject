@@ -8,6 +8,7 @@ on:
   workflow_dispatch:
 permissions:
   contents: write
+  pages: write
 concurrency:
   group: stock-returns
   cancel-in-progress: false
@@ -31,3 +32,7 @@ jobs:
             git pull --rebase origin master
             git push origin master
           fi
+      - name: Request Pages snapshot rebuild
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api --method POST "repos/${{ github.repository }}/pages/builds" --silent
