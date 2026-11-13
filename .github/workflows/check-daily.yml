@@ -4,7 +4,7 @@ on:
     branches: [master]
     paths:
       - 'docs/**'
-      - 'tests/daily*'
+      - 'tests/**'
       - '.github/workflows/check-daily.yml'
   workflow_dispatch:
 permissions:
@@ -19,7 +19,9 @@ jobs:
         with:
           node-version: '22'
       - name: Check daily logic and storage
-        run: node tests/daily.test.mjs
+        run: |
+          node tests/daily.test.mjs
+          node tests/puzzle.test.mjs
       - name: Prepare browser testing
         run: |
           npm install --prefix "$RUNNER_TEMP/teum-qa" --no-package-lock playwright@1.56.1
@@ -28,6 +30,7 @@ jobs:
         run: |
           python3 -m http.server 8000 --directory docs > "$RUNNER_TEMP/teum-http.log" 2>&1 &
           NODE_PATH="$RUNNER_TEMP/teum-qa/node_modules" node tests/daily-browser.cjs
+          NODE_PATH="$RUNNER_TEMP/teum-qa/node_modules" node tests/playground-browser.cjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:

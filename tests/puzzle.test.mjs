@@ -1,0 +1,15 @@
+import assert from 'node:assert/strict';
+import {createPuzzle,applyMove,legalMoves,matchGroups,adjacent,validSnapshot,stages,dailySeed} from '../docs/puzzle-core.mjs';
+import {solvePuzzle} from './puzzle-solver.mjs';
+import {episode,endingIds,resolveStory,validateStorySave} from '../docs/story-data.mjs';
+assert.equal(adjacent(5,6),false);assert.equal(adjacent(0,6),true);
+for(const cfg of stages){const s=createPuzzle(cfg.id);assert(validSnapshot(s));assert.equal(matchGroups(s.board).length,0);assert(legalMoves(s.board).length);const before=JSON.stringify(s);assert.equal(applyMove(s,0,35).valid,false);assert.equal(JSON.stringify(s),before);const solution=solvePuzzle(cfg.id);assert(solution,'No solution for stage '+cfg.id);assert(validSnapshot(solution.state));assert(solution.state.moves>=0);console.log(`Stage ${cfg.id}: validated winning path in ${solution.path.length}/${cfg.moves} moves`);}
+function fixture(length){const s=createPuzzle(1);s.board=Array.from({length:36},(_,i)=>({color:((i/6|0)*2+i%6)%5,special:null}));const row=length===4?[0,0,1,0,2,3]:[0,0,1,0,0,2];row.forEach((color,i)=>s.board[i]={color,special:null});s.board[8]={color:0,special:null};assert.equal(matchGroups(s.board).length,0);return s;}
+for(const length of [4,5]){const turn=applyMove(fixture(length),2,8);assert(turn.valid);assert(turn.frames[0].created>=1);assert(turn.state.board.every(t=>t&&t.color>=0));assert(validSnapshot(turn.state));}
+const ice=createPuzzle(3);ice.board[6].special='row';const t=applyMove(ice,6,7);assert(t.valid);assert(t.frames[0].fired>=1);assert(t.state.cleared>=2);assert.equal(t.state.ice[8],false);assert.equal(t.state.ice[9],false);assert(validSnapshot(t.state));
+for(let n=0;n<25;n++){let s=createPuzzle(n%5+1,'fuzz-'+n);for(let i=0;i<25&&s.status==='playing';i++){const moves=legalMoves(s.board),copy=JSON.stringify(s);assert(moves.length);const r=applyMove(s,...moves[(i+n)%moves.length]);assert.equal(JSON.stringify(s),copy);assert(r.valid);s=r.state;assert(validSnapshot(s));}}
+assert.deepEqual(createPuzzle(3,'teum-daily-2026-11-13'),createPuzzle(3,'teum-daily-2026-11-13'));assert.notDeepEqual(createPuzzle(3,'teum-daily-2026-11-13').board,createPuzzle(3,'teum-daily-2026-11-14').board);
+for(const date of ['2026-11-13','2026-11-14','2026-11-15'])assert(solvePuzzle(3,dailySeed(date)),'Daily challenge cannot be solved: '+date);
+const damaged=createPuzzle(1);damaged.board[0].color=99;assert.equal(validSnapshot(damaged),false);
+const endings=new Set();for(const a of [0,1])for(const b of [0,1]){const node=resolveStory([a,b]).node;assert(node.ending);assert(node.title&&node.punch);endings.add(node.ending);}assert.deepEqual([...endings].sort(),[...endingIds].sort());assert.equal(resolveStory([]).node,episode.nodes.start);assert.throws(()=>validateStorySave({version:1,path:[3],endings:[]}));assert.equal(validateStorySave({version:1,path:[0],endings:['cat','cat']}).endings.length,1);
+console.log('Passed: deterministic boards, no initial matches, invalid moves, five solvable stages, special creation/activation, ice, snapshot checks, simulation invariants, dated challenge samples and all four story endings');
