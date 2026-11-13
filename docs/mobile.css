@@ -13,3 +13,6 @@
  .puzzle-controls button,.game-actions button,.primary,.secondary,.delete-small{min-height:44px}
  .stage-pills{scroll-padding-inline:5px}
 }
+/* Reserve header space for content targets, not for the sticky navigation itself. */
+html{scroll-padding-top:0}
+#story-scene,#journal-form,#puzzle-result{scroll-margin-top:90px}
