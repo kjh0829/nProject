@@ -24,3 +24,8 @@
 - tests/puzzle-improvements.test.mjs: 독립 슬롯, 이어하기 선택, V1 이관, 되돌리기 저장·검증, 일일 슬롯 14개 제한, 손상/차단/용량 초과 저장소, 별 경계값, 목표 중심 힌트, 결말 경로 확인.
 - tests/puzzle.test.mjs: 기존 5개 스테이지 해답·특수 조각·얼음·결정성·저장 상태 검증 유지.
 - tests/playground-browser.cjs: 360px/390px에서 스테이지 왕복·새로고침·힌트·되돌리기·통과·별·결말 재열기를 실제 Chromium에서 검증한다.
+
+## 결과
+- [모바일 CI](https://github.com/kjh0829/nProject/actions/runs/43378302237) 성공. 360px/390px에서 각 스테이지 진행 복원, 새로고침 뒤 한 수 되돌리기, 힌트, 3성 결과, 알려진 결말 재열기와 기존 기능을 확인했다.
+- [Pages 배포](https://github.com/kjh0829/nProject/actions/runs/43378301869) 결과로 서비스 반영을 확인한다.
+- 실제 휴대폰 조작감과 재미·재방문 효과는 사용자 체험으로 계속 확인해야 한다.
