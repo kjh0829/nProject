@@ -10,3 +10,4 @@ dinner:{ending:'dinner',scene:'19:10 · 동네 식당',speaker:'친구',avatar:'
 export const endingIds=['boundary','cat','tomorrow','dinner'];
 export function resolveStory(path){let id='start';for(const choice of path){const node=episode.nodes[id];if(!node.choices||!Number.isInteger(choice)||!node.choices[choice])break;id=node.choices[choice].next;}return {id,node:episode.nodes[id]};}
 export function validateStorySave(raw){if(!raw||raw.version!==1||!Array.isArray(raw.path)||raw.path.length>2||!raw.path.every(x=>x===0||x===1)||!Array.isArray(raw.endings)||!raw.endings.every(x=>endingIds.includes(x)))throw Error('Invalid story save');return {version:1,path:[...raw.path],endings:[...new Set(raw.endings)]};}
+export function endingPath(id){for(const a of [0,1])for(const b of [0,1])if(resolveStory([a,b]).node.ending===id)return [a,b];return null;}

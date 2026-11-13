@@ -71,3 +71,7 @@ export function dailySeed(date){
  // A known-solvable fallback still gives everyone the same board for that date.
  const fallback='teum-stage-3';dailySeeds.set(date,fallback);return fallback;
 }
+export function starsFor(state){if(state.status!=='won')return 0;const total=stages[state.stage-1].moves;return state.moves>=Math.ceil(total/2)?3:state.moves>=Math.ceil(total/4)?2:1;}
+export function hintValue(state,turn){const first=turn.frames[0];if(!first)return {value:-Infinity,collected:0,ice:0,specials:0};const config=stages[state.stage-1],collected=Math.min(config.target,first.collected)-Math.min(config.target,state.collected),ice=first.cleared-state.cleared,specials=first.created;return {value:collected*3+ice*8+specials*2+(first.fired?1:0),collected,ice,specials};}
+export function bestHint(state){if(state.status!=='playing')return null;let best=null;for(const pair of legalMoves(state.board)){const turn=applyMove(state,...pair),benefit=hintValue(state,turn);if(!best||benefit.value>best.value)best={pair,...benefit};}return best;}
+export function recordStars(record,stage){if(!record)return 0;if(Number.isInteger(record.stars)&&record.stars>=1&&record.stars<=3)return record.stars;const total=stages[stage-1]?.moves,used=Number(record.moves);return Number.isFinite(total)&&Number.isFinite(used)&&used>=0&&used<=total?starsFor({stage,status:'won',moves:total-used}):1;}
