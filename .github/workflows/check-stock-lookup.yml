@@ -1,0 +1,23 @@
+name: Check public stock lookup
+on:
+  push:
+    branches: [master]
+    paths: ['tests/stock-source-probe.cjs', '.github/workflows/check-stock-lookup.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  check:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: |
+          npm install --prefix "$RUNNER_TEMP/stock-lookup-qa" --no-package-lock playwright@1.56.1
+          "$RUNNER_TEMP/stock-lookup-qa/node_modules/.bin/playwright" install --with-deps chromium
+      - run: |
+          python3 -m http.server 8000 --directory docs > "$RUNNER_TEMP/stock-lookup-http.log" 2>&1 &
+          NODE_PATH="$RUNNER_TEMP/stock-lookup-qa/node_modules" node tests/stock-source-probe.cjs
