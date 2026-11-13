@@ -1,0 +1,12 @@
+// All prices below are illustrative planning inputs, not surveyed market prices.
+const pack=(name,price,amount,used,unit='g')=>({name,kind:'pack',price,amount,used,unit});
+const rice=()=>pack('쌀 (조리 전)',15000,2000,90);
+const oil=used=>pack('식용유',7000,900,used,'ml');
+const soy=used=>pack('간장',5000,900,used,'ml');
+const onion=()=>pack('대파',2000,200,10);
+export const exampleMeals=[
+{id:'example-tofu',title:'노릇한 두부계란덮밥',author:'알찬끼 기획',example:true,art:0,servings:1,minutes:12,category:'집밥',note:'반 모 남은 두부를 한 그릇으로. 미리 지은 밥을 사용하면 준비가 간단해요.',priceDate:'2026-11-13',priceSource:'기획 예시 단가 · 실제 매장 조사 아님',ingredients:[rice(),pack('두부',1800,300,150),pack('달걀',3500,10,1,'개'),onion(),oil(8),soy(10),pack('설탕',2000,1000,3)],steps:['미리 지어둔 밥 1인분을 준비하고 두부와 대파를 썰어요.','기름을 두른 팬에 두부를 노릇하게 굽고 대파를 넣어요.','간장·설탕과 물 두 숟가락을 넣어 살짝 조려요.','달걀을 넣어 충분히 익힌 뒤 밥 위에 올려요.'],tip:'두부의 물기를 닦으면 기름이 덜 튀고 겉면이 노릇해져요.'},
+{id:'example-tomato',title:'토마토 달걀 한 그릇',author:'알찬끼 기획',example:true,art:1,servings:1,minutes:10,category:'집밥',note:'토마토의 촉촉함에 달걀을 더한 한 끼. 새콤한 맛을 좋아한다면 골라보세요.',priceDate:'2026-11-13',priceSource:'기획 예시 단가 · 실제 매장 조사 아님',ingredients:[rice(),pack('토마토',3000,500,150),pack('달걀',3500,10,2,'개'),onion(),oil(8),pack('소금',2000,500,1),pack('설탕',2000,1000,3)],steps:['미리 지은 밥을 준비하고 토마토와 대파를 썰어요.','팬에 기름을 두르고 달걀을 충분히 익혀 잠시 덜어둬요.','같은 팬에서 토마토와 대파를 볶고 물을 조금 넣어요.','달걀을 다시 넣고 소금·설탕으로 간을 맞춰 밥과 먹어요.'],tip:'단맛은 토마토의 익은 정도에 맞춰 조절해 보세요.'},
+{id:'example-tuna',title:'참치양배추 비빔밥',author:'알찬끼 기획',example:true,art:2,servings:1,minutes:7,category:'간편식',note:'참치 반 캔과 양배추를 알차게 쓰는 조합. 데우거나 볶는 과정 없이 섞어 먹을 수 있어요.',priceDate:'2026-11-13',priceSource:'기획 예시 단가 · 실제 매장 조사 아님',ingredients:[rice(),pack('참치캔',2000,100,50),pack('양배추',3000,1000,100),pack('마요네즈',4500,300,10),soy(8),pack('조미김',3000,10,1,'봉')],steps:['미리 지은 밥을 준비하고 양배추를 깨끗이 씻어 가늘게 썰어요.','참치를 덜어 양배추·밥과 함께 그릇에 담아요.','마요네즈·간장을 넣고 조미김을 잘라 올려요.','골고루 섞어 바로 먹어요.'],tip:'조미김과 참치 제품에 따라 간이 다르니 간장은 조금씩 넣어보세요.'},
+{id:'example-kimchi',title:'달걀 톡, 김치볶음밥',author:'알찬끼 기획',example:true,art:3,servings:1,minutes:10,category:'집밥',note:'조금 남은 김치와 밥으로 만드는 익숙한 한 끼. 밥·기름·양념도 비용에 넣었어요.',priceDate:'2026-11-13',priceSource:'기획 예시 단가 · 실제 매장 조사 아님',ingredients:[rice(),pack('김치',10000,1000,150),pack('달걀',3500,10,1,'개'),onion(),oil(8),pack('고추장',4000,500,10),pack('설탕',2000,1000,3),pack('참깨',4000,200,2)],steps:['미리 지은 밥을 준비하고 김치와 대파를 잘게 썰어요.','팬에 기름을 두르고 대파와 김치를 볶아요.','밥·고추장·설탕을 넣어 골고루 볶아요.','달걀을 충분히 익혀 올리고 참깨를 뿌려요.'],tip:'김치가 덜 시면 설탕을 줄이고, 간이 강하면 고추장 양부터 줄여보세요.'}
+];
