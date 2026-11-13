@@ -1,10 +1,10 @@
 {
-  "attemptedAt": "2026-11-12T13:45:46.535521+00:00",
+  "attemptedAt": "2026-11-13T02:00:21.154063+00:00",
   "sources": {
     "fire": {
       "name": "Google 뉴스 · FIRE/경제적 자유",
       "feedUrl": "https://news.google.com/rss/search?q=FIRE%20%EA%B2%BD%EC%A0%9C%EC%A0%81%EC%9E%90%EC%9C%A0%20when%3A30d&hl=ko&gl=KR&ceid=KR:ko",
-      "updatedAt": "2026-11-12T13:45:46.535521+00:00",
+      "updatedAt": "2026-11-13T02:00:21.154063+00:00",
       "stale": false,
       "items": [
         {
@@ -30,14 +30,14 @@
     "discovery": {
       "name": "NASA · Image of the Day (영문)",
       "feedUrl": "https://www.nasa.gov/feeds/iotd-feed/",
-      "updatedAt": "2026-11-12T13:45:46.535521+00:00",
+      "updatedAt": "2026-11-13T02:00:21.154063+00:00",
       "stale": false,
       "items": [
         {
-          "title": "CHAPEA Crew Leaves a Mark",
-          "url": "https://www.nasa.gov/image-detail/photos-from-chapea-mission-2-arranged-around-boot-print/",
+          "title": "Heart in the Sky at NASA Kennedy",
+          "url": "https://www.nasa.gov/image-detail/55640210122-dae9d5e6b9-o/",
           "publisher": "NASA Image of the Day",
-          "published": "Tue, 10 Nov 2026 15:39 GMT"
+          "published": "Thu, 12 Nov 2026 19:14 GMT"
         }
       ]
     }
