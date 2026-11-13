@@ -1,0 +1,15 @@
+.screen-reader-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+.challenge-history{margin-top:22px;background:#edf0e5}.challenge-history .section-head{margin-bottom:12px}.challenge-history p{font-size:13px;line-height:1.8}.history-days{display:grid;grid-template-columns:repeat(7,1fr);gap:9px;margin-top:20px}.history-day{border:1px solid #d6decb;border-radius:12px;padding:14px 8px;background:#fffef8;display:flex;flex-direction:column;gap:10px;font-size:11px;text-align:center;min-height:105px;justify-content:space-between}.history-day:hover{border-color:#8eaa77}.history-day[data-status="complete"]{background:#e0ebce}.history-day.today{border:2px solid #708965}.history-day strong{font-size:13px}.history-day .history-stars{color:#8e702c;white-space:nowrap}.history-day .history-state{color:#687a61;font-size:10px;line-height:1.6}.home-daily-status{font-size:11px!important;color:#d4e0dc!important;margin:14px 0 0!important;min-height:20px}.history-note{font-size:11px!important;color:#7d8a73;margin:15px 0 0}.bottom-nav{padding-left:max(5px,env(safe-area-inset-left));padding-right:max(5px,env(safe-area-inset-right))}
+@media(max-width:700px){
+ body input,body textarea,body select{font-size:16px!important}
+ main{padding-left:max(18px,env(safe-area-inset-left));padding-right:max(18px,env(safe-area-inset-right))}
+ footer{padding-bottom:calc(95px + env(safe-area-inset-bottom))}
+ .history-days{grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+ .history-day{min-height:100px;padding:12px 5px}
+ .challenge-history{padding:22px}
+ .challenge-history .section-head{align-items:flex-start}
+ .challenge-history .section-head h2{font-size:22px}
+ .puzzle-board{gap:3px;padding:8px}
+ .puzzle-controls button,.game-actions button,.primary,.secondary,.delete-small{min-height:44px}
+ .stage-pills{scroll-padding-inline:5px}
+}

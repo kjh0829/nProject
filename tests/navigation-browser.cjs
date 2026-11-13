@@ -1,0 +1,24 @@
+const {chromium}=require('playwright');
+const assert=require('node:assert/strict');
+const fs=require('node:fs');
+(async()=>{
+ const {dayKey,offsetDay}=await import('../docs/daily-core.mjs');const {dailySeed,starsFor}=await import('../docs/puzzle-core.mjs');const {solvePuzzle}=await import('./puzzle-solver.mjs');const {emptyRuns,withRun}=await import('../docs/puzzle-saves.mjs');
+ const today=dayKey(),seed=dailySeed(today),solution=solvePuzzle(3,seed);assert(solution);const won=solution.state;const vault=withRun(emptyRuns(),{key:'daily-'+today,state:won,undo:null});
+ const browser=await chromium.launch({headless:true});fs.mkdirSync('test-results',{recursive:true});
+ try{for(const width of [360,390]){
+  const context=await browser.newContext({viewport:{width,height:844},isMobile:true,hasTouch:true,reducedMotion:'reduce'});const page=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));
+  async function at(view,y){await page.waitForFunction(({view,y})=>document.body.dataset.view===view&&Math.abs(scrollY-y)<3,{view,y});}
+  await page.goto('http://127.0.0.1:8000/');await page.waitForSelector('#challenge-history a');assert.equal(await page.locator('#challenge-history a').count(),7);await at('home',0);
+  await page.evaluate(()=>window.scrollTo({top:520,behavior:'instant'}));await page.waitForFunction(()=>scrollY>450);const homeY=await page.evaluate(()=>scrollY);
+  await page.locator('header nav a[href="#story"]').click();await at('story',0);await page.evaluate(()=>window.scrollTo({top:180,behavior:'instant'}));await page.waitForFunction(()=>scrollY>=170);const storyY=await page.evaluate(()=>scrollY);
+  await page.locator('header nav a[href="#read"]').click();await at('read',0);await page.evaluate(()=>window.scrollTo({top:460,behavior:'instant'}));await page.waitForFunction(()=>scrollY>400);const readY=await page.evaluate(()=>scrollY);
+  await page.locator('header nav a[href="#home"]').click();await at('home',homeY);await page.locator('header nav a[href="#home"]').click();assert(Math.abs((await page.evaluate(()=>scrollY))-homeY)<3);
+  await page.goBack();await at('read',readY);await page.goBack();await at('story',storyY);
+  await page.goto('http://127.0.0.1:8000/');await page.waitForSelector('#challenge-history a');const yesterday=offsetDay(today,-1);await page.locator(`#challenge-history a[data-date="${yesterday}"]`).click();await page.waitForFunction(date=>document.querySelector('#puzzle-subtitle').textContent.includes(date),yesterday);await at('challenge',0);assert.equal(await page.locator('#puzzle-board button').count(),36);
+  assert((await page.locator('#puzzle-board button').first().boundingBox()).width>=43.9,`${width}px tile target too small`);
+  await page.locator('header nav a[href="#home"]').click();await page.locator('#challenge-history').scrollIntoViewIfNeeded();assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);await page.screenshot({path:`test-results/seven-day-challenges-${width}.png`,fullPage:true});
+  await page.evaluate(({vault,today,won,stars})=>{localStorage.setItem('teum-puzzle-saves-v2',JSON.stringify(vault));localStorage.setItem('teum-puzzle-progress-v1',JSON.stringify({version:1,stages:{},daily:{[today]:{won:true,score:won.score,moves:18-won.moves,stars}}}));},{vault,today,won,stars:starsFor(won)});await page.reload();await page.waitForFunction(()=>document.querySelector('#home-daily-start').textContent.includes('통과 결과'));assert.equal(await page.locator(`#challenge-history a[data-date="${today}"]`).getAttribute('data-status'),'complete');await page.locator('#home-daily-start').click();await page.waitForSelector('#puzzle-result');assert((await page.locator('#puzzle-result-title').textContent()).includes('통과'));
+  await page.locator('header nav a[href="#read"]').click();await page.locator('#read .home-tools a[href="#fire"]').click();await page.waitForSelector('#goal-form');const font=await page.locator('#assets').evaluate(x=>parseFloat(getComputedStyle(x).fontSize));assert(font>=16);await page.locator('header nav a[href="#read"]').click();assert((await page.locator('#daily-note').evaluate(x=>parseFloat(getComputedStyle(x).fontSize)))>=16);
+  await page.goto('http://127.0.0.1:8000/#unknown');await at('home',0);assert.deepEqual(errors,[]);await context.close();console.log(`${width}px: tab positions, browser back, same-tab stability, archive date links, personal daily result, input sizes and puzzle touch targets passed`);
+ }}finally{await browser.close();}
+})().catch(e=>{console.error(e);process.exitCode=1});

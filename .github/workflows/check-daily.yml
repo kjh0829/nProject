@@ -23,6 +23,7 @@ jobs:
           node tests/daily.test.mjs
           node tests/puzzle.test.mjs
           node tests/puzzle-improvements.test.mjs
+          node tests/navigation.test.mjs
       - name: Prepare browser testing
         run: |
           npm install --prefix "$RUNNER_TEMP/teum-qa" --no-package-lock playwright@1.56.1
@@ -32,6 +33,7 @@ jobs:
           python3 -m http.server 8000 --directory docs > "$RUNNER_TEMP/teum-http.log" 2>&1 &
           NODE_PATH="$RUNNER_TEMP/teum-qa/node_modules" node tests/daily-browser.cjs
           NODE_PATH="$RUNNER_TEMP/teum-qa/node_modules" node tests/playground-browser.cjs
+          NODE_PATH="$RUNNER_TEMP/teum-qa/node_modules" node tests/navigation-browser.cjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
