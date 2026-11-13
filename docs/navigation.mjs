@@ -4,7 +4,7 @@ try{history.scrollRestoration='manual';}catch{}
 function remember(){if(current&&!transitioning)rememberPosition(positions,current.key,window.scrollY);}
 function display(){
  const route=routeFor(location.hash);if(current?.key===route.key){transitioning=false;return;}
- remember();transitioning=true;const token=++generation;current=route;
+ const initial=current===null;remember();transitioning=true;const token=++generation;current=route;
  document.body.dataset.view=route.view;
  for(const id of views)document.getElementById(id).hidden=id!==route.view;
  for(const selector of ['.hero','.strip']){const el=document.querySelector(selector);if(el)el.hidden=true;}
@@ -12,7 +12,15 @@ function display(){
  document.title=viewNames[route.view]+' · 알찬끼';
  const announcement=document.getElementById('view-announcement');if(announcement)announcement.textContent=viewNames[route.view]+' 화면';
  const y=positions.get(route.key)||0;
- requestAnimationFrame(()=>requestAnimationFrame(()=>{if(token!==generation)return;window.scrollTo({top:y,behavior:'instant'});transitioning=false;remember();}));
+ const restore=()=>requestAnimationFrame(()=>requestAnimationFrame(()=>{if(token!==generation)return;window.scrollTo({top:y,behavior:'instant'});transitioning=false;remember();}));
+ // The browser can perform its initial fragment scroll after deferred modules/load.
+ // Reconcile it once, without overriding a person who already interacted.
+ if(initial&&document.readyState!=='complete'){
+  let interacted=false;const interrupt=()=>{interacted=true;},events=['pointerdown','wheel','touchstart','keydown'];
+  for(const event of events)window.addEventListener(event,interrupt,{passive:true});
+  window.addEventListener('load',()=>{for(const event of events)window.removeEventListener(event,interrupt);if(!interacted&&token===generation)restore();},{once:true});
+ }
+ restore();
 }
 export function navigateTo(hash){const name=hash.slice(1).split('?')[0];if(!views.includes(name)||hash===location.hash||(!location.hash&&hash==='#home'))return false;remember();transitioning=true;const oldURL=location.href;history.pushState(null,'',hash);window.dispatchEvent(new HashChangeEvent('hashchange',{oldURL,newURL:location.href}));return true;}
 document.addEventListener('click',event=>{
