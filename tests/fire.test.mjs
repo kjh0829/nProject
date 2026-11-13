@@ -1,0 +1,13 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import {cagr,validHistory,validate,project,readFire,writeFire,csvHistory} from '../docs/fire-core.mjs';
+const near=(a,b,epsilon=1e-6)=>assert.ok(Math.abs(a-b)<epsilon,`${a} != ${b}`);
+near(cagr(100,400,20),(Math.pow(4,1/20)-1)*100);
+const base={version:1,cash:10000,cashMonthly:150,cashRate:0,expense:200,withdrawal:4,inflation:0,horizon:40,holdings:[]};let r=project(base);assert.equal(r.initialTarget,60000);assert.equal(r.reached,334);assert.equal(r.last.assets,82000);assert.equal(r.last.principal,82000);
+r=project({...base,cash:0,cashMonthly:0,holdings:[{symbol:'TEST',amount:100,monthly:0,rate:10,mode:'manual',history:null}],horizon:10});near(r.last.assets,100*1.1**10);near(r.last.principal,100);
+r=project({...base,cash:0,cashMonthly:0,holdings:[{symbol:'TEST',amount:100,monthly:10,rate:12,mode:'manual',history:null}],horizon:1});const m=1.12**(1/12)-1;near(r.last.assets,112+10*((1+m)**12-1)/m);assert.equal(r.last.principal,220);
+const inflation=project({...base,inflation:3});near(inflation.last.target,60000*1.03**40,.001);near(inflation.last.real,inflation.last.assets/1.03**40,.001);assert.equal(project({...base,cash:0,cashMonthly:0}).reached,null);assert.equal(project({...base,cash:60000}).reached,0);
+assert.throws(()=>validate({...base,withdrawal:0}));assert.throws(()=>validate({...base,holdings:[{symbol:'SPY',amount:1,monthly:1,rate:10,mode:'history',history:null}]}));
+const h=csvHistory('Date,Adj Close\n1980-01-01,10\n1990-01-01,100\n2000-01-01,200\n2020-01-01,400','TEST','USD');near(h.years,30,.01);near(h.cagr,(4**(1/h.years)-1)*100);assert.throws(()=>csvHistory('Date,Close\n1990-01-01,100\n2020-01-01,200','TEST','USD'));assert.throws(()=>csvHistory('Date,Adj Close\n2020-01-01,0\n2025-01-01,200','TEST','USD'));
+const data=JSON.parse(fs.readFileSync('docs/stock-returns.json'));assert.ok(Object.keys(data.items).length>=7);for(const h of Object.values(data.items))assert.ok(validHistory(h),h.symbol);assert.ok(data.items.QQQ.years<30);assert.ok(data.items.SPY.years>=29.95);
+const broken={getItem:()=>'{bad',setItem:()=>assert.fail('overwrite')};assert.equal(readFire(broken).writable,false);assert.equal(writeFire(base,broken),false);assert.equal(writeFire(base,{getItem:()=>null,setItem:()=>{throw Error('quota');}}),false);console.log('FIRE CAGR, per-holding monthly compounding, inflation, historical sources and storage checks passed');
