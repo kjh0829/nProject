@@ -1,7 +1,7 @@
 # 틈 프로젝트 작업 규칙
 
 ## 제품
-- 모바일 출퇴근길에 FIRE 읽을거리, 목표 계산, 짧은 게임, 경험 나누기를 제공한다.
+- 적은 돈으로 알차게 먹는 한끼를 발견하고, 사용량 원가를 확인하고, 개인 식사 기록을 모으는 알찬끼를 만든다. 기존 FIRE 도구·퍼즐·이야기는 보조 기능으로 유지한다.
 - 서비스의 현재 기능과 제약은 `team/README.md`, 우선 과제는 `team/BACKLOG.md`를 읽는다.
 - 사용자 요청이 최우선이다. 역할 문서는 구현을 돕는 기준이며 추가 승인 절차를 만들지 않는다.
 
@@ -14,8 +14,9 @@
 
 ## 현재 구현과 배포
 - `docs/`가 GitHub Pages 배포 디렉터리다. 현재 메인 앱은 `docs/index.html`이다.
-- 메뉴는 `#home`(기본), `#challenge`, `#story`, `#read`다. 이전 `#fire`, `#play`, `#community`도 홈과 더보기의 링크로 유지한다. 숨긴 화면의 입력값과 게임 진행을 유지한다.
+- 주 메뉴는 `#home`(한끼 구경), `#saved-meals`, `#meal-compose`, `#read`다. 상세는 `#meal?id=...`, 이전 놀이터는 `#arcade`다. `#challenge`, `#story`, `#fire`, `#play`, `#community`의 기능과 저장 데이터도 유지한다.
 - 화면 전환과 탭별 스크롤 복원은 `docs/navigation.mjs`, 최근 7일 도전 표시는 `docs/challenge-history.mjs`에 둔다. 브라우저 기본 fragment 스크롤과 중복되지 않도록 내부 링크 경로를 유지한다.
+- 식사 데이터·계산·UI는 `docs/meal-data.mjs`, `meal-core.mjs`, `meals.mjs`, `meals.css`에 있다. 기록 키는 `teum-meals-v1`이며 사진을 포함해 브라우저에만 저장한다.
 - 새 퍼즐 엔진은 `docs/puzzle-core.mjs`, UI는 `docs/puzzle.mjs`다. 이야기는 `docs/story-data.mjs`, `docs/story.mjs`에 둔다. 퍼즐 변경 시 `node tests/puzzle.test.mjs`와 관련 모바일 CI를 확인한다.
 - 외부 RSS 수집: `scripts/update-feeds.py`. 자동화: `.github/workflows/refresh-feeds.yml`.
 - `docs/feeds.json`은 자동 생성 결과다. 원본을 꾸며 넣지 않고 수집 스크립트를 수정한다.
@@ -23,6 +24,9 @@
 - 배포 성공은 해당 커밋의 GitHub Actions 결과로 확인한다. 브라우저 검증은 별도이며, 못 한 검증은 명시한다.
 
 ## 필수 제품 기준
+- 식사 예시 단가·AI 일러스트·개인 기록을 구분한다. 실제 매장 조사 가격이나 실제 이용자 글로 꾸미지 않는다.
+- 1인분 사용량 원가와 처음 포장 단위 구매비를 구분하고 밥·기름·양념 포함 기준, 조리 에너지 등 제외 항목을 표시한다.
+- 개인 식사 사진·기록을 승인 없이 외부로 전송하지 않는다. 현재는 다른 사용자와 공유되지 않는다.
 - 게시판은 현재 localStorage 체험용이다. 사용자 간 공유, 인증, 서버 저장이 되는 것처럼 표현하지 않는다.
 - 자산·목표·게시글·댓글을 승인 없이 외부 분석 서비스로 보내지 않는다. API 키를 정적 페이지에 넣지 않는다.
 - 외부 데이터는 안전한 URL만 사용하고, 사용자 입력과 외부 제목은 `textContent`로 렌더링한다. 출처·수집 시각·실패 상태를 유지한다.
