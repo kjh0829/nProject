@@ -43,3 +43,5 @@
 - 실행 환경이나 브라우저 도구 오류를 우회해 검증 성공으로 보고하지 않는다.
 
 - 혼자 쓰는 식탁 도구는 `docs/meal-solo-core.mjs`, `meal-solo.mjs`, `meal-solo.css`. 별도 키 `teum-meal-solo-v1`에 재료·계획·최대 1,000개 식사 일지를 저장한다. 기존 레시피·사진 데이터는 보존한다. 일지 CSV는 레시피/사진 백업이 아니다.
+
+- 주식 FIRE 계산기는 `docs/fire-core.mjs`, `fire.mjs`, `fire.css`에 분리한다. 키 `teum-fire-portfolio-v1`은 티커별 평가액/추가 투자와 적용 수익률 근거를 브라우저에 저장한다. 기존 `teum-goal`은 덮어쓰지 않고 최초 현금 항목으로만 이관한다. 공개 과거 자료는 `scripts/update-stock-returns.py`, 월간 갱신·Pages 재빌드는 `.github/workflows/refresh-stock-returns.yml`. 투자자 개인 입력은 수집 작업에 보내지 않는다.

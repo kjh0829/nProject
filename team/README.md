@@ -34,3 +34,5 @@
 기획 중인 개선은 [BACKLOG.md](BACKLOG.md), 결정 기록은 [DECISIONS.md](DECISIONS.md)에 남긴다. 업무 시작은 [briefs/TEMPLATE.md](briefs/TEMPLATE.md)를 필요한 만큼 작성하는 것으로 충분하다.
 
 혼자 쓰는 재방문 흐름과 유지 비용 가설: [SOLO-KITCHEN.md](briefs/SOLO-KITCHEN.md). 실제 재미·지속 사용은 아직 검증되지 않았다.
+
+- 주식 FIRE: 티커별 평가액·월 투자액, 최대 30년 관측 CAGR/직접 가정/개인 CSV, 개별 월 복리·물가 반영 목표·±3%p 비교·연도별 표. 자동 자료 9개이며 다른 티커를 지수 수익률로 대체하지 않는다. [범위와 검증](briefs/TICKER-FIRE.md).
