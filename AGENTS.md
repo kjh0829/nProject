@@ -14,7 +14,7 @@
 
 ## 현재 구현과 배포
 - `docs/`가 GitHub Pages 배포 디렉터리다. 현재 메인 앱은 `docs/index.html`이다.
-- 주 메뉴는 `#home`(한끼 구경), `#saved-meals`, `#meal-compose`, `#read`다. 상세는 `#meal?id=...`, 이전 놀이터는 `#arcade`다. `#challenge`, `#story`, `#fire`, `#play`, `#community`의 기능과 저장 데이터도 유지한다.
+- 주 메뉴는 `#home`(한끼 구경), `#meal-lab`(메뉴 고르기·세 끼 준비), `#saved-meals`, `#meal-compose`, `#read`다. 상세는 `#meal?id=...`, 이전 놀이터는 `#arcade`다. `#challenge`, `#story`, `#fire`, `#play`, `#community`의 기능과 저장 데이터도 유지한다.
 - 화면 전환과 탭별 스크롤 복원은 `docs/navigation.mjs`, 최근 7일 도전 표시는 `docs/challenge-history.mjs`에 둔다. 브라우저 기본 fragment 스크롤과 중복되지 않도록 내부 링크 경로를 유지한다.
 - 식사 데이터·계산·UI는 `docs/meal-data.mjs`, `meal-core.mjs`, `meals.mjs`, `meals.css`에 있다. 기록 키는 `teum-meals-v1`이며 사진을 포함해 브라우저에만 저장한다.
 - 새 퍼즐 엔진은 `docs/puzzle-core.mjs`, UI는 `docs/puzzle.mjs`다. 이야기는 `docs/story-data.mjs`, `docs/story.mjs`에 둔다. 퍼즐 변경 시 `node tests/puzzle.test.mjs`와 관련 모바일 CI를 확인한다.
@@ -41,3 +41,5 @@
 - 계산식·게임·게시판을 수정하면 경계값과 저장 실패를 포함한 의미 있는 동작을 검증한다.
 - 모바일 검증 기준 폭은 360px와 390px이며 가로 넘침, 키보드 포커스, 버튼 터치 영역을 살핀다.
 - 실행 환경이나 브라우저 도구 오류를 우회해 검증 성공으로 보고하지 않는다.
+
+- 혼자 쓰는 식탁 도구는 `docs/meal-solo-core.mjs`, `meal-solo.mjs`, `meal-solo.css`. 별도 키 `teum-meal-solo-v1`에 재료·계획·최대 1,000개 식사 일지를 저장한다. 기존 레시피·사진 데이터는 보존한다. 일지 CSV는 레시피/사진 백업이 아니다.
