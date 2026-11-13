@@ -16,7 +16,7 @@ export function matchGroups(b){const groups=[];for(let r=0;r<6;r++){let c=0;whil
 export function legalMoves(b){const result=[];for(let i=0;i<36;i++)for(const j of [i+1,i+6]){if(!adjacent(i,j))continue;if(b[i]?.special||b[j]?.special){result.push([i,j]);continue;}[b[i],b[j]]=[b[j],b[i]];const hit=matchGroups(b).length>0;[b[i],b[j]]=[b[j],b[i]];if(hit)result.push([i,j]);}return result;}
 function freshBoard(s){for(let attempt=0;attempt<200;attempt++){const b=[];for(let i=0;i<36;i++){let t;do{t=tile(s);}while((i%6>=2&&t.color===b[i-1].color&&t.color===b[i-2].color)||(i>=12&&t.color===b[i-6].color&&t.color===b[i-12].color));b.push(t);}if(legalMoves(b).length)return b;}throw Error('No playable board');}
 export function createPuzzle(stageId=1,seed){const config=stages.find(x=>x.id===stageId)||stages[0];const s={version:1,stage:config.id,seed:String(seed??`teum-stage-${config.id}`),rng:hashSeed(seed??`teum-stage-${config.id}`),moves:config.moves,score:0,collected:0,cleared:0,status:'playing',turns:[],ice:Array.from({length:36},(_,i)=>config.ice.includes(i))};s.board=freshBoard(s);return s;}
-function expandHits(b,initial){const hits=new Set(initial),queue=[...hits],fired=new Set();while(queue.length){const i=queue.shift();const special=b[i]?.special;if(!special||fired.has(i))continue;fired.add(i);const area=[];if(special==='row')for(let c=0;c<6;c++)area.push((i/6|0)*6+c);else for(let dr=-1;dr<=1;dr++)for(let dc=-1;dc<=1;dc++){const r=(i/6|0)+dr,c=i%6+dc;if(r>=0&&r<6&&c>=0&&c<6)area.push(r*6+c);}for(const j of area)if(!hits.has(j)){hits.add(j);queue.push(j);}}return {hits:[...hits],fired:fired.size};}
+function expandHits(b,initial){const hits=new Set(initial),queue=[...hits],fired=new Set(),blast=new Set();while(queue.length){const i=queue.shift();const special=b[i]?.special;if(!special||fired.has(i))continue;fired.add(i);const area=[];if(special==='row')for(let c=0;c<6;c++)area.push((i/6|0)*6+c);else for(let dr=-1;dr<=1;dr++)for(let dc=-1;dc<=1;dc++){const r=(i/6|0)+dr,c=i%6+dc;if(r>=0&&r<6&&c>=0&&c<6)area.push(r*6+c);}for(const j of area){blast.add(j);if(!hits.has(j)){hits.add(j);queue.push(j);}}}return {hits:[...hits],fired:fired.size,blast};}
 function collapse(s){for(let c=0;c<6;c++){const column=[];for(let r=5;r>=0;r--)if(s.board[r*6+c])column.push(s.board[r*6+c]);for(let r=5;r>=0;r--)s.board[r*6+c]=column[5-r]||tile(s);}}
 export function applyMove(original,a,b){
  if(original.status!=='playing'||!adjacent(a,b))return {valid:false,state:original,frames:[]};
@@ -29,7 +29,7 @@ export function applyMove(original,a,b){
   for(const g of groups){if(g.length<4)continue;let at=g.includes(b)&&combo===1?b:g.includes(a)&&combo===1?a:g[Math.floor(g.length/2)];if(s.board[at]?.special)at=g.find(i=>!s.board[i]?.special);if(at!==undefined)births.set(at,g.length>=5?'bomb':'row');}
   const expanded=expandHits(s.board,[...groups.flat(),...forced]);
   // A newly created special survives its creation turn unless another existing special hits it.
-  for(const i of births.keys())if(expanded.fired&&expanded.hits.includes(i))births.delete(i);
+  for(const i of births.keys())if(expanded.blast.has(i))births.delete(i);
   const clear=expanded.hits.filter(i=>!births.has(i));
   for(const i of clear){if(s.board[i]?.color===stages[s.stage-1].color)s.collected++;if(s.ice[i]){s.ice[i]=false;s.cleared++;}}
   s.score+=clear.length*10*combo+expanded.fired*30;

@@ -7,6 +7,7 @@ export function validSlot(slot){
  else if(/^daily-\d{4}-\d{2}-\d{2}$/.test(slot.key)){const date=slot.key.slice(6),parsed=new Date(date+'T00:00:00Z');if(!Number.isFinite(parsed.getTime())||parsed.toISOString().slice(0,10)!==date||s.stage!==3||!(s.seed.startsWith('teum-daily-'+date+'-')||s.seed==='teum-stage-3'))return false;}
  else return false;
  if(slot.undo!=null&&(!validSnapshot(slot.undo)||slot.undo.status!=='playing'||slot.undo.seed!==s.seed||slot.undo.stage!==s.stage||slot.undo.moves!==s.moves+1))return false;
+ if(slot.restart!=null&&(s.turns.length!==0||slot.restart.state?.seed!==s.seed||slot.restart.state?.stage!==s.stage||!slot.restart.state?.turns?.length||!validSlot({key:slot.key,state:slot.restart.state,undo:slot.restart.undo})))return false;
  return true;
 }
 export function normalizeRuns(raw){
