@@ -2,7 +2,7 @@ name: Check public stock lookup
 on:
   push:
     branches: [master]
-    paths: ['tests/stock-source-probe.cjs', '.github/workflows/check-stock-lookup.yml']
+    paths: ['tests/stock-source-probe.cjs', '.github/workflows/check-stock-lookup.yml', 'docs/stock-lookup*.mjs', 'docs/fire.mjs']
   workflow_dispatch:
 permissions:
   contents: read

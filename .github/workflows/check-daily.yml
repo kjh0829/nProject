@@ -28,6 +28,7 @@ jobs:
           node tests/meals.test.mjs
           node tests/meal-solo.test.mjs
           node tests/fire.test.mjs
+          node tests/stock-lookup.test.mjs
       - name: Prepare browser testing
         run: |
           npm install --prefix "$RUNNER_TEMP/teum-qa" --no-package-lock playwright@1.56.1
@@ -42,6 +43,7 @@ jobs:
           NODE_PATH="$RUNNER_TEMP/teum-qa/node_modules" node tests/meals-browser.cjs
           NODE_PATH="$RUNNER_TEMP/teum-qa/node_modules" node tests/meal-solo-browser.cjs
           NODE_PATH="$RUNNER_TEMP/teum-qa/node_modules" node tests/fire-browser.cjs
+          NODE_PATH="$RUNNER_TEMP/teum-qa/node_modules" node tests/stock-lookup-browser.cjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
