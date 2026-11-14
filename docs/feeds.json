@@ -1,10 +1,10 @@
 {
-  "attemptedAt": "2026-11-13T02:00:21.154063+00:00",
+  "attemptedAt": "2026-11-14T01:33:55.062112+00:00",
   "sources": {
     "fire": {
       "name": "Google 뉴스 · FIRE/경제적 자유",
       "feedUrl": "https://news.google.com/rss/search?q=FIRE%20%EA%B2%BD%EC%A0%9C%EC%A0%81%EC%9E%90%EC%9C%A0%20when%3A30d&hl=ko&gl=KR&ceid=KR:ko",
-      "updatedAt": "2026-11-13T02:00:21.154063+00:00",
+      "updatedAt": "2026-11-14T01:33:55.062112+00:00",
       "stale": false,
       "items": [
         {
@@ -14,30 +14,30 @@
           "published": "Sun, 25 Oct 2026 07:00:00 GMT"
         },
         {
-          "title": "\"회사 다닐 때 어떻게 살았나\"…14억 모아 은퇴한 삼성맨의 일상 - 머니투데이 - 머니투데이",
-          "url": "https://news.google.com/rss/articles/CBMiaEFVX3lxTE9hZm1YZ0JuUkxKRDAwSTdoNDdUZGtOMlJVaXVnZ01HZ25DTVNuOXA0YTU3Wlo1MHZWWXlpcG5EcXV2WjhldDJUeGJEbzJMbXc2T3NJOHZkT0c4Ulo4ZkY2YUFEWGVCb19w0gFuQVVfeXFMTnBXcDhtTWFHUmJwZmxNUDRXd0t6RWtja1IxSmhMc1R0VTFVMWFFOVloeVo5ZENJdEt4ZGpoOGVZU0JZbGNUcHJEeHhWUEd6UFdBOXI2b0NaRWZ4a0xFTVBBbTRTb3E1TG1xQmp0OHc?oc=5",
-          "publisher": "머니투데이",
-          "published": "Wed, 04 Nov 2026 08:00:00 GMT"
-        },
-        {
           "title": "보증금 빼서 주식에...6억→13억, '파이어' 한 40대 투자 비결 - 머니투데이 - 머니투데이",
           "url": "https://news.google.com/rss/articles/CBMiaEFVX3lxTE1sZVVWbjVqMmg0TVBZUExaOWhrczQ5VEV3S0JPX3ZFZmlIeGUyQnR5a3NVengxeE5hMnowWWRlSzRLMUNlRFIxSzFCaWJUMjBHVllfMi1lS21BNWFUY1BSaDg1X2ZNaFlt0gFuQVVfeXFMT05MQkZGSmRYWWtmaERsZW43S21tamUtTFR0RkVRd3FsQnVWSlVlU285ZHh1bVFYWjc1TzNPbzNndzk5MThtZUxIRlBfNjhkbW8yQjIzUGdXNFhRSWw3cy1GQTY5d3dNOHR0Yi1BNlE?oc=5",
           "publisher": "머니투데이",
           "published": "Wed, 28 Oct 2026 07:00:00 GMT"
+        },
+        {
+          "title": "\"42억 있어도 한 달 200만원\" 파이어족, 조기 은퇴 이후 생기는 고민들 - 시사통신",
+          "url": "https://news.google.com/rss/articles/CBMiZ0FVX3lxTFBWU2RZeUMtT2JCLWZyVDBQZEVScUR1OFg1VGp0dXJaZUQwQ1NRVndzd0FONzgxQ2tHb1ZEYndnemJMeTNKWG5zQVVaZFVvMkQwRmtQM0xxa2s0Y2hQS2xSbWlUaE4zODA?oc=5",
+          "publisher": "시사통신",
+          "published": "Mon, 02 Nov 2026 04:51:00 GMT"
         }
       ]
     },
     "discovery": {
       "name": "NASA · Image of the Day (영문)",
       "feedUrl": "https://www.nasa.gov/feeds/iotd-feed/",
-      "updatedAt": "2026-11-13T02:00:21.154063+00:00",
+      "updatedAt": "2026-11-14T01:33:55.062112+00:00",
       "stale": false,
       "items": [
         {
-          "title": "Heart in the Sky at NASA Kennedy",
-          "url": "https://www.nasa.gov/image-detail/55640210122-dae9d5e6b9-o/",
+          "title": "Outbursts from a Massive Star",
+          "url": "https://www.nasa.gov/image-detail/a-giant-star-in-a-distant-galaxy-has-been-mysteriously-erupting-for-at-least-15-years-new-data-from-nasas-chandra-explains-what-is-causing-these-huge-outbursts/",
           "publisher": "NASA Image of the Day",
-          "published": "Thu, 12 Nov 2026 19:14 GMT"
+          "published": "Fri, 13 Nov 2026 16:41 GMT"
         }
       ]
     }
