@@ -46,6 +46,7 @@ jobs:
           NODE_PATH="$RUNNER_TEMP/teum-qa/node_modules" node tests/playground-browser.cjs
           NODE_PATH="$RUNNER_TEMP/teum-qa/node_modules" node tests/navigation-browser.cjs
           NODE_PATH="$RUNNER_TEMP/teum-qa/node_modules" node tests/puzzle-motion-browser.cjs
+          NODE_PATH="$RUNNER_TEMP/teum-qa/node_modules" node tests/puzzle-fx-browser.cjs
           NODE_PATH="$RUNNER_TEMP/teum-qa/node_modules" node tests/meals-browser.cjs
           NODE_PATH="$RUNNER_TEMP/teum-qa/node_modules" node tests/meal-solo-browser.cjs
           NODE_PATH="$RUNNER_TEMP/teum-qa/node_modules" node tests/fire-browser.cjs
