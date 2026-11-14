@@ -34,6 +34,7 @@ jobs:
         run: |
           npm install --prefix "$RUNNER_TEMP/teum-qa" --no-package-lock playwright@1.56.1
           "$RUNNER_TEMP/teum-qa/node_modules/.bin/playwright" install --with-deps chromium
+      # Exercise the new entry flow before the retained advanced and legacy tools.
       - name: Check mobile flows
         run: |
           python3 -m http.server 8000 --directory docs > "$RUNNER_TEMP/teum-http.log" 2>&1 &
