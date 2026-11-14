@@ -6,7 +6,7 @@
 | 메뉴 | 하는 일 |
 |---|---|
 | 홈 | 세 핵심 도구 진입, 내 진행 요약, 한끼 예시 구경 |
-| 한끼 | 재료·예산으로 메뉴 선택, 세 끼 준비와 재료 목록 |
+| 한끼 | 예산·끼니 수·재고로 포장 구매 조합 비교, 구매·조리 후 재고 관리 |
 | 목표 | 자산·월 투자·월 생활비로 FIRE 계산, 선택형 티커 도구 |
 | 월예산 | 항목 ON/OFF 생활비 배분, 가상 한 달과 개인 기록 |
 | 기록 | 내 식탁·레시피 작성·저장한 계획·생활 기록·쉬는 틈·보관함 |
@@ -33,3 +33,5 @@
 - [식사 중심 전환](briefs/MEAL-PIVOT.md), [혼자 쓰는 식탁 도구](briefs/SOLO-KITCHEN.md)
 - [티커 FIRE](briefs/TICKER-FIRE.md), [로그인 없는 종목 조회](briefs/ANONYMOUS-TICKER.md)
 - [간편 FIRE·가상 생활·예산 ON/OFF](briefs/SIMPLE-FIRE-LIFE.md)
+
+- [장바구니 최적화기](briefs/CART-OPTIMIZER.md): 한끼 기본 진입은 `#cart`. 기존 가벼운 메뉴 선택은 `#meal-lab`에서 유지한다.
