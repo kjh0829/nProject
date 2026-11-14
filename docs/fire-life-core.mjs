@@ -9,8 +9,24 @@ export const scenes=[
  {title:'셋째 주, 비 오는 날의 이동',prompt:'기본 교통비 외에 이번 달의 이동을 선택해요.',options:[['약속 시간을 조정',0,'서로 시간을 바꿔 비가 잦아든 뒤 만났다. 일정에 여백이 있었다.'],['택시 한 번 이용',2,'이번에는 편하게 이동했다. 젖지 않고 약속 장소에 도착했다.'],['차량 하루 대여',8,'하루 동안 이동을 묶어 처리했다. 필요한 일을 한 번에 마쳤다.']]},
  {title:'넷째 주, 마음을 전하는 방법',prompt:'기념할 일이 생겼어요. 어떻게 축하할까요?',options:[['편지와 직접 만든 선물',0,'집에 있는 재료로 마음을 담았다. 말로 못 했던 문장을 적었다.'],['작은 선물 고르기',4,'받는 사람을 떠올리며 골랐다. 물건보다 이야기를 오래 나눴다.'],['식사 대접하기',10,'한 끼를 대접하며 축하했다. 이번 달에 남기고 싶은 장면이었다.']]}
 ];
-export const defaultLife=()=>({budget:200,housing:60,food:35,utilities:20,transport:10,leisure:15,reserve:10,round:0,choices:[]});
-export function validLife(v){return !!v&&['budget','housing','food','utilities','transport','leisure','reserve'].every(k=>Number.isFinite(v[k])&&v[k]>= (k==='budget'?1:0)&&v[k]<=10000)&&Number.isInteger(v.round)&&v.round>=0&&v.round<=1000000&&Array.isArray(v.choices)&&v.choices.length<=4&&v.choices.every(n=>Number.isInteger(n)&&n>=0&&n<3);}
+export const allocationRules=[
+ {key:'housing',label:'월세',share:30,note:'월세 예산 · 보증금 별도'},
+ {key:'food',label:'식비',share:20,note:'집밥과 가끔 외식'},
+ {key:'utilities',label:'관리비·공과금·통신 등',share:10,note:'보험 등 생활 필수 비용 포함'},
+ {key:'transport',label:'교통비',share:5,note:'대중교통 중심의 예산'},
+ {key:'leisure',label:'여가·모임',share:10,note:'취미와 사람 만나는 시간'},
+ {key:'reserve',label:'예비비',share:10,note:'수리 등 예상 밖 지출에 대비'},
+ {key:'flex',label:'여유 자금',share:15,note:'추가 선택에 쓰거나 다음 달로 남길 몫'}
+];
+export function allocateBudget(budget){
+ if(!Number.isFinite(budget)||budget<1||budget>10000||Math.abs(budget*100-Math.round(budget*100))>1e-6)throw Error('월 예산을 1~10,000만 원, 100원 단위로 입력해주세요.');
+ const total=Math.round(budget*100),rows=allocationRules.map((r,i)=>({...r,index:i,units:Math.floor(total*r.share/100),remainder:total*r.share%100}));
+ let rest=total-rows.reduce((n,r)=>n+r.units,0);for(const r of [...rows].sort((a,b)=>b.remainder-a.remainder||a.index-b.index)){if(rest<=0)break;r.units++;rest--;}
+ return rows.map(({index,units,remainder,...r})=>({...r,amount:units/100}));
+}
+export function referenceLife(plan){const budget=Number(plan.budget.toFixed(2)),next={...plan,budget,allocation:'ratio-v1'};for(const row of allocateBudget(budget))if(row.key!=='flex')next[row.key]=row.amount;return next;}
+export const defaultLife=()=>referenceLife({budget:200,round:0,choices:[]});
+export function validLife(v){if(v?.allocation!==undefined){if(v.allocation!=='ratio-v1')return false;try{for(const r of allocateBudget(v.budget))if(r.key!=='flex'&&Math.abs(v[r.key]-r.amount)>1e-6)return false;}catch{return false;}}return !!v&&['budget','housing','food','utilities','transport','leisure','reserve'].every(k=>Number.isFinite(v[k])&&v[k]>= (k==='budget'?1:0)&&v[k]<=10000)&&Number.isInteger(v.round)&&v.round>=0&&v.round<=1000000&&Array.isArray(v.choices)&&v.choices.length<=4&&v.choices.every(n=>Number.isInteger(n)&&n>=0&&n<3);}
 export function sceneAt(round,week){return scenes[(round%2)*4+week];}
 export function summarizeLife(v){if(!validLife(v))throw Error('예산과 비용을 확인해주세요.');const base=v.housing+v.food+v.utilities+v.transport+v.leisure,extra=v.choices.reduce((n,c,i)=>n+sceneAt(v.round,i).options[c][1],0),spent=base+extra,cash=v.budget-spent,reserveTarget=Math.max(0,v.reserve-extra),reserveLeft=Math.min(reserveTarget,Math.max(0,cash));return {base,extra,spent,reserveLeft,reserveShort:reserveTarget-reserveLeft,free:cash-reserveLeft,cash,complete:v.choices.length===4};}
 export function readLife(storage){try{storage=storage??globalThis.localStorage;const text=storage.getItem(LIFE_KEY);if(text===null)return {state:{version:1,current:defaultLife(),logs:[]},writable:true};const s=JSON.parse(text);if(s.version!==1||!validLife(s.current)||!Array.isArray(s.logs)||s.logs.length>12||!s.logs.every(l=>typeof l.id==='string'&&l.id.length<=80&&typeof l.createdAt==='string'&&Number.isFinite(Date.parse(l.createdAt))&&validLife(l.plan)&&l.plan.choices.length===4)||new Set(s.logs.map(l=>l.id)).size!==s.logs.length)throw Error();return {state:s,writable:true};}catch{return {state:{version:1,current:defaultLife(),logs:[]},writable:false};}}
