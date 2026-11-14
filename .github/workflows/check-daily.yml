@@ -38,6 +38,7 @@ jobs:
       - name: Check mobile flows
         run: |
           python3 -m http.server 8000 --directory docs > "$RUNNER_TEMP/teum-http.log" 2>&1 &
+          NODE_PATH="$RUNNER_TEMP/teum-qa/node_modules" node tests/site-review-browser.cjs
           NODE_PATH="$RUNNER_TEMP/teum-qa/node_modules" node tests/fire-simple-browser.cjs
           NODE_PATH="$RUNNER_TEMP/teum-qa/node_modules" node tests/daily-browser.cjs
           NODE_PATH="$RUNNER_TEMP/teum-qa/node_modules" node tests/playground-browser.cjs

@@ -6,10 +6,10 @@ const fs=require('node:fs');
  try{
   for(const width of [360,390]){
    const context=await browser.newContext({viewport:{width,height:844},isMobile:true,hasTouch:true});const page=await context.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));
-   await page.goto('http://127.0.0.1:8000/#read');await page.waitForFunction(()=>document.querySelector('#daily-title').textContent!=='하루 한 가지, 작은 자유를 쌓아요.');
+   await page.goto('http://127.0.0.1:8000/#read');await page.locator('#read-archive').evaluate(e=>e.open=true);await page.waitForFunction(()=>document.querySelector('#daily-title').textContent!=='하루 한 가지, 작은 자유를 쌓아요.');
    const overflow=()=>page.evaluate(()=>document.documentElement.scrollWidth>innerWidth);assert.equal(await overflow(),false,`${width}px read overflow`);
    await page.locator('#read-done').click();await page.locator('#mission-done').click();await page.locator('#quiz-options button').first().click();assert.equal(await page.locator('#quiz-options button:disabled').count(),3);
-   await page.locator('#mode-evening').click();await page.locator('#daily-note').fill('오늘은 내 시간을 위해 산책했어요.');await page.locator('#journal-form button').click();await page.reload();await page.waitForFunction(()=>document.querySelector('#daily-note').value.length>0);assert.equal(await page.locator('#daily-note').inputValue(),'오늘은 내 시간을 위해 산책했어요.');assert(await page.locator('#daily-complete').textContent().then(t=>t.includes('모두')));
+   await page.locator('#mode-evening').click();await page.locator('#daily-note').fill('오늘은 내 시간을 위해 산책했어요.');await page.locator('#journal-form button').click();await page.reload();await page.locator('#read-archive').evaluate(e=>e.open=true);await page.waitForFunction(()=>document.querySelector('#daily-note').value.length>0);assert.equal(await page.locator('#daily-note').inputValue(),'오늘은 내 시간을 위해 산책했어요.');assert(await page.locator('#daily-complete').textContent().then(t=>t.includes('모두')));
    await page.screenshot({path:`test-results/read-${width}.png`,fullPage:true});
    for(const id of ['fire','play','community']){
     await page.evaluate(id=>location.hash=id,id);await page.waitForFunction(x=>!document.getElementById(x).hidden,id);assert.equal(await overflow(),false,`${width}px ${id} overflow`);assert.equal(await page.locator('#read').isVisible(),false);
