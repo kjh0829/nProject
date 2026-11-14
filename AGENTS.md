@@ -1,7 +1,7 @@
 # 틈 프로젝트 작업 규칙
 
 ## 제품
-- 적은 돈으로 알차게 먹는 한끼를 발견하고, 사용량 원가를 확인하고, 개인 식사 기록을 모으는 알찬끼를 만든다. 기존 FIRE 도구·퍼즐·이야기는 보조 기능으로 유지한다.
+- 식사·FIRE 목표·월 예산 생활을 쉽게 오가는 알찬끼를 만든다. 식사 원가와 개인 기록을 유지하며 예전 퍼즐·이야기·일기는 보관함으로 정리한다.
 - 서비스의 현재 기능과 제약은 `team/README.md`, 우선 과제는 `team/BACKLOG.md`를 읽는다.
 - 사용자 요청이 최우선이다. 역할 문서는 구현을 돕는 기준이며 추가 승인 절차를 만들지 않는다.
 
@@ -14,7 +14,7 @@
 
 ## 현재 구현과 배포
 - `docs/`가 GitHub Pages 배포 디렉터리다. 현재 메인 앱은 `docs/index.html`이다.
-- 주 메뉴는 `#home`(한끼 구경), `#meal-lab`(메뉴 고르기·세 끼 준비), `#saved-meals`, `#meal-compose`, `#read`다. 상세는 `#meal?id=...`, 이전 놀이터는 `#arcade`다. `#challenge`, `#story`, `#fire`, `#play`, `#community`의 기능과 저장 데이터도 유지한다.
+- 주 메뉴는 `#home`(홈), `#meal-lab`(한끼), `#fire`(목표), `#fire-life`(월예산), `#read`(기록)다. `#saved-meals`, `#meal-compose`는 맥락별 링크와 기록 허브에서 연다. 상세는 `#meal?id=...`, 이전 놀이터는 `#arcade`다. `#challenge`, `#story`, `#fire`, `#play`, `#community`의 기능과 저장 데이터도 유지한다.
 - 화면 전환과 탭별 스크롤 복원은 `docs/navigation.mjs`, 최근 7일 도전 표시는 `docs/challenge-history.mjs`에 둔다. 브라우저 기본 fragment 스크롤과 중복되지 않도록 내부 링크 경로를 유지한다.
 - 식사 데이터·계산·UI는 `docs/meal-data.mjs`, `meal-core.mjs`, `meals.mjs`, `meals.css`에 있다. 기록 키는 `teum-meals-v1`이며 사진을 포함해 브라우저에만 저장한다.
 - 새 퍼즐 엔진은 `docs/puzzle-core.mjs`, UI는 `docs/puzzle.mjs`다. 이야기는 `docs/story-data.mjs`, `docs/story.mjs`에 둔다. 퍼즐 변경 시 `node tests/puzzle.test.mjs`와 관련 모바일 CI를 확인한다.
@@ -53,3 +53,5 @@
 - 가상 한 달의 기본 생활비는 직접 입력받지 않는다. 월 예산 하나로 월세30/식비20/관리비·공과금·통신 등10/교통5/여가10/예비비10/여유15%의 예시를 자동 배분한다. 공식 권장 비율/실거래 시세로 표현하지 않는다. 금액은 100원 단위, 배분액과 미배분액의 합계가 예산과 일치해야 한다. ratio-v1 현재 계획과 예전 수동 입력 기록을 구분하고 과거 기록의 금액은 바꾸지 않는다.
 
 - 생활비 기준표의 7개 항목은 ON/OFF 가능하다. OFF 금액은 0이며 나머지 ON 항목의 원래 가중치에 비례해 재배분한다. 금액과 표시 비율은 각각 나머지 배분으로 합계를 맞춘다. 전부 OFF이면 전액 미배분으로 표시하고 가상 선택을 잠시 중단한다. excluded 목록을 현재 계획/기록에 보관하며 미지정인 과거 계획은 모두 ON으로 해석한다.
+
+- 홈/기록 허브는 `docs/hub.mjs`, `hub.css`에 있다. 예전 읽기·퀴즈·일기는 `#read-archive`, 예전 자유 매치/게시판 링크는 `#prototype-archive`에 접어둔다. 해당 기능의 QA는 먼저 보관함을 연다. 상단과 하단의 5개 경로를 일치시키고, 홈페이지에는 실제 기록 개수/진행 여부만 표시하며 재무 금액은 자동 노출하지 않는다. [전체 재검토](team/briefs/SITE-REVIEW.md).
