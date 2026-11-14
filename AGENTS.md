@@ -47,3 +47,5 @@
 - 주식 FIRE 계산기는 `docs/fire-core.mjs`, `fire.mjs`, `fire.css`에 분리한다. 키 `teum-fire-portfolio-v1`은 티커별 평가액/추가 투자와 적용 수익률 근거를 브라우저에 저장한다. 기존 `teum-goal`은 덮어쓰지 않고 최초 현금 항목으로만 이관한다. 공개 과거 자료는 `scripts/update-stock-returns.py`, 월간 갱신·Pages 재빌드는 `.github/workflows/refresh-stock-returns.yml`. 투자자 개인 입력은 수집 작업에 보내지 않는다.
 
 - 로그인 없는 티커 조회는 `docs/stock-lookup-core.mjs`, `stock-lookup.mjs`. 공개 Yahoo chart 자료를 실제 접속 검증된 cors.dev 경유로 읽는다. 티커·공개 조회 기간만 전송하고 수량·평가액·환율·생활비는 보내지 않는다. 조회 실패 시 기존 근거를 보존하고, 다른 티커로 바뀐 뒤 도착한 응답은 적용하지 않는다. 실제 외부 의존 검증은 `Check public stock lookup`, 결정 기록은 `team/briefs/ANONYMOUS-TICKER.md`.
+
+- FIRE 기본 진입은 `docs/fire-quick.mjs`의 세 금액 간편 계산이다. 키 `teum-fire-quick-v1`, 전체 자산 연 5%/물가 2%/인출 4%는 수정 가능한 기본 가정이며 종목 역사에서 가져온 값이 아니다. 종목 도구는 `#fire-advanced` 안에서 유지하고 해당 브라우저 검증은 먼저 details를 연다. `#fire-life`는 `docs/fire-life-core.mjs`, `fire-life.mjs`, `fire-life.css`의 창작 한 달 시뮬레이션이며 `teum-fire-life-v1`에 최근 12개 가상 기록을 보관한다. 실제 시세/가계부/금융 자산과 혼동하지 않는다. 예비비는 실제 남은 현금보다 크게 표시하지 않는다.
