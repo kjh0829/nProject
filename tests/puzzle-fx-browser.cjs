@@ -26,7 +26,7 @@ const assert=require('node:assert/strict');
   assert.equal(await page.locator('#puzzle-score').textContent(),expected.score+'점');assert.equal(await page.locator('#puzzle-result').isVisible(),true);
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
   if(width===390&&!reduced){await page.screenshot({path:'test-results/puzzle-fx-win-390.png',fullPage:true});}
-  await page.locator('header nav a[href="#home"]').click();assert.equal(await page.locator('.puzzle-particle').count(),0);assert.equal(await page.locator('.puzzle-burst').textContent(),'');
+  await page.locator('header nav a[href="#home"]').click();assert.equal(await page.locator('.puzzle-particle').count(),0);assert.equal(await page.locator('#challenge .puzzle-burst').textContent(),'');
   assert.deepEqual(errors,[]);await context.close();console.log(`FX ${width}px reduced=${reduced} PASS`);
  }}finally{await browser.close();}
 })().catch(e=>{console.error(e);process.exitCode=1;});

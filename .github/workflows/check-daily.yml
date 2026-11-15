@@ -22,6 +22,7 @@ jobs:
         run: |
           node tests/daily.test.mjs
           node tests/puzzle.test.mjs
+          node tests/lab.test.mjs
           node tests/puzzle-specials.test.mjs
           node tests/score-mode.test.mjs
           node tests/puzzle-improvements.test.mjs
@@ -51,6 +52,7 @@ jobs:
           NODE_PATH="$RUNNER_TEMP/teum-qa/node_modules" node tests/puzzle-fx-browser.cjs
           NODE_PATH="$RUNNER_TEMP/teum-qa/node_modules" node tests/puzzle-specials-browser.cjs
           NODE_PATH="$RUNNER_TEMP/teum-qa/node_modules" node tests/score-mode-browser.cjs
+          NODE_PATH="$RUNNER_TEMP/teum-qa/node_modules" node tests/lab-browser.cjs
           NODE_PATH="$RUNNER_TEMP/teum-qa/node_modules" node tests/meals-browser.cjs
           NODE_PATH="$RUNNER_TEMP/teum-qa/node_modules" node tests/meal-solo-browser.cjs
           NODE_PATH="$RUNNER_TEMP/teum-qa/node_modules" node tests/fire-browser.cjs

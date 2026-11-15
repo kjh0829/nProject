@@ -33,7 +33,7 @@ export function applyMove(original,a,b){
   const clear=expanded.hits.filter(i=>!births.has(i));
   for(const i of clear){if(s.board[i]?.color===stages[s.stage-1].color)s.collected++;if(s.ice[i]){s.ice[i]=false;s.cleared++;}}
   s.score+=clear.length*10*combo+expanded.fired*30;
-  frames.push({board:copyBoard(s.board),ice:[...s.ice],clear,combo,fired:expanded.fired,created:births.size,births:[...births].map(([at,special])=>({at,special})),effects:expanded.effects,combination:expanded.combination,score:s.score,collected:s.collected,cleared:s.cleared});
+  frames.push({board:copyBoard(s.board),ice:[...s.ice],clear,collect:clear.filter(i=>s.board[i]?.color===stages[s.stage-1].color),combo,fired:expanded.fired,created:births.size,births:[...births].map(([at,special])=>({at,special})),effects:expanded.effects,combination:expanded.combination,score:s.score,collected:s.collected,cleared:s.cleared});
   for(const i of clear)s.board[i]=null;for(const [i,special]of births)s.board[i]={...s.board[i],special};
   collapse(s);forced=[];groups=matchGroups(s.board);
   if(combo>=40&&groups.length){s.board=freshBoard(s);groups=[];}
