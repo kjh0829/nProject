@@ -1,3 +1,4 @@
+import {specialBirths,resolveSpecials} from './puzzle-specials.mjs';
 export const SIZE=6;
 export const pieces=[{name:'오렌지',icon:'🍊'},{name:'새싹',icon:'🌱'},{name:'포도',icon:'🍇'},{name:'물방울',icon:'💧'},{name:'별',icon:'⭐'}];
 export const stages=[
@@ -17,7 +18,6 @@ export function legalMoves(b){const result=[];for(let i=0;i<36;i++)for(const j o
 function freshBoard(s){for(let attempt=0;attempt<200;attempt++){const b=[];for(let i=0;i<36;i++){let t;do{t=tile(s);}while((i%6>=2&&t.color===b[i-1].color&&t.color===b[i-2].color)||(i>=12&&t.color===b[i-6].color&&t.color===b[i-12].color));b.push(t);}if(legalMoves(b).length)return b;}throw Error('No playable board');}
 export function createPuzzle(stageId=1,seed){const config=stages.find(x=>x.id===stageId)||stages[0];const s={version:1,stage:config.id,seed:String(seed??`teum-stage-${config.id}`),rng:hashSeed(seed??`teum-stage-${config.id}`),moves:config.moves,score:0,collected:0,cleared:0,status:'playing',turns:[],ice:Array.from({length:36},(_,i)=>config.ice.includes(i))};s.board=freshBoard(s);return s;}
 export function createScorePuzzle(seed){const value=String(seed);const s=createPuzzle(1,value.startsWith('score-')?value:'score-'+value);s.mode='score';s.moves=20;return s;}
-function expandHits(b,initial){const hits=new Set(initial),queue=[...hits],fired=new Set(),blast=new Set();while(queue.length){const i=queue.shift();const special=b[i]?.special;if(!special||fired.has(i))continue;fired.add(i);const area=[];if(special==='row')for(let c=0;c<6;c++)area.push((i/6|0)*6+c);else for(let dr=-1;dr<=1;dr++)for(let dc=-1;dc<=1;dc++){const r=(i/6|0)+dr,c=i%6+dc;if(r>=0&&r<6&&c>=0&&c<6)area.push(r*6+c);}for(const j of area){blast.add(j);if(!hits.has(j)){hits.add(j);queue.push(j);}}}return {hits:[...hits],fired:fired.size,blast};}
 function collapse(s){for(let c=0;c<6;c++){const column=[];for(let r=5;r>=0;r--)if(s.board[r*6+c])column.push(s.board[r*6+c]);for(let r=5;r>=0;r--)s.board[r*6+c]=column[5-r]||tile(s);}}
 export function applyMove(original,a,b){
  if(original.status!=='playing'||!adjacent(a,b))return {valid:false,state:original,frames:[]};
@@ -26,15 +26,14 @@ export function applyMove(original,a,b){
  let groups=matchGroups(s.board);if(!specialSwap&&!groups.length)return {valid:false,state:original,frames:[]};
  s.moves--;let forced=specialSwap?[a,b]:[],combo=0;const frames=[];
  while(groups.length||forced.length){
-  combo++;const births=new Map();
-  for(const g of groups){if(g.length<4)continue;let at=g.includes(b)&&combo===1?b:g.includes(a)&&combo===1?a:g[Math.floor(g.length/2)];if(s.board[at]?.special)at=g.find(i=>!s.board[i]?.special);if(at!==undefined)births.set(at,g.length>=5?'bomb':'row');}
-  const expanded=expandHits(s.board,[...groups.flat(),...forced]);
+  combo++;const births=specialBirths(s.board,groups,a,b,combo===1);
+  const expanded=resolveSpecials(s.board,[...groups.flat(),...forced],combo===1&&specialSwap?[a,b]:null);
   // A newly created special survives its creation turn unless another existing special hits it.
   for(const i of births.keys())if(expanded.blast.has(i))births.delete(i);
   const clear=expanded.hits.filter(i=>!births.has(i));
   for(const i of clear){if(s.board[i]?.color===stages[s.stage-1].color)s.collected++;if(s.ice[i]){s.ice[i]=false;s.cleared++;}}
   s.score+=clear.length*10*combo+expanded.fired*30;
-  frames.push({board:copyBoard(s.board),ice:[...s.ice],clear,combo,fired:expanded.fired,created:births.size,score:s.score,collected:s.collected,cleared:s.cleared});
+  frames.push({board:copyBoard(s.board),ice:[...s.ice],clear,combo,fired:expanded.fired,created:births.size,births:[...births].map(([at,special])=>({at,special})),effects:expanded.effects,combination:expanded.combination,score:s.score,collected:s.collected,cleared:s.cleared});
   for(const i of clear)s.board[i]=null;for(const [i,special]of births)s.board[i]={...s.board[i],special};
   collapse(s);forced=[];groups=matchGroups(s.board);
   if(combo>=40&&groups.length){s.board=freshBoard(s);groups=[];}
@@ -47,7 +46,7 @@ export function validSnapshot(s){
  if(!s||s.version!==1||!Number.isInteger(s.stage)||s.stage<1||s.stage>5||typeof s.seed!=='string'||s.seed.length>100)return false;
  if(s.mode!==undefined&&s.mode!=='score')return false;const scoreMode=s.mode==='score';if(scoreMode&&(s.stage!==1||!s.seed.startsWith('score-')))return false;const config=stages[s.stage-1],total=scoreMode?20:config.moves;if(!Number.isInteger(s.rng)||s.rng<1||s.rng>4294967295||!Number.isInteger(s.moves)||s.moves<0||s.moves>total||!['playing','won','lost'].includes(s.status))return false;
  if(!['score','collected','cleared'].every(k=>Number.isInteger(s[k])&&s[k]>=0&&s[k]<10000000))return false;
- if(!Array.isArray(s.board)||s.board.length!==36||!s.board.every(t=>t&&Number.isInteger(t.color)&&t.color>=0&&t.color<5&&[null,'row','bomb'].includes(t.special)))return false;
+ if(!Array.isArray(s.board)||s.board.length!==36||!s.board.every(t=>t&&Number.isInteger(t.color)&&t.color>=0&&t.color<5&&[null,'row','col','bomb','rainbow'].includes(t.special)))return false;
  if(!Array.isArray(s.ice)||s.ice.length!==36||!s.ice.every((x,i)=>typeof x==='boolean'&&(!x||config.ice.includes(i)))||s.cleared!==config.ice.length-s.ice.filter(Boolean).length)return false;
  if(!Array.isArray(s.turns)||s.turns.length!==total-s.moves||!s.turns.every(x=>Number.isInteger(x)&&x>=1&&x<=40)||matchGroups(s.board).length)return false;
  if(scoreMode)return s.status==='won'?s.moves===0:s.status==='playing'&&s.moves>0&&legalMoves(s.board).length>0;

@@ -59,3 +59,5 @@
 - 장바구니 최적화기는 `docs/cart-{data,core,worker}.mjs`, `cart.mjs`, `cart.css`다. 10개 기획 예시 내 1~7끼 조합을 전수 비교하며 실제 시장 최저가가 아니다. 포장 단위 구매비와 사용량 원가를 구분한다. 별도 키 `teum-cart-v1`에 재고/진행/최근 6개 계획을 저장한다. 구매·조리 명시 동작만 재고에 반영하고 마지막 동작만 되돌린다. 기존 식탁 도구/저장 키는 보존한다. [범위와 검증](team/briefs/CART-OPTIMIZER.md).
 
 - 소프트 아케이드 디자인은 `docs/soft-theme.css`, `soft-theme.mjs`, `soft-graphics.mjs`가 담당한다. 홈은 게임 우선이며 장보기는 홈과 기록의 맥락 링크로 유지한다. 게임/선택극/기존 자유매치는 게임 탭, 식사 기록/게시판은 기록 탭으로 표시한다. 퍼즐 아이콘은 고정 벡터이고 접근성 이름과 게임 판정/저장은 기존 엔진을 유지한다. [디자인 결정](team/briefs/SOFT-ARCADE.md).
+
+- 특수 조각 규칙은 `docs/puzzle-specials.mjs`(4개 직선 방향 번개, T/L 폭탄, 5개 직선 무지개와 특수 교환 조합), `puzzle-fx.mjs`는 해당 프레임 effects/births/combination만 표현한다. 변경 시 puzzle-specials 단위/브라우저 검사와 기존 점수·저장·모션 회귀를 실행한다. 저장된 row/bomb과 새 col/rainbow를 모두 검증한다.

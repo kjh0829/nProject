@@ -1,7 +1,9 @@
 const {chromium}=require('playwright');
 const assert=require('node:assert/strict');
 (async()=>{
- const {solvePuzzle}=await import('./puzzle-solver.mjs');const {createPuzzle,applyMove}=await import('../docs/puzzle-core.mjs');const solution=solvePuzzle(1);assert(solution&&solution.path.length>=3);const initial=createPuzzle(1),one=applyMove(initial,...solution.path[0]),two=applyMove(one.state,...solution.path[1]);
+ const {createPuzzle,applyMove,legalMoves}=await import('../docs/puzzle-core.mjs');
+ function threeMoves(s,remaining){if(remaining===0)return s.status==='won'?[]:null;if(s.status!=='playing')return null;for(const pair of legalMoves(s.board)){const next=applyMove(s,...pair).state,rest=threeMoves(next,remaining-1);if(rest)return [pair,...rest];}return null;}
+ const initial=createPuzzle(1),solution={path:threeMoves(initial,3)};assert(solution.path);const one=applyMove(initial,...solution.path[0]),two=applyMove(one.state,...solution.path[1]);
  const browser=await chromium.launch({headless:true});try{
   const context=await browser.newContext({viewport:{width:390,height:844},reducedMotion:'no-preference'}),page=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));await page.goto('http://127.0.0.1:8000/#challenge?stage=1');await page.waitForFunction(()=>document.querySelector('#puzzle-board').children.length===36);
   const [a,b]=solution.path[0];await page.locator(`[data-puzzle-index="${a}"]`).focus();await page.keyboard.press('Enter');assert.equal(await page.locator('.puzzle-tile.selected').count(),1);await page.locator(`[data-puzzle-index="${b}"]`).focus();await page.keyboard.press('Enter');await page.waitForFunction(()=>document.querySelector('#puzzle-moves').textContent==='11'&&!document.querySelector('#puzzle-hint').disabled);assert.equal(await page.evaluate(()=>document.activeElement.dataset.puzzleIndex),String(b));const step=b%6<5?1:-1;await page.keyboard.press(step===1?'ArrowRight':'ArrowLeft');assert.equal(await page.evaluate(()=>document.activeElement.dataset.puzzleIndex),String(b+step));
