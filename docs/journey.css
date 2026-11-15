@@ -6,3 +6,4 @@
 
 .is-game-focused>.puzzle-save-status{max-width:550px;margin:10px auto;font-size:10px}.is-game-focused .puzzle-tile{touch-action:manipulation}
 @media(max-width:400px){.is-game-focused{padding-left:max(6px,env(safe-area-inset-left));padding-right:max(6px,env(safe-area-inset-right))}.is-game-focused .puzzle-box{padding:12px 6px}.is-game-focused .puzzle-board{padding:4px;gap:4px}}
+.home-game-paths{margin:24px 0}.home-game-paths .journey-entry,.home-game-paths .avatar-entry{margin:14px 0}.home-secondary{border-top:1px solid #ddd2e4;margin:28px 0 20px;padding-top:6px}.home-secondary>summary{min-height:48px;display:flex;align-items:center;cursor:pointer;font-size:13px;color:#817188}.home-secondary .hub-grid{grid-template-columns:repeat(2,minmax(0,1fr))}#meal-archive{max-width:850px;margin:28px auto}#meal-archive>.hub-grid{grid-template-columns:1fr}#food-tools-archive .record-hub{margin-top:12px}@media(max-width:600px){.home-secondary .hub-grid{grid-template-columns:1fr}}

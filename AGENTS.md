@@ -1,7 +1,7 @@
 # 틈 프로젝트 작업 규칙
 
 ## 제품
-- 식사·FIRE 목표·월 예산 생활을 쉽게 오가는 알찬끼를 만든다. 식사 원가와 개인 기록을 유지하며 예전 퍼즐·이야기·일기는 보관함으로 정리한다.
+- 현재 중심 경험은 3매치 퍼즐 → 여행 진행 → 포인트/의상 수집 → 2D 캐릭터 꾸미기다. 식사 피드·레시피·장보기는 메인에서 제외하고 기존 개인 기록을 보관함에서 보존한다. FIRE/월예산은 기존 도구로 유지한다.
 - 서비스의 현재 기능과 제약은 `team/README.md`, 우선 과제는 `team/BACKLOG.md`를 읽는다.
 - 사용자 요청이 최우선이다. 역할 문서는 구현을 돕는 기준이며 추가 승인 절차를 만들지 않는다.
 
@@ -71,3 +71,5 @@
 - 여행 콘텐츠는 journey-content/*.mjs 지역 pack을 journey-data.mjs 배열 끝에 추가한다. journey-catalog.mjs가 지역/순차 ID를 검증한다. 공개된 기존 ID/순서/목표/seed 규칙을 변경하지 않는다. 지도는 한 지역·최대 10노드 구간만 표시한다. 15판/지역당5판을 UI에 하드코딩하지 않는다. tests/journey-catalog.test.mjs와 journey-map-browser.cjs, 기존 진행/집중 검증을 확인한다. [확장 절차](team/briefs/JOURNEY-MAP.md).
 
 - 아바타 #avatar는 avatar-{data,core,art,store,reward-core,rewards}.mjs와 avatar.mjs/avatar.css에 있다. 키 teum-avatar-v1에 포인트/claim/구매/장비를 함께 저장한다. 게임 완료 상태 검증과 claim 중복 방지를 거쳐 지급하고 일반 게임 종료 이벤트만으로 지급하지 않는다. 공개된 아이템 ID/가격/기본 무료품을 이관 없이 변경하지 않는다. tests/avatar.test.mjs와 avatar-browser.cjs, 기존 게임/집중 회귀를 확인한다. [설계](team/briefs/AVATAR-WARDROBE.md).
+
+- 홈에 식사 피드·레시피 작성·장보기 카드를 다시 노출하지 않는다. 기존 식사 예시는 #meal-archive, 개인 기록은 #read의 접힌 food-tools-archive에서 연다. meals.mjs는 게임/홈에서 식사 피드를 렌더링하지 않는다. 개인 데이터와 기존 상세 경로를 삭제하지 않는다. [정리와 제안](team/briefs/GAME-FOCUS-REVIEW.md).
