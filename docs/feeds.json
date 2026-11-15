@@ -1,10 +1,10 @@
 {
-  "attemptedAt": "2026-11-14T01:33:55.062112+00:00",
+  "attemptedAt": "2026-11-15T01:11:00.954016+00:00",
   "sources": {
     "fire": {
       "name": "Google 뉴스 · FIRE/경제적 자유",
       "feedUrl": "https://news.google.com/rss/search?q=FIRE%20%EA%B2%BD%EC%A0%9C%EC%A0%81%EC%9E%90%EC%9C%A0%20when%3A30d&hl=ko&gl=KR&ceid=KR:ko",
-      "updatedAt": "2026-11-14T01:33:55.062112+00:00",
+      "updatedAt": "2026-11-15T01:11:00.954016+00:00",
       "stale": false,
       "items": [
         {
@@ -30,7 +30,7 @@
     "discovery": {
       "name": "NASA · Image of the Day (영문)",
       "feedUrl": "https://www.nasa.gov/feeds/iotd-feed/",
-      "updatedAt": "2026-11-14T01:33:55.062112+00:00",
+      "updatedAt": "2026-11-15T01:11:00.954016+00:00",
       "stale": false,
       "items": [
         {
