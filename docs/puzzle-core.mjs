@@ -10,15 +10,18 @@ export const stages=[
 ];
 export function hashSeed(text){let h=2166136261;for(const c of String(text)){h^=c.charCodeAt(0);h=Math.imul(h,16777619);}return h>>>0||1;}
 function random(s){let x=s.rng;x^=x<<13;x^=x>>>17;x^=x<<5;s.rng=x>>>0||1;return s.rng/4294967296;}
-const tile=s=>({color:Math.floor(random(s)*5),special:null});
+const tile=s=>({color:Math.floor(random(s)*(s.feel==='burst-v1'?4:5)),special:null});
 const copyBoard=b=>b.map(x=>x?{...x}:null);
 export function adjacent(a,b){return Number.isInteger(a)&&Number.isInteger(b)&&a>=0&&b>=0&&a<36&&b<36&&Math.abs((a/6|0)-(b/6|0))+Math.abs(a%6-b%6)===1;}
 export function matchGroups(b){const groups=[];for(let r=0;r<6;r++){let c=0;while(c<6){let end=c+1;while(end<6&&b[r*6+c]&&b[r*6+end]?.color===b[r*6+c].color)end++;if(end-c>=3)groups.push(Array.from({length:end-c},(_,k)=>r*6+c+k));c=end;}}for(let c=0;c<6;c++){let r=0;while(r<6){let end=r+1;while(end<6&&b[r*6+c]&&b[end*6+c]?.color===b[r*6+c].color)end++;if(end-r>=3)groups.push(Array.from({length:end-r},(_,k)=>(r+k)*6+c));r=end;}}return groups;}
 export function legalMoves(b){const result=[];for(let i=0;i<36;i++)for(const j of [i+1,i+6]){if(!adjacent(i,j))continue;if(b[i]?.special||b[j]?.special){result.push([i,j]);continue;}[b[i],b[j]]=[b[j],b[i]];const hit=matchGroups(b).length>0;[b[i],b[j]]=[b[j],b[i]];if(hit)result.push([i,j]);}return result;}
 function freshBoard(s){for(let attempt=0;attempt<200;attempt++){const b=[];for(let i=0;i<36;i++){let t;do{t=tile(s);}while((i%6>=2&&t.color===b[i-1].color&&t.color===b[i-2].color)||(i>=12&&t.color===b[i-6].color&&t.color===b[i-12].color));b.push(t);}if(legalMoves(b).length)return b;}throw Error('No playable board');}
 export function createPuzzle(stageId=1,seed){const config=stages.find(x=>x.id===stageId)||stages[0];const s={version:1,stage:config.id,seed:String(seed??`teum-stage-${config.id}`),rng:hashSeed(seed??`teum-stage-${config.id}`),moves:config.moves,score:0,collected:0,cleared:0,status:'playing',turns:[],ice:Array.from({length:36},(_,i)=>config.ice.includes(i))};s.board=freshBoard(s);return s;}
-export function createScorePuzzle(seed){const value=String(seed);const s=createPuzzle(1,value.startsWith('score-')?value:'score-'+value);s.mode='score';s.moves=20;return s;}
-function collapse(s){for(let c=0;c<6;c++){const column=[];for(let r=5;r>=0;r--)if(s.board[r*6+c])column.push(s.board[r*6+c]);for(let r=5;r>=0;r--)s.board[r*6+c]=column[5-r]||tile(s);}}
+export function createScorePuzzle(seed,burst=true){const value=String(seed);const s=createPuzzle(1,value.startsWith('score-')?value:'score-'+value);s.mode='score';s.moves=20;if(burst){s.feel='burst-v1';s.board=freshBoard(s);}return s;}
+function collapse(s,combo=0){const fresh=[];for(let c=0;c<6;c++){const column=[];for(let r=5;r>=0;r--)if(s.board[r*6+c])column.push(s.board[r*6+c]);for(let r=5;r>=0;r--){const kept=column[5-r];s.board[r*6+c]=kept||tile(s);if(!kept)fresh.push(r*6+c);}}
+ // Casual score rounds compare three refills in the first two waves. Only newly
+ // arriving tiles change; every displayed cascade still requires a real match.
+ if(s.feel==='burst-v1'&&combo<=2&&fresh.length){let chosen=copyBoard(s.board),value=matchGroups(chosen).reduce((n,g)=>n+g.length,0);for(let attempt=0;attempt<2;attempt++){const candidate=copyBoard(s.board);for(const i of fresh)candidate[i]=tile(s);const next=matchGroups(candidate).reduce((n,g)=>n+g.length,0);if(next>value){chosen=candidate;value=next;}}s.board=chosen;}}
 export function applyMove(original,a,b){
  if(original.status!=='playing'||!adjacent(a,b))return {valid:false,state:original,frames:[]};
  const s={...original,board:copyBoard(original.board),ice:[...original.ice],turns:[...original.turns]};
@@ -35,7 +38,7 @@ export function applyMove(original,a,b){
   s.score+=clear.length*10*combo+expanded.fired*30;
   frames.push({board:copyBoard(s.board),ice:[...s.ice],clear,collect:clear.filter(i=>s.board[i]?.color===stages[s.stage-1].color),combo,fired:expanded.fired,created:births.size,births:[...births].map(([at,special])=>({at,special})),effects:expanded.effects,combination:expanded.combination,score:s.score,collected:s.collected,cleared:s.cleared});
   for(const i of clear)s.board[i]=null;for(const [i,special]of births)s.board[i]={...s.board[i],special};
-  collapse(s);forced=[];groups=matchGroups(s.board);
+  collapse(s,combo);forced=[];groups=matchGroups(s.board);
   if(combo>=40&&groups.length){s.board=freshBoard(s);groups=[];}
  }
  const config=stages[s.stage-1];s.turns.push(combo);if(s.mode==='score'){if(s.moves===0)s.status='won';}else if(s.collected>=config.target&&s.cleared>=config.ice.length)s.status='won';else if(s.moves===0)s.status='lost';
@@ -44,7 +47,7 @@ export function applyMove(original,a,b){
 }
 export function validSnapshot(s){
  if(!s||s.version!==1||!Number.isInteger(s.stage)||s.stage<1||s.stage>5||typeof s.seed!=='string'||s.seed.length>100)return false;
- if(s.mode!==undefined&&s.mode!=='score')return false;const scoreMode=s.mode==='score';if(scoreMode&&(s.stage!==1||!s.seed.startsWith('score-')))return false;const config=stages[s.stage-1],total=scoreMode?20:config.moves;if(!Number.isInteger(s.rng)||s.rng<1||s.rng>4294967295||!Number.isInteger(s.moves)||s.moves<0||s.moves>total||!['playing','won','lost'].includes(s.status))return false;
+ if(s.mode!==undefined&&s.mode!=='score')return false;if(s.feel!==undefined&&(s.mode!=='score'||s.feel!=='burst-v1'))return false;const scoreMode=s.mode==='score';if(scoreMode&&(s.stage!==1||!s.seed.startsWith('score-')))return false;const config=stages[s.stage-1],total=scoreMode?20:config.moves;if(!Number.isInteger(s.rng)||s.rng<1||s.rng>4294967295||!Number.isInteger(s.moves)||s.moves<0||s.moves>total||!['playing','won','lost'].includes(s.status))return false;
  if(!['score','collected','cleared'].every(k=>Number.isInteger(s[k])&&s[k]>=0&&s[k]<10000000))return false;
  if(!Array.isArray(s.board)||s.board.length!==36||!s.board.every(t=>t&&Number.isInteger(t.color)&&t.color>=0&&t.color<5&&[null,'row','col','bomb','rainbow'].includes(t.special)))return false;
  if(!Array.isArray(s.ice)||s.ice.length!==36||!s.ice.every((x,i)=>typeof x==='boolean'&&(!x||config.ice.includes(i)))||s.cleared!==config.ice.length-s.ice.filter(Boolean).length)return false;

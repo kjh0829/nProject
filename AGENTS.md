@@ -63,3 +63,5 @@
 - 특수 조각 규칙은 `docs/puzzle-specials.mjs`(4개 직선 방향 번개, T/L 폭탄, 5개 직선 무지개와 특수 교환 조합), `puzzle-fx.mjs`는 해당 프레임 effects/births/combination만 표현한다. 변경 시 puzzle-specials 단위/브라우저 검사와 기존 점수·저장·모션 회귀를 실행한다. 저장된 row/bomb과 새 col/rainbow를 모두 검증한다.
 
 - `#lab` 기믹 도전은 별도 `puzzle-lab.mjs` 엔진, `lab.mjs` 화면, `lab-saves.mjs` 저장이다. 키 `teum-puzzle-lab-v1`만 쓰고 일반 점수/스테이지 판은 기존 규칙을 유지한다. 충전 스킬은 이동을 쓰지 않으므로 undo는 actions 차이도 검증한다. 보너스는 엔진에서 1회 계산해 저장하고, UI는 프레임만 재생한다. 새 기믹 변경 시 lab 단위/브라우저 및 기존 특수/점수/모션 회귀를 확인한다.
+
+- 20수 새 판의 연쇄 프로필은 `burst-v1`이다. 이전 저장판/같은 판 재시작은 기존 프로필을 유지하며 기믹 엔진은 `createScorePuzzle(seed,false)`로 기존 RNG를 보존한다. 변경 시 `tests/burst.test.mjs`와 점수/기믹 테스트를 확인한다. 결정 기록: `team/briefs/BURST-FEEL.md`.
