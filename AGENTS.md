@@ -73,3 +73,5 @@
 - 아바타 #avatar는 avatar-{data,core,art,store,reward-core,rewards}.mjs와 avatar.mjs/avatar.css에 있다. 키 teum-avatar-v1에 포인트/claim/구매/장비를 함께 저장한다. 게임 완료 상태 검증과 claim 중복 방지를 거쳐 지급하고 일반 게임 종료 이벤트만으로 지급하지 않는다. 공개된 아이템 ID/가격/기본 무료품을 이관 없이 변경하지 않는다. tests/avatar.test.mjs와 avatar-browser.cjs, 기존 게임/집중 회귀를 확인한다. [설계](team/briefs/AVATAR-WARDROBE.md).
 
 - 홈에 식사 피드·레시피 작성·장보기 카드를 다시 노출하지 않는다. 기존 식사 예시는 #meal-archive, 개인 기록은 #read의 접힌 food-tools-archive에서 연다. meals.mjs는 게임/홈에서 식사 피드를 렌더링하지 않는다. 개인 데이터와 기존 상세 경로를 삭제하지 않는다. [정리와 제안](team/briefs/GAME-FOCUS-REVIEW.md).
+
+- B안 캐릭터는 avatar-rig.mjs의 cel-b-v1 공통 좌표/관절, avatar-art.mjs 부위별 SVG, avatar-cel.css의 움직임이다. 아이템 ID/가격/지갑 키는 유지한다. 새 소매는 어깨·팔꿈치 그룹, 모자/안경은 머리 그룹에 붙이고 avatarCoverage/Framing 규칙을 검토한다. tests/avatar-cel.test.mjs와 avatar-cel-browser.cjs 및 기존 구매/보상 테스트를 확인한다. [규격](team/briefs/AVATAR-CEL-B.md).
