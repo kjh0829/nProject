@@ -1,0 +1,11 @@
+// Fixed local vector artwork. Accessible tile names remain owned by the game.
+const shapes=[
+ '<circle cx="24" cy="26" r="14" fill="#ee9651"/><path d="M24 12c3-8 10-7 13-6-2 7-8 9-13 6" fill="#558963"/><path d="M17 19c-3 2-5 6-4 9" stroke="#ffd5a1" stroke-width="3" fill="none" stroke-linecap="round"/>',
+ '<path d="M24 37V22" stroke="#41775b" stroke-width="3" stroke-linecap="round"/><path d="M24 26C8 27 9 13 11 11c12-1 15 7 13 15" fill="#78ab73"/><path d="M24 23c-1-14 12-16 15-14 2 10-6 16-15 14" fill="#a1c48b"/>',
+ '<path d="M24 12c0-6 4-8 8-8" stroke="#58845d" stroke-width="3" fill="none"/><g fill="#9277bb"><circle cx="17" cy="18" r="7"/><circle cx="30" cy="18" r="7"/><circle cx="12" cy="28" r="7"/><circle cx="24" cy="28" r="7"/><circle cx="36" cy="28" r="7"/><circle cx="18" cy="37" r="6"/><circle cx="30" cy="37" r="6"/></g><circle cx="16" cy="16" r="2" fill="#d7c3ee"/>',
+ '<path d="M24 5C20 14 10 22 10 31a14 14 0 0028 0C38 22 28 14 24 5" fill="#65b6c9"/><path d="M17 28c-1 5 1 8 4 9" stroke="#c5edf0" stroke-width="3" stroke-linecap="round" fill="none"/>',
+ '<path d="M24 5l6 12 13 2-9 10 2 14-12-7-12 7 2-14-9-10 13-2z" fill="#e9b953" stroke="#d7a641" stroke-width="1.5" stroke-linejoin="round"/><path d="M24 13l3 7 8 1" stroke="#ffe5a0" stroke-width="2.5" fill="none" stroke-linecap="round"/>'
+];
+export function pieceArt(color){return '<svg class="piece-art" viewBox="0 0 48 48" aria-hidden="true" focusable="false">'+shapes[color]+'</svg>';}
+const icons={home:'<path d="M3 10l9-7 9 7v10H7V10m3 10v-7h5v7"/>',game:'<path d="M8 6h8c3 0 5 9 5 12s-3 3-6-1H9c-3 4-6 4-6 1s2-12 5-12zM7 10v5m-2-2h5m6-2h.01m2 3h.01"/>',leaf:'<path d="M5 20C2 7 12 3 21 3c0 11-5 18-16 17zm0 0L16 9"/>',wallet:'<path d="M4 5h15v15H4zM4 5l13-3v3m-3 6h7v5h-7z"/>',bookmark:'<path d="M6 3h12v19l-6-4-6 4z"/>',book:'<path d="M12 5v16M3 3c4-1 6 0 9 2 3-2 5-3 9-2v15c-4-1-6 0-9 3-3-3-5-4-9-3z"/>',bowl:'<path d="M3 11h18c0 7-4 10-9 10s-9-3-9-10zm5-8v4m4-5v5m4-4v4"/>'};
+export function uiIcon(name){return '<svg class="soft-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+(icons[name]||icons.bookmark)+'</svg>';}
