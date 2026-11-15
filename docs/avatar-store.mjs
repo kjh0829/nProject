@@ -1,0 +1,10 @@
+import {emptyAvatar,validAvatar,buyAvatarItem,wearAvatarItem,changeAvatarLook,grantAvatarReward} from './avatar-core.mjs';
+import {avatarGameReceipt} from './avatar-reward-core.mjs';
+export const AVATAR_KEY='teum-avatar-v1';
+export function readAvatar(storage){try{storage??=globalThis.localStorage;const raw=storage.getItem(AVATAR_KEY);if(raw===null)return {value:emptyAvatar(),writable:true,exists:false};const value=JSON.parse(raw);if(!validAvatar(value))throw Error();return {value,writable:true,exists:true};}catch{return {value:emptyAvatar(),writable:false,exists:false};}}
+async function transact(update,storage){const work=()=>{try{storage??=globalThis.localStorage;const current=readAvatar(storage);if(!current.writable)return {ok:false,reason:'storage',value:current.value};const result=update(current.value);if(!result.ok)return result;if(!validAvatar(result.value))return {ok:false,reason:'invalid',value:current.value};if(!current.exists||JSON.stringify(result.value)!==JSON.stringify(current.value))storage.setItem(AVATAR_KEY,JSON.stringify(result.value));if(typeof window!=='undefined')window.dispatchEvent(new Event('teum-avatar-changed'));return result;}catch{return {ok:false,reason:'storage',value:readAvatar(storage).value};}};try{return globalThis.navigator?.locks?.request?await navigator.locks.request(AVATAR_KEY,work):work();}catch{return {ok:false,reason:'storage',value:readAvatar(storage).value};}}
+export const ensureAvatar=storage=>transact(value=>({ok:true,value}),storage);
+export const purchaseAvatar=(id,storage)=>transact(v=>buyAvatarItem(v,id),storage);
+export const equipAvatar=(slot,id,storage)=>transact(v=>wearAvatarItem(v,slot,id),storage);
+export const setAvatarLook=(key,id,storage)=>transact(v=>changeAvatarLook(v,key,id),storage);
+export const claimAvatarGame=(game,storage)=>{let receipt;try{receipt=avatarGameReceipt(game);}catch{return Promise.resolve({ok:false,reason:'ineligible'});}return receipt?transact(v=>grantAvatarReward(v,receipt),storage):Promise.resolve({ok:false,reason:'ineligible'});};

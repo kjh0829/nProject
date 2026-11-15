@@ -69,3 +69,5 @@
 - 스토리 퍼즐은 #journey 지도와 #challenge?journey=N, journey-{data,saves}.mjs/journey.mjs, 키 teum-journey-v1이다. 기존 선택극 #story는 보존한다. configFor로 목표를 읽고 일반 슬롯에 journey 상태를 저장하지 않는다. 집중은 game-focus.mjs/journey.css, 전체화면 불가 시 집중 유지. tests/journey.test.mjs와 journey-focus-browser.cjs를 확인한다.
 
 - 여행 콘텐츠는 journey-content/*.mjs 지역 pack을 journey-data.mjs 배열 끝에 추가한다. journey-catalog.mjs가 지역/순차 ID를 검증한다. 공개된 기존 ID/순서/목표/seed 규칙을 변경하지 않는다. 지도는 한 지역·최대 10노드 구간만 표시한다. 15판/지역당5판을 UI에 하드코딩하지 않는다. tests/journey-catalog.test.mjs와 journey-map-browser.cjs, 기존 진행/집중 검증을 확인한다. [확장 절차](team/briefs/JOURNEY-MAP.md).
+
+- 아바타 #avatar는 avatar-{data,core,art,store,reward-core,rewards}.mjs와 avatar.mjs/avatar.css에 있다. 키 teum-avatar-v1에 포인트/claim/구매/장비를 함께 저장한다. 게임 완료 상태 검증과 claim 중복 방지를 거쳐 지급하고 일반 게임 종료 이벤트만으로 지급하지 않는다. 공개된 아이템 ID/가격/기본 무료품을 이관 없이 변경하지 않는다. tests/avatar.test.mjs와 avatar-browser.cjs, 기존 게임/집중 회귀를 확인한다. [설계](team/briefs/AVATAR-WARDROBE.md).

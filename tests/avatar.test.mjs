@@ -1,0 +1,26 @@
+import assert from 'node:assert/strict';
+import {solvePuzzle} from './puzzle-solver.mjs';
+import {avatarItems,avatarSlots,itemById} from '../docs/avatar-data.mjs';
+import {emptyAvatar,validAvatar,avatarBalance,buyAvatarItem,wearAvatarItem,changeAvatarLook,grantAvatarReward} from '../docs/avatar-core.mjs';
+import {AVATAR_KEY,readAvatar,ensureAvatar,purchaseAvatar,equipAvatar,claimAvatarGame} from '../docs/avatar-store.mjs';
+import {avatarGameReceipt} from '../docs/avatar-reward-core.mjs';
+import {avatarArt} from '../docs/avatar-art.mjs';
+import {createJourneyPuzzle,createPuzzle,createScorePuzzle,applyMove,bestHint} from '../docs/puzzle-core.mjs';
+import {createLabPuzzle,applyLabMove,labHint} from '../docs/puzzle-lab.mjs';
+let value=emptyAvatar();assert(validAvatar(value));assert.equal(avatarBalance(value),100);assert.equal(new Set(avatarItems.map(i=>i.id)).size,avatarItems.length);
+assert(!wearAvatarItem(value,'hat','hat-beret').ok);assert(!wearAvatarItem(value,'top',null).ok);assert(!buyAvatarItem(value,'hat-wizard').ok);
+const purchase=buyAvatarItem(value,'hat-beret');assert(purchase.ok);assert.equal(avatarBalance(purchase.value),40);assert.equal(value.owned.length,4);assert.equal(purchase.value.equipped.hat,null);assert(!buyAvatarItem(purchase.value,'hat-beret').ok);
+value=wearAvatarItem(purchase.value,'hat','hat-beret').value;assert(validAvatar(value));assert.equal(value.equipped.hat,'hat-beret');assert.equal(wearAvatarItem(value,'hat',null).value.equipped.hat,null);assert(!wearAvatarItem(value,'top','hat-beret').ok);assert(changeAvatarLook(value,'skin','cocoa').ok);assert(!changeAvatarLook(value,'skin','custom').ok);
+assert(!validAvatar({...value,spent:0}));assert(!validAvatar({...value,equipped:{...value.equipped,accessory:'acc-bird'}}));assert(!validAvatar({...value,owned:[...value.owned,'hat-beret']}));assert(!validAvatar({...value,earned:80}));
+const finish=s=>{while(s.status==='playing')s=applyMove(s,...bestHint(s).pair).state;return s;};
+const journey=finish(createJourneyPuzzle(1));assert.equal(journey.status,'won');const r=avatarGameReceipt({kind:'journey',state:journey});assert.equal(r.amount,80);assert.equal(avatarGameReceipt({kind:'score',state:journey}),null);assert.equal(avatarGameReceipt({kind:'journey',state:createJourneyPuzzle(1)}),null);
+const score=finish(createScorePuzzle('avatar-reward'));const scoreReceipt=avatarGameReceipt({kind:'score',state:score});assert(scoreReceipt.amount>=40&&scoreReceipt.amount<=80);const daily=solvePuzzle(3).state;assert.equal(avatarGameReceipt({kind:'daily',state:daily,date:'2026-11-15'}).amount,50);assert.equal(avatarGameReceipt({kind:'daily',state:daily,date:'2026-99-99'}),null);const stage=finish(createPuzzle(1));assert.equal(avatarGameReceipt({kind:'stage',state:stage}).amount,50);assert.equal(avatarGameReceipt({kind:'daily',state:stage,date:'2026-11-15'}),null);
+let lab=createLabPuzzle('avatar-reward');while(lab.status==='playing')lab=applyLabMove(lab,...labHint(lab).pair).state;assert.equal(avatarGameReceipt({kind:'lab',state:lab}).amount,50);
+const memory=new Map(),storage={getItem:k=>memory.get(k)??null,setItem:(k,v)=>memory.set(k,v)};
+assert((await ensureAvatar(storage)).ok);const start=memory.get(AVATAR_KEY);await ensureAvatar(storage);assert.equal(memory.get(AVATAR_KEY),start);
+assert((await claimAvatarGame({kind:'journey',state:journey},storage)).ok);const awarded=memory.get(AVATAR_KEY);assert((await claimAvatarGame({kind:'journey',state:journey},storage)).duplicate);assert.equal(memory.get(AVATAR_KEY),awarded);assert.equal(avatarBalance(readAvatar(storage).value),180);const prePurchase=memory.get(AVATAR_KEY);assert(!(await purchaseAvatar('top-mint',{...storage,setItem(){throw Error('quota');}})).ok);assert.equal(memory.get(AVATAR_KEY),prePurchase);
+assert((await purchaseAvatar('hat-wizard',storage)).ok);assert.equal(avatarBalance(readAvatar(storage).value),30);assert((await equipAvatar('hat','hat-wizard',storage)).ok);assert(!(await purchaseAvatar('hat-wizard',storage)).ok);assert.equal(avatarBalance(readAvatar(storage).value),30);
+const before=memory.get(AVATAR_KEY),quota={...storage,setItem(){throw Error('quota');}};assert(!(await claimAvatarGame({kind:'score',state:score},quota)).ok);assert.equal(memory.get(AVATAR_KEY),before);assert(!(await equipAvatar('hat',null,quota)).ok);assert.equal(memory.get(AVATAR_KEY),before);
+memory.set(AVATAR_KEY,'{broken');assert(!readAvatar(storage).writable);assert(!(await ensureAvatar(storage)).ok);assert(!(await purchaseAvatar('top-mint',storage)).ok);assert.equal(memory.get(AVATAR_KEY),'{broken');assert(!readAvatar({getItem(){throw Error('blocked')}}).writable);
+for(const item of avatarItems){const svg=avatarArt(emptyAvatar(),{outfit:{...emptyAvatar().equipped,[item.slot]:item.id}});assert(svg.startsWith('<svg'));assert(!/<script|foreignObject|href=|https?:|onload=/i.test(svg.replace('xmlns="http://www.w3.org/2000/svg"','')));assert(svg.includes('role="img"'));assert(avatarSlots.some(s=>s.id===item.slot));}
+console.log('Avatar: layered catalog, ownership/equip, exact spending, immutable failures, eligible game rewards, one grant per run, reload ledger, corrupt/quota/blocked storage and safe SVG PASS');
