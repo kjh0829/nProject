@@ -3,7 +3,7 @@ export const RUNS_KEY='teum-puzzle-saves-v2',LEGACY_KEY='teum-puzzle-run-v1';
 export const emptyRuns=()=>({version:2,order:[],slots:{}});
 export function validSlot(slot){
  if(!slot||typeof slot.key!=='string'||!validSnapshot(slot.state))return false;
- const s=slot.state;if(s.mode==='score')return false;if(/^stage-[1-5]$/.test(slot.key)){if(slot.key!=='stage-'+s.stage||s.seed!=='teum-stage-'+s.stage)return false;}
+ const s=slot.state;if(s.mode==='score'||s.mode==='journey')return false;if(/^stage-[1-5]$/.test(slot.key)){if(slot.key!=='stage-'+s.stage||s.seed!=='teum-stage-'+s.stage)return false;}
  else if(/^daily-\d{4}-\d{2}-\d{2}$/.test(slot.key)){const date=slot.key.slice(6),parsed=new Date(date+'T00:00:00Z');if(!Number.isFinite(parsed.getTime())||parsed.toISOString().slice(0,10)!==date||s.stage!==3||!(s.seed.startsWith('teum-daily-'+date+'-')||s.seed==='teum-stage-3'))return false;}
  else return false;
  if(slot.undo!=null&&(!validSnapshot(slot.undo)||slot.undo.status!=='playing'||slot.undo.seed!==s.seed||slot.undo.stage!==s.stage||slot.undo.moves!==s.moves+1))return false;

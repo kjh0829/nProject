@@ -1,3 +1,4 @@
+import {journeyLevels} from './journey-data.mjs';
 import {specialBirths,resolveSpecials} from './puzzle-specials.mjs';
 export const SIZE=6;
 export const pieces=[{name:'오렌지',icon:'🍊'},{name:'새싹',icon:'🌱'},{name:'포도',icon:'🍇'},{name:'물방울',icon:'💧'},{name:'별',icon:'⭐'}];
@@ -22,6 +23,8 @@ function collapse(s,combo=0){const fresh=[];for(let c=0;c<6;c++){const column=[]
  // Casual score rounds compare three refills in the first two waves. Only newly
  // arriving tiles change; every displayed cascade still requires a real match.
  if(s.feel==='burst-v1'&&combo<=2&&fresh.length){let chosen=copyBoard(s.board),value=matchGroups(chosen).reduce((n,g)=>n+g.length,0);for(let attempt=0;attempt<2;attempt++){const candidate=copyBoard(s.board);for(const i of fresh)candidate[i]=tile(s);const next=matchGroups(candidate).reduce((n,g)=>n+g.length,0);if(next>value){chosen=candidate;value=next;}}s.board=chosen;}}
+export const configFor=s=>s.mode==='journey'?journeyLevels[s.level-1]:stages[s.stage-1];
+export function createJourneyPuzzle(level){const config=journeyLevels[level-1];if(!config)throw Error('Invalid journey level');const s=createScorePuzzle('journey-v1-'+level);s.mode='journey';s.level=level;s.moves=config.moves;s.ice=Array.from({length:36},(_,i)=>config.ice.includes(i));return s;}
 export function applyMove(original,a,b){
  if(original.status!=='playing'||!adjacent(a,b))return {valid:false,state:original,frames:[]};
  const s={...original,board:copyBoard(original.board),ice:[...original.ice],turns:[...original.turns]};
@@ -34,20 +37,20 @@ export function applyMove(original,a,b){
   // A newly created special survives its creation turn unless another existing special hits it.
   for(const i of births.keys())if(expanded.blast.has(i))births.delete(i);
   const clear=expanded.hits.filter(i=>!births.has(i));
-  for(const i of clear){if(s.board[i]?.color===stages[s.stage-1].color)s.collected++;if(s.ice[i]){s.ice[i]=false;s.cleared++;}}
+  for(const i of clear){if(s.board[i]?.color===configFor(s).color)s.collected++;if(s.ice[i]){s.ice[i]=false;s.cleared++;}}
   s.score+=clear.length*10*combo+expanded.fired*30;
-  frames.push({board:copyBoard(s.board),ice:[...s.ice],clear,collect:clear.filter(i=>s.board[i]?.color===stages[s.stage-1].color),combo,fired:expanded.fired,created:births.size,births:[...births].map(([at,special])=>({at,special})),effects:expanded.effects,combination:expanded.combination,score:s.score,collected:s.collected,cleared:s.cleared});
+  frames.push({board:copyBoard(s.board),ice:[...s.ice],clear,collect:clear.filter(i=>s.board[i]?.color===configFor(s).color),combo,fired:expanded.fired,created:births.size,births:[...births].map(([at,special])=>({at,special})),effects:expanded.effects,combination:expanded.combination,score:s.score,collected:s.collected,cleared:s.cleared});
   for(const i of clear)s.board[i]=null;for(const [i,special]of births)s.board[i]={...s.board[i],special};
   collapse(s,combo);forced=[];groups=matchGroups(s.board);
   if(combo>=40&&groups.length){s.board=freshBoard(s);groups=[];}
  }
- const config=stages[s.stage-1];s.turns.push(combo);if(s.mode==='score'){if(s.moves===0)s.status='won';}else if(s.collected>=config.target&&s.cleared>=config.ice.length)s.status='won';else if(s.moves===0)s.status='lost';
+ const config=configFor(s);s.turns.push(combo);if(s.mode==='score'){if(s.moves===0)s.status='won';}else if(s.collected>=config.target&&s.cleared>=config.ice.length)s.status='won';else if(s.moves===0)s.status='lost';
  let reshuffled=false;if(s.status==='playing'&&!legalMoves(s.board).length){s.board=freshBoard(s);reshuffled=true;}
  return {valid:true,state:s,frames,reshuffled};
 }
 export function validSnapshot(s){
  if(!s||s.version!==1||!Number.isInteger(s.stage)||s.stage<1||s.stage>5||typeof s.seed!=='string'||s.seed.length>100)return false;
- if(s.mode!==undefined&&s.mode!=='score')return false;if(s.feel!==undefined&&(s.mode!=='score'||s.feel!=='burst-v1'))return false;const scoreMode=s.mode==='score';if(scoreMode&&(s.stage!==1||!s.seed.startsWith('score-')))return false;const config=stages[s.stage-1],total=scoreMode?20:config.moves;if(!Number.isInteger(s.rng)||s.rng<1||s.rng>4294967295||!Number.isInteger(s.moves)||s.moves<0||s.moves>total||!['playing','won','lost'].includes(s.status))return false;
+ if(s.mode!==undefined&&!['score','journey'].includes(s.mode))return false;if(s.feel!==undefined&&(!['score','journey'].includes(s.mode)||s.feel!=='burst-v1'))return false;const scoreMode=s.mode==='score';if(scoreMode&&(s.stage!==1||!s.seed.startsWith('score-')))return false;if(s.mode==='journey'&&(!Number.isInteger(s.level)||!journeyLevels[s.level-1]||s.stage!==1||s.seed!=='score-journey-v1-'+s.level||s.feel!=='burst-v1'))return false;const config=configFor(s),total=scoreMode?20:config.moves;if(!Number.isInteger(s.rng)||s.rng<1||s.rng>4294967295||!Number.isInteger(s.moves)||s.moves<0||s.moves>total||!['playing','won','lost'].includes(s.status))return false;
  if(!['score','collected','cleared'].every(k=>Number.isInteger(s[k])&&s[k]>=0&&s[k]<10000000))return false;
  if(!Array.isArray(s.board)||s.board.length!==36||!s.board.every(t=>t&&Number.isInteger(t.color)&&t.color>=0&&t.color<5&&[null,'row','col','bomb','rainbow'].includes(t.special)))return false;
  if(!Array.isArray(s.ice)||s.ice.length!==36||!s.ice.every((x,i)=>typeof x==='boolean'&&(!x||config.ice.includes(i)))||s.cleared!==config.ice.length-s.ice.filter(Boolean).length)return false;
@@ -75,7 +78,7 @@ export function dailySeed(date){
  // A known-solvable fallback still gives everyone the same board for that date.
  const fallback='teum-stage-3';dailySeeds.set(date,fallback);return fallback;
 }
-export function starsFor(state){if(state.mode==='score'||state.status!=='won')return 0;const total=stages[state.stage-1].moves;return state.moves>=Math.ceil(total/2)?3:state.moves>=Math.ceil(total/4)?2:1;}
-export function hintValue(state,turn){const first=turn.frames[0];if(!first)return {value:-Infinity,collected:0,ice:0,specials:0};if(state.mode==='score')return {value:first.score-state.score+first.created*10,collected:0,ice:0,specials:first.created};const config=stages[state.stage-1],collected=Math.min(config.target,first.collected)-Math.min(config.target,state.collected),ice=first.cleared-state.cleared,specials=first.created;return {value:collected*3+ice*8+specials*2+(first.fired?1:0),collected,ice,specials};}
+export function starsFor(state){if(state.mode==='score'||state.status!=='won')return 0;const total=configFor(state).moves;return state.moves>=Math.ceil(total/2)?3:state.moves>=Math.ceil(total/4)?2:1;}
+export function hintValue(state,turn){const first=turn.frames[0];if(!first)return {value:-Infinity,collected:0,ice:0,specials:0};if(state.mode==='score')return {value:first.score-state.score+first.created*10,collected:0,ice:0,specials:first.created};const config=configFor(state),collected=Math.min(config.target,first.collected)-Math.min(config.target,state.collected),ice=first.cleared-state.cleared,specials=first.created;return {value:collected*3+ice*8+specials*2+(first.fired?1:0),collected,ice,specials};}
 export function bestHint(state){if(state.status!=='playing')return null;let best=null;for(const pair of legalMoves(state.board)){const turn=applyMove(state,...pair),benefit=hintValue(state,turn);if(!best||benefit.value>best.value)best={pair,...benefit};}return best;}
 export function recordStars(record,stage){if(!record)return 0;if(Number.isInteger(record.stars)&&record.stars>=1&&record.stars<=3)return record.stars;const total=stages[stage-1]?.moves,used=Number(record.moves);return Number.isFinite(total)&&Number.isFinite(used)&&used>=0&&used<=total?starsFor({stage,status:'won',moves:total-used}):1;}
