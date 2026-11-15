@@ -67,3 +67,5 @@
 - 20수 새 판의 연쇄 프로필은 `burst-v1`이다. 이전 저장판/같은 판 재시작은 기존 프로필을 유지하며 기믹 엔진은 `createScorePuzzle(seed,false)`로 기존 RNG를 보존한다. 변경 시 `tests/burst.test.mjs`와 점수/기믹 테스트를 확인한다. 결정 기록: `team/briefs/BURST-FEEL.md`.
 
 - 스토리 퍼즐은 #journey 지도와 #challenge?journey=N, journey-{data,saves}.mjs/journey.mjs, 키 teum-journey-v1이다. 기존 선택극 #story는 보존한다. configFor로 목표를 읽고 일반 슬롯에 journey 상태를 저장하지 않는다. 집중은 game-focus.mjs/journey.css, 전체화면 불가 시 집중 유지. tests/journey.test.mjs와 journey-focus-browser.cjs를 확인한다.
+
+- 여행 콘텐츠는 journey-content/*.mjs 지역 pack을 journey-data.mjs 배열 끝에 추가한다. journey-catalog.mjs가 지역/순차 ID를 검증한다. 공개된 기존 ID/순서/목표/seed 규칙을 변경하지 않는다. 지도는 한 지역·최대 10노드 구간만 표시한다. 15판/지역당5판을 UI에 하드코딩하지 않는다. tests/journey-catalog.test.mjs와 journey-map-browser.cjs, 기존 진행/집중 검증을 확인한다. [확장 절차](team/briefs/JOURNEY-MAP.md).
