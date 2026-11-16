@@ -74,6 +74,6 @@
 
 - 홈에 식사 피드·레시피 작성·장보기 카드를 다시 노출하지 않는다. 기존 식사 예시는 #meal-archive, 개인 기록은 #read의 접힌 food-tools-archive에서 연다. meals.mjs는 게임/홈에서 식사 피드를 렌더링하지 않는다. 개인 데이터와 기존 상세 경로를 삭제하지 않는다. [정리와 제안](team/briefs/GAME-FOCUS-REVIEW.md).
 
-- B안 캐릭터는 avatar-rig.mjs의 cel-b-v1 공통 좌표/관절, avatar-art.mjs 부위별 SVG, avatar-cel.css의 움직임이다. 아이템 ID/가격/지갑 키는 유지한다. 새 소매는 어깨·팔꿈치 그룹, 모자/안경은 머리 그룹에 붙이고 avatarCoverage/Framing 규칙을 검토한다. tests/avatar-cel.test.mjs와 avatar-cel-browser.cjs 및 기존 구매/보상 테스트를 확인한다. [규격](team/briefs/AVATAR-CEL-B.md).
+- B안 캐릭터는 avatar-art.mjs의 정지 래스터 레이어 합성이다. avatar-layers.mjs의 atlas source/target 좌표와 avatar-rig.mjs의 확대/겹침 규격을 따른다. assets/avatar-art/wardrobe-v1/ 원본 PNG를 보존하며 도형 캐릭터로 축약하지 않는다. 각 부위는 독립 원화이며 상의별 몸체 가림과 신발 좌우 배치를 확인한다. 아이템 ID/가격/지갑 키는 유지한다. tests/avatar-cel.test.mjs, avatar-cel-browser.cjs와 기존 구매/보상 검사를 확인한다.
 
-- 최우선 그래픽 기준은 정지원화 품질이다. #avatar는 avatar-quality.mjs/css의 고해상도 기본 코디 원화, #avatar?view=wardrobe는 기존 구매/착장 호환 화면이다. 원화에 개별 의상/피부/표정이 적용됐다고 표현하지 않는다. SVG 동작 실험은 중단 상태다. 기본 원화와 같은 품질의 레이어 합성이 확인된 부위부터 추후 연결한다. [정지원화 기준](team/briefs/AVATAR-QUALITY-MASTER.md), tests/avatar-quality-browser.cjs와 기존 지갑/옷장 검증을 확인한다.
+- #avatar와 #avatar?view=wardrobe는 원화 코디·옷장이다. 피부 4톤/표정 3종, 22개 의상을 실제 착장에 합성한다. #avatar?view=reference는 초기 고정 디자인 원화로 현재 착장과 별도 표시한다. 새 포즈/애니메이션은 중단 상태를 유지한다. [정지원화·옷장 기준](team/briefs/AVATAR-QUALITY-MASTER.md), tests/avatar-quality-browser.cjs를 확인한다.
