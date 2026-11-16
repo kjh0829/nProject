@@ -7,3 +7,7 @@
 /* Resizing the sticky preview must not make browser scroll anchoring expand it again. */
 #avatar{overflow-anchor:none}
 @media(max-width:700px){.avatar-shopping button{scroll-margin-top:330px;scroll-margin-bottom:110px}.avatar-slots{scroll-margin-top:330px;scroll-margin-bottom:110px}}
+
+/* A one-theme grid is short: a non-sticky preview avoids covering its controls
+   and keeps document height stable when the observer toggles compact mode. */
+@media(max-width:700px){#avatar.avatar-themed .avatar-dressing{position:static}#avatar.avatar-themed .avatar-room{height:300px}#avatar.avatar-themed .avatar-stage:not(.avatar-zoom-stage){height:280px;width:100%;margin:9px 0 16px}#avatar.avatar-themed .avatar-art-credit{display:block}#avatar.avatar-themed .avatar-base-look{margin-top:8px}#avatar.avatar-themed .avatar-room:before{inset:22px 46px 28px;width:auto;height:auto}#avatar.avatar-themed .avatar-podium{bottom:12px;width:130px;height:14px}}

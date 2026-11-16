@@ -7,6 +7,7 @@ const $=id=>document.getElementById(id);let tab='shop',slot='top',selected=null,
 const matchesTheme=item=>theme==='all'||theme==='classic'&&!item.theme||item.theme===theme;
 const say=text=>{$('avatar-status').textContent=text;};
 function render(){
+ $('avatar').classList.toggle('avatar-themed',theme!=='all');
  const {value:v,writable,exists}=readAvatar(),item=itemById(selected),preview=!!item&&v.equipped[item.slot]!==item.id,outfit=preview?{...v.equipped,[item.slot]:item.id}:v.equipped;
  const focus=document.activeElement?.dataset.avatarItem;for(const b of document.querySelectorAll('[data-avatar-pose]'))b.setAttribute('aria-pressed',String(b.dataset.avatarPose===pose));
  $('avatar-stage').innerHTML=avatarArt(v,{outfit,pose});if($('avatar-zoom-dialog').open)$('avatar-zoom-stage').innerHTML=avatarArt(v,{outfit,pose});$('avatar-preview-label').textContent=preview?'미리 입어보는 중':'저장된 내 모습';$('avatar-preview-label').classList.toggle('is-preview',preview);
