@@ -1,5 +1,6 @@
+import {avatarProfiles} from '../docs/avatar-profiles.mjs';
 import assert from 'node:assert/strict';
-import {avatarItems,avatarSlots} from '../docs/avatar-data.mjs';
+import {avatarItems,avatarSlots,faces,skins} from '../docs/avatar-data.mjs';
 import {avatarLayers,avatarAtlases} from '../docs/avatar-layers.mjs';
 import {validateAvatarCatalog,buildAvatarQaPlan,avatarQaShards} from '../docs/avatar-qa.mjs';
 const copy=v=>structuredClone(v),plan=buildAvatarQaPlan();assert.deepEqual(validateAvatarCatalog(),[]);
@@ -38,3 +39,14 @@ for(const mutate of [a=>delete a.cuffs.frames,a=>a.cuffs.frames[0].turn=80,a=>a.
 console.log('Independent left/right cuff positions, width, anatomical angles and invalid frame rejection PASS');
 
 {const layers=copy(avatarLayers);layers['top-mint'].cuffs.frames[0].turn=-layers['top-mint'].cuffs.frames[0].angle;layers['top-mint'].cuffs.openings[0][4]=0;assert(validateAvatarCatalog(avatarItems,layers).some(e=>e.includes('frames')));}
+
+for(const mutate of [a=>delete a.legFit,a=>a.legFit.start=NaN,a=>a.legFit.end=900,a=>a.legFit.shifts=[-50,0]]){const layers=copy(avatarLayers);mutate(layers['bottom-denim']);assert(validateAvatarCatalog(avatarItems,layers).some(e=>e.includes('leg fitting')));}
+for(const mutate of [a=>delete a.openings,a=>a.openings.pop(),a=>a.openings[0][0]=999]){const layers=copy(avatarLayers);mutate(layers['shoes-red']);assert(validateAvatarCatalog(avatarItems,layers).some(e=>e.includes('boot openings')));}
+console.log('Hem fitting and both boot mouth registrations are required and bounded PASS');
+
+{const layers=copy(avatarLayers);delete layers['acc-glasses'].lensAnchors;assert(validateAvatarCatalog(avatarItems,layers).some(e=>e.includes('eye anchors')));}
+{const layers=copy(avatarLayers),a=layers['acc-glasses'];a.segments[0].target[0]=469;a.segments[1].target=[524,116,27,63];a.segments[2].target=[551,116,92,63];assert(validateAvatarCatalog(avatarItems,layers).some(e=>e.includes('eye anchors')));}
+assert.equal(plan.pairCounts['face-accessory'],avatarItems.filter(i=>i.slot==='hair').length*faces.length*avatarItems.filter(i=>avatarProfiles[avatarLayers[i.id].profile].faceClip).length);assert.equal(plan.pairCounts['boot-skin'],avatarItems.filter(i=>i.slot==='bottom').length*skins.length*avatarItems.filter(i=>avatarProfiles[avatarLayers[i.id].profile].boot).length);
+console.log('Both lenses align with the eye rig; all expressions and boot skin combinations included PASS');
+
+{const layers=copy(avatarLayers);delete layers['acc-bird'].perchPoints;assert(validateAvatarCatalog(avatarItems,layers).some(e=>e.includes('perch points')));}

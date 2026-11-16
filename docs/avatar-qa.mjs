@@ -1,3 +1,4 @@
+import {avatarEyeRig} from './avatar-rig.mjs';
 import {avatarWristRig} from './avatar-neckline.mjs';
 import {avatarItems,avatarSlots,starterOutfit,skins,faces} from './avatar-data.mjs';
 import {avatarLayers,avatarAtlases,avatarFaceSources} from './avatar-layers.mjs';
@@ -6,8 +7,8 @@ export const avatarQaVersion='wardrobe-qa-v1';
 const rect=(r,positive=false)=>Array.isArray(r)&&r.length===4&&r.every(Number.isFinite)&&r[2]>0&&r[3]>0&&(!positive||r[0]>=0&&r[1]>=0);
 export function validateAvatarCatalog(items=avatarItems,layers=avatarLayers,atlases=avatarAtlases,profiles=avatarProfiles){
  const errors=[],ids=new Set(),slots=new Set(avatarSlots.map(s=>s.id));
- const profileKeys=new Set('slot kind probes framing bareArms faceClear longLegs waistJoin waistLift legStart overTop boot mirror behindHair faceClip segmentCount lining outer'.split(' '));
- for(const [name,p]of Object.entries(profiles)){if(p.framing!==undefined&&typeof p.framing!=='string')errors.push(`profile ${name}: invalid preview framing`);if(Object.keys(p).some(k=>!profileKeys.has(k))||['bareArms','faceClear','longLegs','overTop','boot','mirror','behindHair','faceClip','lining','outer'].some(k=>p[k]!==undefined&&typeof p[k]!=='boolean'))errors.push(`profile ${name}: unknown/invalid fields`);if(p.kind==='waist'&&(!Number.isFinite(p.waistLift)||p.waistLift<0||p.waistLift>128))errors.push(`profile ${name}: invalid waist lift`);}
+ const profileKeys=new Set('slot kind probes framing bareArms faceClear longLegs waistJoin waistLift legStart overTop boot mirror behindHair faceClip segmentCount lining outer shoulderClip eyeFit perch'.split(' '));
+ for(const [name,p]of Object.entries(profiles)){if(p.framing!==undefined&&typeof p.framing!=='string')errors.push(`profile ${name}: invalid preview framing`);if(Object.keys(p).some(k=>!profileKeys.has(k))||['bareArms','faceClear','longLegs','overTop','boot','mirror','behindHair','faceClip','lining','outer','shoulderClip','eyeFit','perch'].some(k=>p[k]!==undefined&&typeof p[k]!=='boolean'))errors.push(`profile ${name}: unknown/invalid fields`);if(p.kind==='waist'&&(!Number.isFinite(p.waistLift)||p.waistLift<0||p.waistLift>128))errors.push(`profile ${name}: invalid waist lift`);}
  for(const [name,p]of Object.entries(profiles))if(!slots.has(p.slot)||!['plain','segments','waist'].includes(p.kind)||!Array.isArray(p.probes)||!p.probes.every(v=>Array.isArray(v)&&v.length===2&&v.every(Number.isFinite)&&v[0]>=0&&v[0]<1024&&v[1]>=0&&v[1]<1536)||p.kind==='segments'&&(!Number.isInteger(p.segmentCount)||p.segmentCount<1))errors.push(`profile ${name}: invalid fitting rules`);
  for(const [name,a]of Object.entries(atlases))if(!/^[a-z][a-z0-9-]*$/.test(name)||!Number.isInteger(a.width)||!Number.isInteger(a.height)||a.width<1||a.height<1)errors.push(`atlas ${name}: invalid name/dimensions`);
  for(const item of items){const id=item.id;if(!/^[a-z][a-z0-9-]*$/.test(id)||ids.has(id))errors.push(`${id}: duplicate/unsafe ID`);ids.add(id);if(!slots.has(item.slot))errors.push(`${id}: unknown slot`);const a=layers[id];if(!a){errors.push(`${id}: missing artwork registration`);continue;}const p=profiles[a.profile],atlas=atlases[a.atlas];if(!p||p.slot!==item.slot){errors.push(`${id}: missing/incompatible fitting profile`);continue;}if(!atlas){errors.push(`${id}: unregistered atlas`);continue;}
@@ -21,6 +22,13 @@ export function validateAvatarCatalog(items=avatarItems,layers=avatarLayers,atla
    const c=a.cuffs,frames=c?.frames,point=v=>Array.isArray(v)&&v.length===2&&v.every(Number.isFinite);
    if(!Array.isArray(frames)||frames.length!==2||!frames.every((f,i)=>f&&Object.keys(f).every(k=>['pivot','angle','turn','width','shift'].includes(k))&&point(f.pivot)&&point(f.shift)&&f.pivot[0]>(i?710:235)&&f.pivot[0]<(i?805:315)&&f.pivot[1]>640&&f.pivot[1]<700&&f.shift.every(v=>Math.abs(v)<=25)&&Number.isFinite(f.angle)&&Math.abs(f.angle)<=45&&Number.isFinite(f.turn)&&Math.abs(f.turn)<=15&&Number.isFinite(f.width)&&f.width>=.75&&f.width<=1.1&&c.openings?.[i]&&Math.hypot(f.pivot[0]+f.shift[0]-c.openings[i][0],f.pivot[1]+f.shift[1]-c.openings[i][1])<.5&&Math.abs(f.angle+f.turn-c.openings[i][4])<.5&&Math.hypot(c.openings[i][0]-avatarWristRig[i].center[0],c.openings[i][1]-avatarWristRig[i].center[1])<3&&Math.abs(c.openings[i][4]-avatarWristRig[i].angle)<3))errors.push(`${id}: invalid/missing cuff angle frames`);
   }
+  if(a.legFit&&!p.longLegs)errors.push(`${id}: leg fitting on incompatible profile`);
+  if(a.openings&&!p.boot)errors.push(`${id}: boot openings on incompatible profile`);
+  if(p.longLegs){const f=a.legFit;if(!f||Object.keys(f).some(k=>!['start','end','shifts'].includes(k))||!Number.isFinite(f.start)||f.start<1100||f.start>1250||!Number.isFinite(f.end)||!rect(a.target)||f.end<=f.start||f.start<=a.target[1]||a.target[0]>=480||a.target[0]+a.target[2]<=480||p.kind==='waist'&&p.waistJoin>=f.start||Math.abs(f.end-(a.target[1]+a.target[3]))>2||!Array.isArray(f.shifts)||f.shifts.length!==2||!f.shifts.every(v=>Number.isFinite(v)&&Math.abs(v)<=20))errors.push(`${id}: invalid/missing leg fitting`);}
+  if(p.boot){if(!Array.isArray(a.openings)||a.openings.length!==2||!a.openings.every((o,i)=>Array.isArray(o)&&o.length===5&&o.every(Number.isFinite)&&o[0]>(i?560:300)&&o[0]<(i?620:350)&&o[1]>1280&&o[1]<1340&&o[2]>10&&o[2]<40&&o[3]>2&&o[3]<15&&Math.abs(o[4])<=30))errors.push(`${id}: invalid/missing boot openings`);}
+  if(p.eyeFit){const anchors=a.lensAnchors;if(!Array.isArray(anchors)||anchors.length!==2||!anchors.every((point,i)=>{if(!Array.isArray(point)||point.length!==2||!point.every(Number.isFinite))return false;const box=(Array.isArray(a.segments)?a.segments:[]).find(b=>rect(b.source)&&point[0]>=b.source[0]&&point[0]<=b.source[0]+b.source[2]&&point[1]>=b.source[1]&&point[1]<=b.source[1]+b.source[3]);if(!box||!rect(box.target))return false;const x=box.target[0]+(point[0]-box.source[0])*box.target[2]/box.source[2],y=box.target[1]+(point[1]-box.source[1])*box.target[3]/box.source[3];return Math.hypot(x-avatarEyeRig[i][0],y-avatarEyeRig[i][1])<4;}))errors.push(`${id}: missing/misaligned eye anchors`);}
+  if(p.eyeFit&&(!Array.isArray(a.segments)||a.segments.some((b,i,all)=>i>0&&(!rect(b.target)||!rect(all[i-1].target)||Math.abs(b.target[0]-all[i-1].target[0]-all[i-1].target[2])>.5||Math.abs(b.target[1]-all[0].target[1])>.5||Math.abs(b.target[3]-all[0].target[3])>.5))))errors.push(`${id}: disconnected lens segments`);
+  if(p.perch&&(!Array.isArray(a.perchPoints)||a.perchPoints.length!==2||!a.perchPoints.every(v=>Array.isArray(v)&&v.length===2&&v.every(Number.isFinite)&&rect(a.target)&&v[0]>=a.target[0]&&v[0]<=a.target[0]+a.target[2]&&v[1]>=a.target[1]&&v[1]<=a.target[1]+a.target[3])))errors.push(`${id}: invalid/missing perch points`);
   if(p.kind!=='segments'&&a.segments!==undefined)errors.push(`${id}: unused segment registration`);
   if(p.kind==='segments'&&(!Array.isArray(a.segments)||a.segments.length!==p.segmentCount))errors.push(`${id}: incomplete registered segments`);
   if(p.kind==='waist'&&(!rect(a.target)||!Number.isFinite(p.waistJoin)||p.waistJoin<=a.target[1]||p.waistJoin>=a.target[1]+a.target[3]))errors.push(`${id}: invalid waistband join`);
@@ -31,7 +39,7 @@ export function validateAvatarCatalog(items=avatarItems,layers=avatarLayers,atla
  return errors;
 }
 const hash=s=>{let n=2166136261;for(const c of s)n=Math.imul(n^c.charCodeAt(0),16777619);return(n>>>0).toString(16);};
-export const avatarQaGroups={item:'각 아이템', 'top-bottom':'상의 × 하의','bottom-shoes':'하의 × 신발','hair-hat':'머리 × 모자 × 표정','hair-accessory':'머리 × 소품','top-accessory':'상의 × 소품','top-look':'상의 × 피부 × 표정',look:'피부 × 표정','hair-skin':'머리 × 피부'};
+export const avatarQaGroups={item:'각 아이템', 'top-bottom':'상의 × 하의','bottom-shoes':'하의 × 신발','hair-hat':'머리 × 모자 × 표정','hair-accessory':'머리 × 소품','top-accessory':'상의 × 소품','top-look':'상의 × 피부 × 표정',look:'피부 × 표정','hair-skin':'머리 × 피부','face-accessory':'안경 × 머리 × 표정','boot-skin':'부츠 × 하의 × 피부'};
 export function buildAvatarQaPlan(items=avatarItems,layers=avatarLayers){
  const errors=validateAvatarCatalog(items,layers);if(errors.length)throw Error(errors.join('\n'));
  const by=slot=>items.filter(i=>i.slot===slot),cases=new Map(),collision=new Map(),pairCounts={};
@@ -43,6 +51,8 @@ export function buildAvatarQaPlan(items=avatarItems,layers=avatarLayers){
  for(const hair of by('hair'))for(const accessory of by('accessory'))add('hair-accessory',{hair:hair.id,accessory:accessory.id});
  for(const top of by('top'))for(const accessory of by('accessory'))add('top-accessory',{top:top.id,accessory:accessory.id});
  for(const top of by('top'))for(const skin of skins)for(const face of faces)add('top-look',{top:top.id},{skin:skin.id,face:face.id});
+ for(const accessory of by('accessory').filter(i=>avatarProfiles[layers[i.id].profile].faceClip))for(const hair of by('hair'))for(const face of faces)add('face-accessory',{accessory:accessory.id,hair:hair.id},{face:face.id});
+ for(const shoes of by('shoes').filter(i=>avatarProfiles[layers[i.id].profile].boot))for(const bottom of by('bottom'))for(const skin of skins)add('boot-skin',{shoes:shoes.id,bottom:bottom.id},{skin:skin.id});
  for(const skin of skins)for(const face of faces)add('look',{}, {skin:skin.id,face:face.id});
  for(const hair of by('hair'))for(const skin of skins)add('hair-skin',{hair:hair.id},{skin:skin.id});
  return {version:avatarQaVersion,itemCount:items.length,pairCounts,cases:[...cases.values()]};

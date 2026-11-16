@@ -54,6 +54,20 @@ const results=await p.evaluate(async()=>{
  expect(blocked>0,'Regression did not reject a hole cut through the cuff front');const front=openHand.pixel(275,672),wrong=closedHand.pixel(275,672);expect(front[1]>front[0]&&wrong[0]>wrong[1]+20,'Cuff front/back occlusion regression');
  const solid=(await render({...basic,top:'top-mint'},{},false,true));
  for(let x=390;x<=680;x+=3)for(let y=420;y<=690;y+=3)expect(solid.pixel(x,y)[3]>=250,`Fabric mesh seam: ${x},${y}`);
+ // Whole-body depth and colour contracts, including intentionally broken fixtures.
+ const {avatarQaPixels,inspectAvatarCase}=await import('./avatar-qa-render.mjs'),{buildAvatarQaPlan}=await import('./avatar-qa.mjs');
+ const plan=buildAvatarQaPlan(),bagCase={...plan.cases.find(c=>c.isolate==='acc-bag'),outfit:{...basic,hair:'hair-lilac',accessory:'acc-bag'}},bootCase=plan.cases.find(c=>c.isolate==='shoes-red'),legCase=plan.cases.find(c=>c.isolate==='bottom-denim');
+ expect((await inspectAvatarCase(bagCase)).passed,'Bag attachment/depth check');
+ async function brokenSvg(test,mutate,rule){const parse=DOMParser.prototype.parseFromString;DOMParser.prototype.parseFromString=function(text,type){const doc=parse.call(this,text,type);mutate(doc.documentElement);return doc;};try{const result=await inspectAvatarCase(test);expect(result.failures.some(f=>f.rule===rule),'Fixture did not reject '+rule);}finally{DOMParser.prototype.parseFromString=parse;}}
+ await brokenSvg(bagCase,svg=>{let node=svg.querySelector('[data-item="acc-bag"]');while(node.parentElement!==svg)node=node.parentElement;svg.append(node);},'bag-strap-behind-hair');
+ await brokenSvg(bagCase,svg=>svg.querySelector('[mask$="-shoulder)"]').removeAttribute('mask'),'bag-shoulder-clipping');
+ await brokenSvg(bootCase,svg=>svg.querySelector('[data-item="shoes-red"]')?.removeAttribute('mask'),'boot-leg-insertion');
+ const fittedLegs=structuredClone(avatarLayers['bottom-denim'].legFit);try{avatarLayers['bottom-denim'].legFit.shifts=[0,0];expect((await inspectAvatarCase(legCase)).failures.some(f=>f.rule==='hem-ankle-alignment'),'Fixture did not reject displaced trouser hems');}finally{avatarLayers['bottom-denim'].legFit=fittedLegs;}
+ const {skins}=await import('./avatar-data.mjs');
+ for(const outfit of [{...basic,bottom:'bottom-check'},{...basic,top:'top-night',bottom:'bottom-check'}]){
+  const reference=await render(outfit,{skin:'peach'});
+  for(const skin of skins){const current=await render(outfit,{skin:skin.id});for(const[x,y]of [[350,1000],[590,1000],[320,1348],...(outfit.top==='top-night'?[[620,450],[620,600]]:[])])expect(current.pixel(x,y).every((v,i)=>Math.abs(v-reference.pixel(x,y)[i])<3),'Skin setting recoloured clothing '+skin.id+' @ '+x+','+y);}
+ }
  let html='';for(const top of ['top-stripe','top-mint','top-coral','top-night'])for(const bottom of ['bottom-denim','bottom-lilac','bottom-check','bottom-overall'])html+=`<figure style="margin:0;height:600px"><figcaption style="font:14px sans-serif">${top} / ${bottom}</figcaption>${avatarArt({},{outfit:{...basic,top,bottom}})}</figure>`;
  document.body.innerHTML='<main style="display:grid;grid-template-columns:repeat(4,400px);width:1600px;background:#e8f5f6">'+html+'</main>';document.body.style.margin='0';return checks;
 });assert.equal(results.length,16);await p.screenshot({path:'test-results/avatar-fit-matrix.png',fullPage:true});assert.equal(await p.evaluate(()=>localStorage.getItem('teum-avatar-v1')),before);console.log('Rendered pixel regression: 16 waists, body fragments, coat lining, continuous overalls, 4 crowns, 12 moon hair/face/hat fits and 16 trouser/shoe pairs, all top necks and rejected opaque-collar fixtures; original wallet unchanged PASS');}finally{await b.close();}})().catch(e=>{console.error(e);process.exit(1)});

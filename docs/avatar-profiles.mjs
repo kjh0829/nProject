@@ -12,7 +12,7 @@ export const avatarProfiles={
  overall:{framing:'overall',slot:'bottom',kind:'plain',longLegs:true,overTop:true,probes:[[550,700]]},
  'low-shoe':{slot:'shoes',kind:'segments',segmentCount:2,probes:[[330,1440],[630,1440]]},
  boot:{slot:'shoes',kind:'segments',segmentCount:2,boot:true,probes:[[330,1440],[630,1440]]},
- glasses:{framing:'glasses',slot:'accessory',kind:'segments',segmentCount:3,behindHair:true,faceClip:true,probes:[]},
- bag:{framing:'bag',slot:'accessory',kind:'plain',mirror:true,probes:[[400,750]]},
- bird:{framing:'bird',slot:'accessory',kind:'plain',probes:[[360,250]]}
+ glasses:{framing:'glasses',slot:'accessory',kind:'segments',segmentCount:3,behindHair:true,faceClip:true,eyeFit:true,probes:[]},
+ bag:{framing:'bag',slot:'accessory',kind:'plain',mirror:true,behindHair:true,shoulderClip:true,probes:[[400,750]]},
+ bird:{framing:'bird',slot:'accessory',kind:'plain',perch:true,probes:[[410,270]]}
 };

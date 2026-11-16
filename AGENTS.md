@@ -85,3 +85,5 @@
 - 긴 소매에는 cuffs(scale/rightShift/openings)를 등록하고 목의 폭·높이와 양쪽 손목을 함께 확대 검토한다. top-look에서 입구 투명도뿐 아니라 소매가 손바닥을 덮지 않는지 검사한다. 얼굴/손 원본과 지갑은 유지한다.
 
 - 카라에는 neckline.tilt, 긴 소매에는 좌우 독립 cuffs.frames(pivot/angle/turn/width/shift)를 등록한다. avatarWristRig의 실제 손목 중심/각도와 맞추며, 소매 앞 원단을 유지하고 그 아래로 손이 나오게 한다. 손목 축의 연결과 위쪽 원단 지점을 검사하고, 가이드를 끈 확대 화면에서 피부 구멍/V자 절개가 없는지 확인한다.
+
+- 전신 피팅은 [검토 기록](team/briefs/AVATAR-FULL-FIT.md)을 따른다. 긴 하의 legFit, 부츠 openings, 안경 lensAnchors를 필수 등록한다. 가방 끈은 어깨 표면/머리 뒤에 두고 새 소품 perchPoints의 모든 상의 접촉을 확인하며 피부색으로 스타킹·안감이 바뀌지 않게 한다. 원본 PNG와 지갑을 유지하고 전신/부분/피부색별 육안 검토 및 776개 동적 검사·누락 집계를 확인한다.

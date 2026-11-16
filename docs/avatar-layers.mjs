@@ -474,7 +474,15 @@ export const avatarLayers={
       391,
       741
     ],
-    "profile": "pants"
+    "profile": "pants",
+    "legFit": {
+      "start": 1180,
+      "end": 1369,
+      "shifts": [
+        -8,
+        -10
+      ]
+    }
   },
   "bottom-lilac": {
     "atlas": "bottoms",
@@ -522,7 +530,15 @@ export const avatarLayers={
       400,
       1067
     ],
-    "profile": "overall"
+    "profile": "overall",
+    "legFit": {
+      "start": 1180,
+      "end": 1370,
+      "shifts": [
+        -10,
+        -13
+      ]
+    }
   },
   "shoes-canvas": {
     "atlas": "shoes",
@@ -614,6 +630,22 @@ export const avatarLayers={
           197
         ]
       }
+    ],
+    "openings": [
+      [
+        325,
+        1307,
+        25,
+        7,
+        3
+      ],
+      [
+        592,
+        1316,
+        25,
+        7,
+        12
+      ]
     ]
   },
   "shoes-lilac": {
@@ -706,6 +738,22 @@ export const avatarLayers={
           197
         ]
       }
+    ],
+    "openings": [
+      [
+        331,
+        1320,
+        22,
+        6,
+        5
+      ],
+      [
+        592,
+        1322,
+        24,
+        6,
+        12
+      ]
     ]
   },
   "acc-bag": {
@@ -733,9 +781,9 @@ export const avatarLayers={
       193
     ],
     "target": [
-      469,
+      474,
       116,
-      174,
+      164,
       63
     ],
     "profile": "glasses",
@@ -748,7 +796,7 @@ export const avatarLayers={
           193
         ],
         "target": [
-          469,
+          474,
           116,
           55,
           63
@@ -762,9 +810,9 @@ export const avatarLayers={
           193
         ],
         "target": [
-          524,
+          529,
           116,
-          27,
+          17,
           63
         ]
       },
@@ -776,12 +824,22 @@ export const avatarLayers={
           193
         ],
         "target": [
-          551,
+          546,
           116,
           92,
           63
         ]
       }
+    ],
+    "lensAnchors": [
+      [
+        787.29,
+        343.58
+      ],
+      [
+        960.31,
+        369.36
+      ]
     ]
   },
   "acc-bird": {
@@ -793,12 +851,22 @@ export const avatarLayers={
       340
     ],
     "target": [
-      302,
-      199,
+      342,
+      226,
       109,
       102
     ],
-    "profile": "bird"
+    "profile": "bird",
+    "perchPoints": [
+      [
+        413,
+        320
+      ],
+      [
+        430,
+        325
+      ]
+    ]
   },
   "hair-blossom": {
     "atlas": "theme-hair",
