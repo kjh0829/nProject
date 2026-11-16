@@ -4,13 +4,14 @@ const results=await p.evaluate(async()=>{
  const {avatarArt}=await import('./avatar-art.mjs'),cache=new Map();
  // Decode the actual SVG composition with inline copies of its local textures.
  // Canvas is read only: sample pixels, never modify or replace the source PNGs.
- async function render(outfit,look={},withoutNeckMask=false){
+ async function render(outfit,look={},withoutNeckMask=false,solidTop=false){
   const doc=new DOMParser().parseFromString(avatarArt({skin:'peach',face:'smile',...look},{outfit}).replace('160 -100 700 1640','0 0 1024 1536'),'image/svg+xml'),svg=doc.documentElement;
+  if(solidTop){const {avatarLayers}=await import('./avatar-layers.mjs'),[x,y,width,height]=avatarLayers[outfit.top].target,source=svg.querySelector('g[id$="-top-source"]'),rect=doc.createElementNS('http://www.w3.org/2000/svg','rect');for(const [key,value]of Object.entries({x,y,width,height,fill:'#183048',opacity:.992}))rect.setAttribute(key,value);source.replaceChildren(rect);const top=svg.querySelector(`[data-item="${outfit.top}"]`);for(const child of [...svg.children])if(child.tagName!=='defs'&&child!==top)child.remove();}
   if(withoutNeckMask)for(const node of svg.querySelectorAll('[mask]'))node.removeAttribute('mask');
   svg.setAttribute('width','1024');svg.setAttribute('height','1536');
   for(const node of svg.querySelectorAll('image')){const href=node.getAttribute('href');if(!cache.has(href)){const blob=await(await fetch(href)).blob();cache.set(href,await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onerror=reject;reader.onload=()=>resolve(reader.result);reader.readAsDataURL(blob);}));}node.setAttribute('href',cache.get(href));}
   const url=URL.createObjectURL(new Blob([new XMLSerializer().serializeToString(svg)],{type:'image/svg+xml'}));
-  try{const img=new Image();img.src=url;await img.decode();const canvas=document.createElement('canvas');canvas.width=1024;canvas.height=1536;const ctx=canvas.getContext('2d');ctx.drawImage(img,0,0);return{svg,pixel:(x,y)=>[...ctx.getImageData(x,y,1,1).data]};}finally{URL.revokeObjectURL(url);}
+  try{const img=new Image();img.src=url;await img.decode();const canvas=document.createElement('canvas');canvas.width=1024;canvas.height=1536;const ctx=canvas.getContext('2d');ctx.drawImage(img,0,0);const data=ctx.getImageData(0,0,1024,1536).data;return{svg,pixel:(x,y)=>[...data.slice((y*1024+x)*4,(y*1024+x)*4+4)]};}finally{URL.revokeObjectURL(url);}
  }
  const basic={hair:'hair-cocoa',hat:null,top:'top-stripe',bottom:'bottom-denim',shoes:'shoes-canvas',accessory:null},checks=[];
  const expect=(ok,message)=>{if(!ok)throw Error(message);};
@@ -47,6 +48,8 @@ const results=await p.evaluate(async()=>{
  let badWrist;try{Object.assign(avatarLayers['top-mint'].cuffs,{scale:1,rightShift:0});badWrist=(await render({...basic,top:'top-mint'})).pixel(265,715);}finally{avatarLayers['top-mint'].cuffs=mintCuffs;}
  expect(goodWrist[0]>goodWrist[2]+25,'Sleeve covers the left palm');
  expect(badWrist.some((v,i)=>Math.abs(v-goodWrist[i])>30),'Regression did not reject the old sleeve length');
+ const solid=(await render({...basic,top:'top-mint'},{},false,true));
+ for(let x=390;x<=680;x+=3)for(let y=420;y<=690;y+=3)expect(solid.pixel(x,y)[3]>=250,`Fabric mesh seam: ${x},${y}`);
  let html='';for(const top of ['top-stripe','top-mint','top-coral','top-night'])for(const bottom of ['bottom-denim','bottom-lilac','bottom-check','bottom-overall'])html+=`<figure style="margin:0;height:600px"><figcaption style="font:14px sans-serif">${top} / ${bottom}</figcaption>${avatarArt({},{outfit:{...basic,top,bottom}})}</figure>`;
  document.body.innerHTML='<main style="display:grid;grid-template-columns:repeat(4,400px);width:1600px;background:#e8f5f6">'+html+'</main>';document.body.style.margin='0';return checks;
 });assert.equal(results.length,16);await p.screenshot({path:'test-results/avatar-fit-matrix.png',fullPage:true});assert.equal(await p.evaluate(()=>localStorage.getItem('teum-avatar-v1')),before);console.log('Rendered pixel regression: 16 waists, body fragments, coat lining, continuous overalls, 4 crowns, 12 moon hair/face/hat fits and 16 trouser/shoe pairs, all top necks and rejected opaque-collar fixtures; original wallet unchanged PASS');}finally{await b.close();}})().catch(e=>{console.error(e);process.exit(1)});
