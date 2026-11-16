@@ -1,0 +1,101 @@
+name: Check wardrobe artwork
+on:
+  push:
+    branches: [master]
+    paths:
+      - 'docs/avatar*'
+      - 'docs/avatar-review/**'
+      - 'docs/assets/avatar-art/**'
+      - 'tests/avatar*'
+      - 'scripts/*avatar*'
+      - '.github/workflows/avatar-art-check.yml'
+  pull_request:
+    paths:
+      - 'docs/avatar*'
+      - 'docs/avatar-review/**'
+      - 'docs/assets/avatar-art/**'
+      - 'tests/avatar*'
+      - 'scripts/*avatar*'
+      - '.github/workflows/avatar-art-check.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  registry:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 3
+    outputs:
+      matrix: ${{ steps.plan.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node tests/avatar-qa.test.mjs
+      - id: plan
+        run: |
+          matrix=$(node scripts/check-avatar-assets.mjs --matrix)
+          echo "matrix=$matrix" >> "$GITHUB_OUTPUT"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: wardrobe-registry
+          overwrite: true
+          path: test-results/avatar-qa/manifest.json
+  rendering:
+    needs: registry
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      max-parallel: 3
+      matrix: ${{ fromJSON(needs.registry.outputs.matrix) }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Prepare Chromium
+        run: |
+          npm install --prefix "$RUNNER_TEMP/wardrobe-qa" --no-package-lock playwright@1.56.1
+          "$RUNNER_TEMP/wardrobe-qa/node_modules/.bin/playwright" install --with-deps chromium
+      - name: Inspect registered combinations
+        env:
+          AVATAR_QA_SHARD: ${{ matrix.index }}
+        run: |
+          python3 -m http.server 8000 --directory docs > "$RUNNER_TEMP/wardrobe-http.log" 2>&1 &
+          NODE_PATH="$RUNNER_TEMP/wardrobe-qa/node_modules" node tests/avatar-catalog-browser.cjs
+      - name: Check mobile review tooling
+        if: matrix.index == 0
+        run: NODE_PATH="$RUNNER_TEMP/wardrobe-qa/node_modules" node tests/avatar-review-browser.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: wardrobe-render-${{ matrix.index }}
+          overwrite: true
+          path: test-results/avatar-qa/
+  completeness:
+    if: always()
+    needs: [registry, rendering]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: wardrobe-*
+          merge-multiple: true
+          path: test-results/avatar-qa
+      - name: Require every planned case exactly once
+        run: node scripts/summarize-avatar-qa.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: wardrobe-summary
+          overwrite: true
+          path: |
+            test-results/avatar-qa/summary.json
+            test-results/avatar-qa/summary.html

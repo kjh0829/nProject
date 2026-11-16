@@ -1,6 +1,40 @@
-// Original raster atlases; source rectangles and fitting coordinates in a 1024 × 1536 paper doll.
-export const avatarAtlasSize=1254;
+// Each published item must register its fitting profile. Keep source PNGs unchanged.
+export const avatarAtlasSize=1254; // Compatibility only; new textures use the atlas registry.
 export const avatarAssetsRoot="./assets/avatar-art/wardrobe-v1/";
+export const avatarAtlases={
+  "base": {
+    "width": 1024,
+    "height": 1536
+  },
+  "hair": {
+    "width": 1254,
+    "height": 1254
+  },
+  "hats": {
+    "width": 1254,
+    "height": 1254
+  },
+  "tops": {
+    "width": 1254,
+    "height": 1254
+  },
+  "bottoms": {
+    "width": 1254,
+    "height": 1254
+  },
+  "shoes": {
+    "width": 1254,
+    "height": 1254
+  },
+  "accessories": {
+    "width": 1254,
+    "height": 1254
+  },
+  "faces": {
+    "width": 1254,
+    "height": 1254
+  }
+};
 export const avatarLayers={
   "hair-cocoa": {
     "atlas": "hair",
@@ -15,7 +49,8 @@ export const avatarLayers={
       25,
       210,
       230
-    ]
+    ],
+    "profile": "hair"
   },
   "hair-peach": {
     "atlas": "hair",
@@ -30,7 +65,8 @@ export const avatarLayers={
       25,
       215,
       230
-    ]
+    ],
+    "profile": "hair"
   },
   "hair-lilac": {
     "atlas": "hair",
@@ -45,9 +81,9 @@ export const avatarLayers={
       20,
       290,
       325
-    ]
+    ],
+    "profile": "hair"
   },
-  // Align the face opening, not the asymmetric ponytail bounding-box centre.
   "hair-silver": {
     "atlas": "hair",
     "source": [
@@ -61,7 +97,8 @@ export const avatarLayers={
       5,
       265,
       345
-    ]
+    ],
+    "profile": "hair"
   },
   "hat-beret": {
     "atlas": "hats",
@@ -76,7 +113,8 @@ export const avatarLayers={
       -8,
       244,
       234
-    ]
+    ],
+    "profile": "hat"
   },
   "hat-sprout": {
     "atlas": "hats",
@@ -91,7 +129,8 @@ export const avatarLayers={
       -6,
       238,
       307
-    ]
+    ],
+    "profile": "hat"
   },
   "hat-wizard": {
     "atlas": "hats",
@@ -106,7 +145,8 @@ export const avatarLayers={
       -87,
       315,
       260
-    ]
+    ],
+    "profile": "hat"
   },
   "top-stripe": {
     "atlas": "tops",
@@ -121,7 +161,8 @@ export const avatarLayers={
       254,
       350,
       430
-    ]
+    ],
+    "profile": "short-sleeve"
   },
   "top-mint": {
     "atlas": "tops",
@@ -136,7 +177,8 @@ export const avatarLayers={
       244,
       565,
       489
-    ]
+    ],
+    "profile": "long-sleeve"
   },
   "top-coral": {
     "atlas": "tops",
@@ -151,7 +193,8 @@ export const avatarLayers={
       265,
       567,
       469
-    ]
+    ],
+    "profile": "long-sleeve"
   },
   "top-night": {
     "atlas": "tops",
@@ -166,7 +209,8 @@ export const avatarLayers={
       251,
       551,
       690
-    ]
+    ],
+    "profile": "coat"
   },
   "bottom-denim": {
     "atlas": "bottoms",
@@ -181,7 +225,8 @@ export const avatarLayers={
       628,
       391,
       741
-    ]
+    ],
+    "profile": "pants"
   },
   "bottom-lilac": {
     "atlas": "bottoms",
@@ -196,7 +241,8 @@ export const avatarLayers={
       620,
       450,
       260
-    ]
+    ],
+    "profile": "shorts"
   },
   "bottom-check": {
     "atlas": "bottoms",
@@ -211,7 +257,8 @@ export const avatarLayers={
       620,
       460,
       300
-    ]
+    ],
+    "profile": "skirt"
   },
   "bottom-overall": {
     "atlas": "bottoms",
@@ -226,7 +273,8 @@ export const avatarLayers={
       303,
       400,
       1067
-    ]
+    ],
+    "profile": "overall"
   },
   "shoes-canvas": {
     "atlas": "shoes",
@@ -241,6 +289,37 @@ export const avatarLayers={
       1354,
       433,
       154
+    ],
+    "profile": "low-shoe",
+    "segments": [
+      {
+        "source": [
+          51,
+          145,
+          181,
+          362
+        ],
+        "target": [
+          278,
+          1354,
+          112,
+          154
+        ]
+      },
+      {
+        "source": [
+          242,
+          174,
+          339,
+          293
+        ],
+        "target": [
+          549,
+          1365,
+          166,
+          140
+        ]
+      }
     ]
   },
   "shoes-red": {
@@ -256,6 +335,37 @@ export const avatarLayers={
       1308,
       435,
       201
+    ],
+    "profile": "boot",
+    "segments": [
+      {
+        "source": [
+          676,
+          110,
+          173,
+          409
+        ],
+        "target": [
+          278,
+          1294,
+          112,
+          214
+        ]
+      },
+      {
+        "source": [
+          875,
+          122,
+          340,
+          357
+        ],
+        "target": [
+          549,
+          1302,
+          166,
+          197
+        ]
+      }
     ]
   },
   "shoes-lilac": {
@@ -271,6 +381,37 @@ export const avatarLayers={
       1350,
       433,
       158
+    ],
+    "profile": "low-shoe",
+    "segments": [
+      {
+        "source": [
+          48,
+          756,
+          190,
+          390
+        ],
+        "target": [
+          278,
+          1354,
+          112,
+          154
+        ]
+      },
+      {
+        "source": [
+          244,
+          772,
+          339,
+          333
+        ],
+        "target": [
+          549,
+          1365,
+          166,
+          140
+        ]
+      }
     ]
   },
   "shoes-star": {
@@ -286,6 +427,37 @@ export const avatarLayers={
       1289,
       435,
       222
+    ],
+    "profile": "boot",
+    "segments": [
+      {
+        "source": [
+          671,
+          707,
+          180,
+          465
+        ],
+        "target": [
+          278,
+          1294,
+          112,
+          214
+        ]
+      },
+      {
+        "source": [
+          880,
+          718,
+          327,
+          412
+        ],
+        "target": [
+          549,
+          1302,
+          166,
+          197
+        ]
+      }
     ]
   },
   "acc-bag": {
@@ -301,7 +473,8 @@ export const avatarLayers={
       270,
       300,
       550
-    ]
+    ],
+    "profile": "bag"
   },
   "acc-glasses": {
     "atlas": "accessories",
@@ -316,6 +489,51 @@ export const avatarLayers={
       116,
       174,
       63
+    ],
+    "profile": "glasses",
+    "segments": [
+      {
+        "source": [
+          706,
+          250,
+          164,
+          193
+        ],
+        "target": [
+          469,
+          116,
+          55,
+          63
+        ]
+      },
+      {
+        "source": [
+          870,
+          250,
+          40,
+          193
+        ],
+        "target": [
+          524,
+          116,
+          27,
+          63
+        ]
+      },
+      {
+        "source": [
+          910,
+          250,
+          274,
+          193
+        ],
+        "target": [
+          551,
+          116,
+          92,
+          63
+        ]
+      }
     ]
   },
   "acc-bird": {
@@ -331,7 +549,8 @@ export const avatarLayers={
       199,
       109,
       102
-    ]
+    ],
+    "profile": "bird"
   }
 };
-export const avatarFaceSources={"smile": [124, 22, 376, 578], "sparkle": [751, 22, 376, 578], "calm": [124, 649, 373, 578]};
+export const avatarFaceSources={"smile":[124,22,376,578],"sparkle":[751,22,376,578],"calm":[124,649,373,578]};
