@@ -27,3 +27,14 @@ for(const mutate of [a=>delete a.cuffs,a=>a.cuffs.scale=1.4,a=>a.cuffs.rightShif
 for(const mutate of [a=>delete a.neckline.scale,a=>a.neckline.scale=.1,a=>a.neckline.lift=-100]){const layers=copy(avatarLayers);mutate(layers['top-stripe']);assert(validateAvatarCatalog(avatarItems,layers).some(e=>e.includes('neckline')));}
 
 {const layers=copy(avatarLayers);Object.assign(layers['top-stripe'].neckline,{shift:-45,scale:1.2});assert(validateAvatarCatalog(avatarItems,layers).some(e=>e.includes('neckline')));}
+
+const {fitAvatarCuff}=await import('../docs/avatar-neckline.mjs');
+for(const a of Object.values(avatarLayers))if(a.cuffs)for(let i=0;i<2;i++){
+ const f=a.cuffs.frames[i],o=a.cuffs.openings[i],p=fitAvatarCuff(f.pivot,f),angle=f.angle*Math.PI/180,probe=fitAvatarCuff([f.pivot[0]+20*Math.cos(angle),f.pivot[1]+20*Math.sin(angle)],f);
+ assert(Math.hypot(p[0]-o[0],p[1]-o[1])<.001);assert(Math.abs(Math.hypot(probe[0]-p[0],probe[1]-p[1])-20*f.width)<.001);assert(Math.abs(Math.atan2(probe[1]-p[1],probe[0]-p[0])*180/Math.PI-o[4])<.001);
+}
+for(const mutate of [a=>delete a.cuffs.frames,a=>a.cuffs.frames[0].turn=80,a=>a.cuffs.frames[1].shift[0]=0,a=>a.cuffs.frames[0].width=-1,a=>a.cuffs.frames.reverse()]){const layers=copy(avatarLayers);mutate(layers['top-mint']);assert(validateAvatarCatalog(avatarItems,layers).some(e=>e.includes('frames')));}
+{const layers=copy(avatarLayers);layers['top-coral'].neckline.tilt=90;assert(validateAvatarCatalog(avatarItems,layers).some(e=>e.includes('neckline')));}
+console.log('Independent left/right cuff positions, width, anatomical angles and invalid frame rejection PASS');
+
+{const layers=copy(avatarLayers);layers['top-mint'].cuffs.frames[0].turn=-layers['top-mint'].cuffs.frames[0].angle;layers['top-mint'].cuffs.openings[0][4]=0;assert(validateAvatarCatalog(avatarItems,layers).some(e=>e.includes('frames')));}

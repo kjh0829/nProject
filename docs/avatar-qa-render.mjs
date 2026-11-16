@@ -29,8 +29,9 @@ export async function inspectAvatarCase(test){
   const cuffs=avatarLayers[test.outfit.top].cuffs;
   if(cuffs){
    for(const [x,y]of cuffs.openings){expect(neck.pixel(x,y)[3]<25,'wrist-opening-clear',[x,y]);expect(pixel(x,y)[3]>220,'wrist-connected',[x,y]);}
+   for(const [cx,cy,,,angle]of cuffs.openings){const a=angle*Math.PI/180;for(const u of [-6,0,6])for(let v=0;v<=12;v+=2){const x=Math.round(cx+u*Math.cos(a)-v*Math.sin(a)),y=Math.round(cy+u*Math.sin(a)+v*Math.cos(a));expect(neck.pixel(x,y)[3]<25,'wrist-front-unobstructed',[x,y]);expect(pixel(x,y)[3]>220,'wrist-axis-connected',[x,y]);}}
    for(const [x,y]of [[265,715],[770,715]]){expect(neck.pixel(x,y)[3]<25,'sleeve-clear-of-palm',[x,y]);expect(pixel(x,y)[3]>200,'palm-connected',[x,y]);}
-   for(const [x,y]of [[281,650],[760,650]])expect(neck.pixel(x,y)[3]>160,'cuff-fabric-preserved',[x,y]);
+   for(const [cx,cy,,,angle]of cuffs.openings){const a=angle*Math.PI/180,x=Math.round(cx+24*Math.sin(a)),y=Math.round(cy-24*Math.cos(a));expect(neck.pixel(x,y)[3]>160,'cuff-fabric-preserved',[x,y]);}
   }
   if(fit('top').outer)for(const [x,y]of [[495,285],[510,295],[520,320]])expect(pixel(x,y)[3]>220,'coat-inner-neck-connected',[x,y]);
   if(!fit('top').outer)expect(neck.pixel(510,295)[3]>200,'front-collar-preserved',[510,295]);

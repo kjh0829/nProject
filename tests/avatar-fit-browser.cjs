@@ -4,8 +4,9 @@ const results=await p.evaluate(async()=>{
  const {avatarArt}=await import('./avatar-art.mjs'),cache=new Map();
  // Decode the actual SVG composition with inline copies of its local textures.
  // Canvas is read only: sample pixels, never modify or replace the source PNGs.
- async function render(outfit,look={},withoutNeckMask=false,solidTop=false){
+ async function render(outfit,look={},withoutNeckMask=false,solidTop=false,closedCuff=false){
   const doc=new DOMParser().parseFromString(avatarArt({skin:'peach',face:'smile',...look},{outfit}).replace('160 -100 700 1640','0 0 1024 1536'),'image/svg+xml'),svg=doc.documentElement;
+  if(closedCuff){const {avatarLayers}=await import('./avatar-layers.mjs');svg.querySelector('clipPath[id$="-cuff-opening"]').innerHTML=avatarLayers[outfit.top].cuffs.openings.map(([cx,cy,rx,ry,angle])=>`<ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" transform="rotate(${angle} ${cx} ${cy})"/>`).join('');}
   if(solidTop){const {avatarLayers}=await import('./avatar-layers.mjs'),[x,y,width,height]=avatarLayers[outfit.top].target,source=svg.querySelector('g[id$="-top-source"]'),rect=doc.createElementNS('http://www.w3.org/2000/svg','rect');for(const [key,value]of Object.entries({x,y,width,height,fill:'#183048',opacity:.992}))rect.setAttribute(key,value);source.replaceChildren(rect);const top=svg.querySelector(`[data-item="${outfit.top}"]`);for(const child of [...svg.children])if(child.tagName!=='defs'&&child!==top)child.remove();}
   if(withoutNeckMask)for(const node of svg.querySelectorAll('[mask]'))node.removeAttribute('mask');
   svg.setAttribute('width','1024');svg.setAttribute('height','1536');
@@ -48,6 +49,9 @@ const results=await p.evaluate(async()=>{
  let badWrist;try{Object.assign(avatarLayers['top-mint'].cuffs,{scale:1,rightShift:0});badWrist=(await render({...basic,top:'top-mint'})).pixel(265,715);}finally{avatarLayers['top-mint'].cuffs=mintCuffs;}
  expect(goodWrist[0]>goodWrist[2]+25,'Sleeve covers the left palm');
  expect(badWrist.some((v,i)=>Math.abs(v-goodWrist[i])>30),'Regression did not reject the old sleeve length');
+ const openHand=await render({...basic,top:'top-mint'}),closedHand=await render({...basic,top:'top-mint'},{},false,false,true);let blocked=0;
+ for(const[cx,cy,,,angle]of avatarLayers['top-mint'].cuffs.openings){const a=angle*Math.PI/180;for(const u of [-6,0,6])for(let v=0;v<=12;v+=2){const x=Math.round(cx+u*Math.cos(a)-v*Math.sin(a)),y=Math.round(cy+u*Math.sin(a)+v*Math.cos(a)),good=openHand.pixel(x,y),bad=closedHand.pixel(x,y);if(bad.some((value,i)=>Math.abs(value-good[i])>20))blocked++;}}
+ expect(blocked>0,'Regression did not reject the closed cuff rim over the hand');
  const solid=(await render({...basic,top:'top-mint'},{},false,true));
  for(let x=390;x<=680;x+=3)for(let y=420;y<=690;y+=3)expect(solid.pixel(x,y)[3]>=250,`Fabric mesh seam: ${x},${y}`);
  let html='';for(const top of ['top-stripe','top-mint','top-coral','top-night'])for(const bottom of ['bottom-denim','bottom-lilac','bottom-check','bottom-overall'])html+=`<figure style="margin:0;height:600px"><figcaption style="font:14px sans-serif">${top} / ${bottom}</figcaption>${avatarArt({},{outfit:{...basic,top,bottom}})}</figure>`;
