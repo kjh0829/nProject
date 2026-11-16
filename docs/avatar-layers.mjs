@@ -41,9 +41,9 @@ export const avatarLayers={
       647
     ],
     "target": [
-      398,
+      365,
       20,
-      250,
+      290,
       325
     ]
   },
@@ -311,10 +311,10 @@ export const avatarLayers={
       193
     ],
     "target": [
-      474,
-      132,
-      115,
-      46
+      469,
+      116,
+      174,
+      63
     ]
   },
   "acc-bird": {
