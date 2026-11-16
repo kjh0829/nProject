@@ -75,3 +75,5 @@
 - 홈에 식사 피드·레시피 작성·장보기 카드를 다시 노출하지 않는다. 기존 식사 예시는 #meal-archive, 개인 기록은 #read의 접힌 food-tools-archive에서 연다. meals.mjs는 게임/홈에서 식사 피드를 렌더링하지 않는다. 개인 데이터와 기존 상세 경로를 삭제하지 않는다. [정리와 제안](team/briefs/GAME-FOCUS-REVIEW.md).
 
 - B안 캐릭터는 avatar-rig.mjs의 cel-b-v1 공통 좌표/관절, avatar-art.mjs 부위별 SVG, avatar-cel.css의 움직임이다. 아이템 ID/가격/지갑 키는 유지한다. 새 소매는 어깨·팔꿈치 그룹, 모자/안경은 머리 그룹에 붙이고 avatarCoverage/Framing 규칙을 검토한다. tests/avatar-cel.test.mjs와 avatar-cel-browser.cjs 및 기존 구매/보상 테스트를 확인한다. [규격](team/briefs/AVATAR-CEL-B.md).
+
+- 최우선 그래픽 기준은 정지원화 품질이다. #avatar는 avatar-quality.mjs/css의 고해상도 기본 코디 원화, #avatar?view=wardrobe는 기존 구매/착장 호환 화면이다. 원화에 개별 의상/피부/표정이 적용됐다고 표현하지 않는다. SVG 동작 실험은 중단 상태다. 기본 원화와 같은 품질의 레이어 합성이 확인된 부위부터 추후 연결한다. [정지원화 기준](team/briefs/AVATAR-QUALITY-MASTER.md), tests/avatar-quality-browser.cjs와 기존 지갑/옷장 검증을 확인한다.
