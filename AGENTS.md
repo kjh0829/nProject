@@ -79,3 +79,5 @@
 - #avatar와 #avatar?view=wardrobe는 원화 코디·옷장이다. 피부 4톤/표정 3종, 52개 의상을 실제 착장에 합성한다. #avatar?view=reference는 초기 고정 디자인 원화로 현재 착장과 별도 표시한다. 새 포즈/애니메이션은 중단 상태를 유지한다. [정지원화·옷장 기준](team/briefs/AVATAR-QUALITY-MASTER.md), tests/avatar-quality-browser.cjs를 확인한다.
 
 - 의상 추가/원화 좌표/profile 변경 시 [의상 검사 규격](team/briefs/AVATAR-QA.md)을 따른다. avatar-layers.mjs에 필수 profile/atlas/좌표를 등록하고 avatar-profiles.mjs에서 의미 기반 렌더링을 정의한다. avatar-qa.mjs가 catalog에서 사례를 자동 생성한다. `node tests/avatar-qa.test.mjs`, `node scripts/check-avatar-assets.mjs`, catalog/review 브라우저 검사와 기존 fit/지갑 회귀를 실행한다. 새 원화는 avatar-review/에서 확대 육안 검토한다. `.github/workflows/avatar-art-check.yml`의 전체 분할/집계 결과를 확인하고 부분 성공을 전체 통과로 말하지 않는다. 자동 검사와 그림의 미적 품질, 별도 Pages 배포를 구분한다.
+
+- 상의의 목선은 avatar-layers.mjs의 필수 neckline 등록과 avatar-neckline.mjs로 보정한다. 실제 목 알파와의 교집합만 투명하게 처리하고 앞깃을 남긴다. 새 상의는 top-look 전 피부/표정 검사와 확대 육안 검토를 진행한다. 원본 PNG·가격·아이템 ID는 보존한다.

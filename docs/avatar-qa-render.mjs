@@ -20,6 +20,15 @@ export async function inspectAvatarCase(test){
  if(fit('hair').faceClear){const [r,,b,a]=pixel(520,180);expect(a>200&&r>b+25,'hair-face-clearance',[520,180]);}
  if(fit('bottom').overTop&&!fit('top').outer){const ids=[...svg.children].map(n=>n.getAttribute('data-item'));expect(ids.indexOf(test.outfit.bottom)>ids.indexOf(test.outfit.top),'overall-above-shirt');}
  if(fit('shoes').boot){const ids=[...svg.children].map(n=>n.getAttribute('data-item'));expect(ids.indexOf(test.outfit.shoes)>ids.indexOf(test.outfit.bottom),'boot-above-trousers');}
+ if(test.groups.includes('top-look')||test.isolate?.startsWith('top-')){
+  const neck=await avatarQaPixels({...test,isolate:test.outfit.top},true);
+  for(const [x,y]of [[485,250],[495,250],[505,250],[495,253]]){
+   expect(neck.pixel(x,y)[3]<25,'neck-opening-clear',[x,y]);
+   expect(pixel(x,y)[3]>220,'neck-skin-connected',[x,y]);
+  }
+  if(fit('top').outer)for(const [x,y]of [[495,285],[510,295],[520,320]])expect(pixel(x,y)[3]>220,'coat-inner-neck-connected',[x,y]);
+  if(!fit('top').outer)expect(neck.pixel(510,295)[3]>200,'front-collar-preserved',[510,295]);
+ }
  if(test.isolate){const isolated=await avatarQaPixels(test,true),profile=avatarProfiles[avatarLayers[test.isolate].profile];let samples=0;for(let y=0;y<1536;y+=8)for(let x=0;x<1024;x+=8)if(isolated.data[(y*1024+x)*4+3]>100)samples++;expect(samples>=5,'nonempty-isolated-art');for(const [x,y]of profile.probes)expect(isolated.pixel(x,y)[3]>120,'item-registration-landmark',[x,y]);}
  return {id:test.id,passed:failures.length===0,failures};
 }

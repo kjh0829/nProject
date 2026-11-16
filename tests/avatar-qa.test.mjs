@@ -18,3 +18,7 @@ assert(summarizeAvatarQa(plan,complete,'fixture').passed);assert(!summarizeAvata
 console.log('QA aggregation rejects missing cases, duplicates, hidden failures and mismatched commits PASS');
 for(const slot of avatarSlots){const original=avatarItems.find(i=>i.slot===slot.id),added={...original,id:'qa-added-'+slot.id},layers={...copy(avatarLayers),[added.id]:copy(avatarLayers[original.id])},grown=buildAvatarQaPlan([...avatarItems,added],layers);assert(grown.cases.some(c=>c.isolate===added.id));assert(grown.cases.some(c=>!c.isolate&&c.outfit[slot.id]===added.id),'New '+slot.id+' omitted from combinations');}
 console.log('New items in all six slots automatically enter isolated and paired checks PASS');
+
+for(const mutate of [a=>delete a.neckline,a=>a.neckline.shift=-60,a=>a.neckline.opening[0][1]=NaN,a=>a.neckline.opening='path']){const layers=copy(avatarLayers);mutate(layers['top-stripe']);assert(validateAvatarCatalog(avatarItems,layers).some(e=>e.includes('neckline')));}
+assert.equal(plan.pairCounts['top-look'],avatarItems.filter(i=>i.slot==='top').length*12);
+console.log('Every top requires a safe neckline registration and all 12 skin/expression combinations PASS');

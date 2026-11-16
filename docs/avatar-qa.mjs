@@ -11,6 +11,10 @@ export function validateAvatarCatalog(items=avatarItems,layers=avatarLayers,atla
  for(const [name,a]of Object.entries(atlases))if(!/^[a-z][a-z0-9-]*$/.test(name)||!Number.isInteger(a.width)||!Number.isInteger(a.height)||a.width<1||a.height<1)errors.push(`atlas ${name}: invalid name/dimensions`);
  for(const item of items){const id=item.id;if(!/^[a-z][a-z0-9-]*$/.test(id)||ids.has(id))errors.push(`${id}: duplicate/unsafe ID`);ids.add(id);if(!slots.has(item.slot))errors.push(`${id}: unknown slot`);const a=layers[id];if(!a){errors.push(`${id}: missing artwork registration`);continue;}const p=profiles[a.profile],atlas=atlases[a.atlas];if(!p||p.slot!==item.slot){errors.push(`${id}: missing/incompatible fitting profile`);continue;}if(!atlas){errors.push(`${id}: unregistered atlas`);continue;}
   const boxes=[a,...(Array.isArray(a.segments)?a.segments:[])];for(const box of boxes){if(!rect(box.source,true)||box.source[0]+box.source[2]>atlas.width||box.source[1]+box.source[3]>atlas.height)errors.push(`${id}: source rectangle outside atlas`);if(!rect(box.target)||box.target[0]<160||box.target[1]<-100||box.target[0]+box.target[2]>860||box.target[1]+box.target[3]>1540)errors.push(`${id}: target rectangle outside full view`);}
+  if(item.slot==='top'){
+   const n=a.neckline;
+   if(!n||Object.keys(n).some(k=>!['shift','opening'].includes(k))||!Number.isFinite(n.shift)||n.shift< -45||n.shift>20||!Array.isArray(n.opening)||n.opening.length!==3||!n.opening.every(v=>Array.isArray(v)&&v.length===2&&v.every(Number.isFinite)&&v[0]>=450&&v[0]<=550&&v[1]>=235&&v[1]<=305)||!(n.opening[0][0]<n.opening[1][0]&&n.opening[1][0]<n.opening[2][0])||n.opening[1][1]<Math.max(n.opening[0][1],n.opening[2][1])||!rect(a.target)||a.target[0]>=430||a.target[0]+a.target[2]<=650||a.target[1]>=290||a.target[1]+a.target[3]<=380)errors.push(`${id}: invalid/missing neckline fitting`);
+  }
   if(p.kind!=='segments'&&a.segments!==undefined)errors.push(`${id}: unused segment registration`);
   if(p.kind==='segments'&&(!Array.isArray(a.segments)||a.segments.length!==p.segmentCount))errors.push(`${id}: incomplete registered segments`);
   if(p.kind==='waist'&&(!rect(a.target)||!Number.isFinite(p.waistJoin)||p.waistJoin<=a.target[1]||p.waistJoin>=a.target[1]+a.target[3]))errors.push(`${id}: invalid waistband join`);
@@ -21,7 +25,7 @@ export function validateAvatarCatalog(items=avatarItems,layers=avatarLayers,atla
  return errors;
 }
 const hash=s=>{let n=2166136261;for(const c of s)n=Math.imul(n^c.charCodeAt(0),16777619);return(n>>>0).toString(16);};
-export const avatarQaGroups={item:'각 아이템', 'top-bottom':'상의 × 하의','bottom-shoes':'하의 × 신발','hair-hat':'머리 × 모자 × 표정','hair-accessory':'머리 × 소품','top-accessory':'상의 × 소품',look:'피부 × 표정','hair-skin':'머리 × 피부'};
+export const avatarQaGroups={item:'각 아이템', 'top-bottom':'상의 × 하의','bottom-shoes':'하의 × 신발','hair-hat':'머리 × 모자 × 표정','hair-accessory':'머리 × 소품','top-accessory':'상의 × 소품','top-look':'상의 × 피부 × 표정',look:'피부 × 표정','hair-skin':'머리 × 피부'};
 export function buildAvatarQaPlan(items=avatarItems,layers=avatarLayers){
  const errors=validateAvatarCatalog(items,layers);if(errors.length)throw Error(errors.join('\n'));
  const by=slot=>items.filter(i=>i.slot===slot),cases=new Map(),collision=new Map(),pairCounts={};
@@ -32,6 +36,7 @@ export function buildAvatarQaPlan(items=avatarItems,layers=avatarLayers){
  for(const hair of by('hair'))for(const hat of [null,...by('hat')])for(const face of faces)add('hair-hat',{hair:hair.id,hat:hat?.id||null},{face:face.id});
  for(const hair of by('hair'))for(const accessory of by('accessory'))add('hair-accessory',{hair:hair.id,accessory:accessory.id});
  for(const top of by('top'))for(const accessory of by('accessory'))add('top-accessory',{top:top.id,accessory:accessory.id});
+ for(const top of by('top'))for(const skin of skins)for(const face of faces)add('top-look',{top:top.id},{skin:skin.id,face:face.id});
  for(const skin of skins)for(const face of faces)add('look',{}, {skin:skin.id,face:face.id});
  for(const hair of by('hair'))for(const skin of skins)add('hair-skin',{hair:hair.id},{skin:skin.id});
  return {version:avatarQaVersion,itemCount:items.length,pairCounts,cases:[...cases.values()]};

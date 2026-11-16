@@ -186,7 +186,24 @@ export const avatarLayers={
       350,
       430
     ],
-    "profile": "short-sleeve"
+    "profile": "short-sleeve",
+    "neckline": {
+      "shift": -10,
+      "opening": [
+        [
+          463,
+          255
+        ],
+        [
+          499,
+          275
+        ],
+        [
+          533,
+          258
+        ]
+      ]
+    }
   },
   "top-mint": {
     "atlas": "tops",
@@ -202,7 +219,24 @@ export const avatarLayers={
       565,
       489
     ],
-    "profile": "long-sleeve"
+    "profile": "long-sleeve",
+    "neckline": {
+      "shift": -18,
+      "opening": [
+        [
+          463,
+          253
+        ],
+        [
+          499,
+          282
+        ],
+        [
+          533,
+          258
+        ]
+      ]
+    }
   },
   "top-coral": {
     "atlas": "tops",
@@ -218,7 +252,24 @@ export const avatarLayers={
       567,
       469
     ],
-    "profile": "long-sleeve"
+    "profile": "long-sleeve",
+    "neckline": {
+      "shift": -40,
+      "opening": [
+        [
+          463,
+          262
+        ],
+        [
+          499,
+          283
+        ],
+        [
+          533,
+          266
+        ]
+      ]
+    }
   },
   "top-night": {
     "atlas": "tops",
@@ -234,7 +285,24 @@ export const avatarLayers={
       551,
       690
     ],
-    "profile": "coat"
+    "profile": "coat",
+    "neckline": {
+      "shift": -35,
+      "opening": [
+        [
+          463,
+          270
+        ],
+        [
+          499,
+          300
+        ],
+        [
+          533,
+          270
+        ]
+      ]
+    }
   },
   "bottom-denim": {
     "atlas": "bottoms",
@@ -622,7 +690,24 @@ export const avatarLayers={
       565,
       489
     ],
-    "profile": "long-sleeve"
+    "profile": "long-sleeve",
+    "neckline": {
+      "shift": -25,
+      "opening": [
+        [
+          463,
+          253
+        ],
+        [
+          499,
+          275
+        ],
+        [
+          533,
+          257
+        ]
+      ]
+    }
   },
   "bottom-blossom": {
     "atlas": "theme-bottoms",
@@ -748,7 +833,24 @@ export const avatarLayers={
       565,
       489
     ],
-    "profile": "long-sleeve"
+    "profile": "long-sleeve",
+    "neckline": {
+      "shift": -20,
+      "opening": [
+        [
+          463,
+          253
+        ],
+        [
+          499,
+          278
+        ],
+        [
+          533,
+          257
+        ]
+      ]
+    }
   },
   "bottom-coast": {
     "atlas": "theme-bottoms",
@@ -874,7 +976,24 @@ export const avatarLayers={
       565,
       489
     ],
-    "profile": "long-sleeve"
+    "profile": "long-sleeve",
+    "neckline": {
+      "shift": -35,
+      "opening": [
+        [
+          463,
+          245
+        ],
+        [
+          499,
+          265
+        ],
+        [
+          533,
+          248
+        ]
+      ]
+    }
   },
   "bottom-starlit": {
     "atlas": "theme-bottoms",
@@ -1000,7 +1119,24 @@ export const avatarLayers={
       565,
       489
     ],
-    "profile": "long-sleeve"
+    "profile": "long-sleeve",
+    "neckline": {
+      "shift": -30,
+      "opening": [
+        [
+          463,
+          244
+        ],
+        [
+          499,
+          265
+        ],
+        [
+          533,
+          248
+        ]
+      ]
+    }
   },
   "bottom-forest": {
     "atlas": "theme-bottoms",
@@ -1126,7 +1262,24 @@ export const avatarLayers={
       565,
       489
     ],
-    "profile": "long-sleeve"
+    "profile": "long-sleeve",
+    "neckline": {
+      "shift": -35,
+      "opening": [
+        [
+          463,
+          245
+        ],
+        [
+          499,
+          265
+        ],
+        [
+          533,
+          248
+        ]
+      ]
+    }
   },
   "bottom-cafe": {
     "atlas": "theme-bottoms",
