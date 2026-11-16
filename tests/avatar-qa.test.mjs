@@ -10,7 +10,7 @@ assert(validateAvatarCatalog(nextItems).some(e=>e.includes('missing artwork')));
 for(const mutate of [a=>delete a.profile,a=>a.profile='unknown',a=>a.profile='hair',a=>a.source=[0,0,9000,20],a=>a.target=[NaN,0,20,20],a=>a.atlas='../remote']){const layers=copy(avatarLayers);mutate(layers['top-stripe']);assert(validateAvatarCatalog(avatarItems,layers).length>0);}
 const segments=copy(avatarLayers);segments['shoes-red'].segments.pop();assert(validateAvatarCatalog(avatarItems,segments).some(e=>e.includes('segments')));
 const duplicate=[...avatarItems,avatarItems[0]];assert(validateAvatarCatalog(duplicate).some(e=>e.includes('duplicate')));
-const shards=avatarQaShards(plan,17),indices=shards.flatMap(s=>Array.from({length:s.end-s.start},(_,i)=>s.start+i));assert.deepEqual(indices,plan.cases.map((_,i)=>i));assert.throws(()=>avatarQaShards(plan,1,1),/never silently skipped/);
+const shards=avatarQaShards(plan,17,256),indices=shards.flatMap(s=>Array.from({length:s.end-s.start},(_,i)=>s.start+i));assert.deepEqual(indices,plan.cases.map((_,i)=>i));assert.throws(()=>avatarQaShards(plan,1,1),/never silently skipped/);
 assert.equal(new Set(plan.cases.map(c=>c.id)).size,plan.cases.length);assert.deepEqual(buildAvatarQaPlan(),plan);console.log(`Catalog QA PASS: auto inclusion, all adjacent pairs, bad registration failures, deterministic IDs and complete sharding (${plan.cases.length} cases)`);
 const {summarizeAvatarQa}=await import('../docs/avatar-qa.mjs');
 const complete=avatarQaShards(plan).map(shard=>({version:plan.version,commit:'fixture',shard:shard.index,totalPlanned:plan.cases.length,checked:shard.end-shard.start,results:plan.cases.slice(shard.start,shard.end).map(c=>({id:c.id,passed:true,failures:[]}))}));

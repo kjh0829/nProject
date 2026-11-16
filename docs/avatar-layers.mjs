@@ -1,5 +1,5 @@
-// Each published item must register its fitting profile. Keep source PNGs unchanged.
-export const avatarAtlasSize=1254; // Compatibility only; new textures use the atlas registry.
+// Registered original textures and fitting data; preserve original PNGs.
+export const avatarAtlasSize=1254;
 export const avatarAssetsRoot="./assets/avatar-art/wardrobe-v1/";
 export const avatarAtlases={
   "base": {
@@ -33,6 +33,30 @@ export const avatarAtlases={
   "faces": {
     "width": 1254,
     "height": 1254
+  },
+  "theme-hair": {
+    "width": 1024,
+    "height": 1536
+  },
+  "theme-hats": {
+    "width": 1024,
+    "height": 1536
+  },
+  "theme-tops": {
+    "width": 1024,
+    "height": 1536
+  },
+  "theme-bottoms": {
+    "width": 1024,
+    "height": 1536
+  },
+  "theme-shoes": {
+    "width": 1024,
+    "height": 1536
+  },
+  "theme-bags": {
+    "width": 1024,
+    "height": 1536
   }
 };
 export const avatarLayers={
@@ -551,6 +575,636 @@ export const avatarLayers={
       102
     ],
     "profile": "bird"
+  },
+  "hair-blossom": {
+    "atlas": "theme-hair",
+    "source": [
+      8,
+      10,
+      492,
+      462
+    ],
+    "target": [
+      390,
+      20,
+      235,
+      245
+    ],
+    "profile": "hair"
+  },
+  "hat-blossom": {
+    "atlas": "theme-hats",
+    "source": [
+      46,
+      45,
+      448,
+      446
+    ],
+    "target": [
+      395,
+      -18,
+      244,
+      244
+    ],
+    "profile": "hat"
+  },
+  "top-blossom": {
+    "atlas": "theme-tops",
+    "source": [
+      12,
+      22,
+      490,
+      459
+    ],
+    "target": [
+      241,
+      244,
+      565,
+      489
+    ],
+    "profile": "long-sleeve"
+  },
+  "bottom-blossom": {
+    "atlas": "theme-bottoms",
+    "source": [
+      21,
+      66,
+      469,
+      378
+    ],
+    "target": [
+      310,
+      620,
+      460,
+      300
+    ],
+    "profile": "skirt"
+  },
+  "shoes-blossom": {
+    "atlas": "theme-shoes",
+    "source": [
+      27,
+      89,
+      465,
+      347
+    ],
+    "target": [
+      277,
+      1354,
+      438,
+      154
+    ],
+    "profile": "low-shoe",
+    "segments": [
+      {
+        "source": [
+          27,
+          89,
+          172,
+          347
+        ],
+        "target": [
+          278,
+          1354,
+          112,
+          154
+        ]
+      },
+      {
+        "source": [
+          208,
+          121,
+          284,
+          291
+        ],
+        "target": [
+          549,
+          1365,
+          166,
+          140
+        ]
+      }
+    ]
+  },
+  "acc-blossom": {
+    "atlas": "theme-bags",
+    "source": [
+      73,
+      24,
+      375,
+      468
+    ],
+    "target": [
+      397,
+      270,
+      300,
+      550
+    ],
+    "profile": "bag"
+  },
+  "hair-coast": {
+    "atlas": "theme-hair",
+    "source": [
+      520,
+      10,
+      493,
+      465
+    ],
+    "target": [
+      390,
+      20,
+      235,
+      245
+    ],
+    "profile": "hair"
+  },
+  "hat-coast": {
+    "atlas": "theme-hats",
+    "source": [
+      545,
+      57,
+      431,
+      425
+    ],
+    "target": [
+      395,
+      -8,
+      244,
+      244
+    ],
+    "profile": "hat"
+  },
+  "top-coast": {
+    "atlas": "theme-tops",
+    "source": [
+      524,
+      23,
+      491,
+      458
+    ],
+    "target": [
+      241,
+      244,
+      565,
+      489
+    ],
+    "profile": "long-sleeve"
+  },
+  "bottom-coast": {
+    "atlas": "theme-bottoms",
+    "source": [
+      530,
+      63,
+      476,
+      380
+    ],
+    "target": [
+      310,
+      620,
+      460,
+      300
+    ],
+    "profile": "skirt"
+  },
+  "shoes-coast": {
+    "atlas": "theme-shoes",
+    "source": [
+      537,
+      93,
+      470,
+      345
+    ],
+    "target": [
+      277,
+      1354,
+      438,
+      154
+    ],
+    "profile": "low-shoe",
+    "segments": [
+      {
+        "source": [
+          537,
+          93,
+          170,
+          345
+        ],
+        "target": [
+          278,
+          1354,
+          112,
+          154
+        ]
+      },
+      {
+        "source": [
+          707,
+          129,
+          300,
+          285
+        ],
+        "target": [
+          549,
+          1365,
+          166,
+          140
+        ]
+      }
+    ]
+  },
+  "acc-coast": {
+    "atlas": "theme-bags",
+    "source": [
+      585,
+      24,
+      376,
+      469
+    ],
+    "target": [
+      397,
+      270,
+      300,
+      550
+    ],
+    "profile": "bag"
+  },
+  "hair-starlit": {
+    "atlas": "theme-hair",
+    "source": [
+      16,
+      522,
+      487,
+      465
+    ],
+    "target": [
+      390,
+      20,
+      235,
+      245
+    ],
+    "profile": "hair"
+  },
+  "hat-starlit": {
+    "atlas": "theme-hats",
+    "source": [
+      46,
+      540,
+      444,
+      455
+    ],
+    "target": [
+      395,
+      -23,
+      244,
+      244
+    ],
+    "profile": "hat"
+  },
+  "top-starlit": {
+    "atlas": "theme-tops",
+    "source": [
+      13,
+      520,
+      489,
+      475
+    ],
+    "target": [
+      241,
+      244,
+      565,
+      489
+    ],
+    "profile": "long-sleeve"
+  },
+  "bottom-starlit": {
+    "atlas": "theme-bottoms",
+    "source": [
+      17,
+      577,
+      489,
+      384
+    ],
+    "target": [
+      310,
+      620,
+      460,
+      300
+    ],
+    "profile": "skirt"
+  },
+  "shoes-starlit": {
+    "atlas": "theme-shoes",
+    "source": [
+      32,
+      591,
+      460,
+      354
+    ],
+    "target": [
+      277,
+      1354,
+      438,
+      154
+    ],
+    "profile": "low-shoe",
+    "segments": [
+      {
+        "source": [
+          32,
+          591,
+          170,
+          354
+        ],
+        "target": [
+          278,
+          1354,
+          112,
+          154
+        ]
+      },
+      {
+        "source": [
+          208,
+          625,
+          284,
+          295
+        ],
+        "target": [
+          549,
+          1365,
+          166,
+          140
+        ]
+      }
+    ]
+  },
+  "acc-starlit": {
+    "atlas": "theme-bags",
+    "source": [
+      72,
+      536,
+      379,
+      469
+    ],
+    "target": [
+      397,
+      270,
+      300,
+      550
+    ],
+    "profile": "bag"
+  },
+  "hair-forest": {
+    "atlas": "theme-hair",
+    "source": [
+      524,
+      521,
+      489,
+      465
+    ],
+    "target": [
+      390,
+      20,
+      235,
+      245
+    ],
+    "profile": "hair"
+  },
+  "hat-forest": {
+    "atlas": "theme-hats",
+    "source": [
+      538,
+      555,
+      457,
+      376
+    ],
+    "target": [
+      395,
+      -50,
+      244,
+      205
+    ],
+    "profile": "hat"
+  },
+  "top-forest": {
+    "atlas": "theme-tops",
+    "source": [
+      524,
+      521,
+      491,
+      475
+    ],
+    "target": [
+      241,
+      244,
+      565,
+      489
+    ],
+    "profile": "long-sleeve"
+  },
+  "bottom-forest": {
+    "atlas": "theme-bottoms",
+    "source": [
+      530,
+      577,
+      476,
+      384
+    ],
+    "target": [
+      310,
+      620,
+      460,
+      300
+    ],
+    "profile": "skirt"
+  },
+  "shoes-forest": {
+    "atlas": "theme-shoes",
+    "source": [
+      530,
+      590,
+      479,
+      353
+    ],
+    "target": [
+      277,
+      1354,
+      438,
+      154
+    ],
+    "profile": "low-shoe",
+    "segments": [
+      {
+        "source": [
+          530,
+          590,
+          178,
+          353
+        ],
+        "target": [
+          278,
+          1354,
+          112,
+          154
+        ]
+      },
+      {
+        "source": [
+          709,
+          612,
+          300,
+          305
+        ],
+        "target": [
+          552.255,
+          1365,
+          162.745,
+          140
+        ]
+      }
+    ]
+  },
+  "acc-forest": {
+    "atlas": "theme-bags",
+    "source": [
+      585,
+      536,
+      373,
+      467
+    ],
+    "target": [
+      397,
+      270,
+      300,
+      550
+    ],
+    "profile": "bag"
+  },
+  "hair-cafe": {
+    "atlas": "theme-hair",
+    "source": [
+      28,
+      1039,
+      480,
+      482
+    ],
+    "target": [
+      390,
+      20,
+      235,
+      245
+    ],
+    "profile": "hair"
+  },
+  "hat-cafe": {
+    "atlas": "theme-hats",
+    "source": [
+      43,
+      1045,
+      440,
+      462
+    ],
+    "target": [
+      397,
+      -80,
+      240,
+      250
+    ],
+    "profile": "hat"
+  },
+  "top-cafe": {
+    "atlas": "theme-tops",
+    "source": [
+      11,
+      1036,
+      494,
+      474
+    ],
+    "target": [
+      241,
+      244,
+      565,
+      489
+    ],
+    "profile": "long-sleeve"
+  },
+  "bottom-cafe": {
+    "atlas": "theme-bottoms",
+    "source": [
+      16,
+      1088,
+      481,
+      388
+    ],
+    "target": [
+      310,
+      620,
+      460,
+      300
+    ],
+    "profile": "skirt"
+  },
+  "shoes-cafe": {
+    "atlas": "theme-shoes",
+    "source": [
+      26,
+      1091,
+      473,
+      370
+    ],
+    "target": [
+      277,
+      1354,
+      438,
+      154
+    ],
+    "profile": "low-shoe",
+    "segments": [
+      {
+        "source": [
+          26,
+          1091,
+          175,
+          370
+        ],
+        "target": [
+          278,
+          1354,
+          112,
+          154
+        ]
+      },
+      {
+        "source": [
+          210,
+          1121,
+          289,
+          314
+        ],
+        "target": [
+          549,
+          1365,
+          166,
+          140
+        ]
+      }
+    ]
+  },
+  "acc-cafe": {
+    "atlas": "theme-bags",
+    "source": [
+      72,
+      1048,
+      374,
+      471
+    ],
+    "target": [
+      397,
+      270,
+      300,
+      550
+    ],
+    "profile": "bag"
   }
 };
 export const avatarFaceSources={"smile":[124,22,376,578],"sparkle":[751,22,376,578],"calm":[124,649,373,578]};
