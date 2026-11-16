@@ -51,7 +51,7 @@ const results=await p.evaluate(async()=>{
  expect(badWrist.some((v,i)=>Math.abs(v-goodWrist[i])>30),'Regression did not reject the old sleeve length');
  const openHand=await render({...basic,top:'top-mint'}),closedHand=await render({...basic,top:'top-mint'},{},false,false,true);let blocked=0;
  for(const[cx,cy,,,angle]of avatarLayers['top-mint'].cuffs.openings){const a=angle*Math.PI/180;for(const u of [-6,0,6])for(let v=0;v<=12;v+=2){const x=Math.round(cx+u*Math.cos(a)-v*Math.sin(a)),y=Math.round(cy+u*Math.sin(a)+v*Math.cos(a)),good=openHand.pixel(x,y),bad=closedHand.pixel(x,y);if(bad.some((value,i)=>Math.abs(value-good[i])>20))blocked++;}}
- expect(blocked>0,'Regression did not reject the closed cuff rim over the hand');
+ expect(blocked>0,'Regression did not reject a hole cut through the cuff front');const front=openHand.pixel(275,672),wrong=closedHand.pixel(275,672);expect(front[1]>front[0]&&wrong[0]>wrong[1]+20,'Cuff front/back occlusion regression');
  const solid=(await render({...basic,top:'top-mint'},{},false,true));
  for(let x=390;x<=680;x+=3)for(let y=420;y<=690;y+=3)expect(solid.pixel(x,y)[3]>=250,`Fabric mesh seam: ${x},${y}`);
  let html='';for(const top of ['top-stripe','top-mint','top-coral','top-night'])for(const bottom of ['bottom-denim','bottom-lilac','bottom-check','bottom-overall'])html+=`<figure style="margin:0;height:600px"><figcaption style="font:14px sans-serif">${top} / ${bottom}</figcaption>${avatarArt({},{outfit:{...basic,top,bottom}})}</figure>`;
