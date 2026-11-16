@@ -188,21 +188,23 @@ export const avatarLayers={
     ],
     "profile": "short-sleeve",
     "neckline": {
-      "shift": -10,
+      "shift": -18,
       "opening": [
         [
           463,
           255
         ],
         [
-          499,
-          275
+          495,
+          289
         ],
         [
-          533,
-          258
+          531,
+          263
         ]
-      ]
+      ],
+      "scale": 0.65,
+      "lift": -12
     }
   },
   "top-mint": {
@@ -225,15 +227,37 @@ export const avatarLayers={
       "opening": [
         [
           463,
-          253
+          250
         ],
         [
-          499,
-          282
+          495,
+          287
         ],
         [
           533,
-          258
+          263
+        ]
+      ],
+      "scale": 0.65,
+      "lift": -10
+    },
+    "cuffs": {
+      "scale": 0.65,
+      "rightShift": -18,
+      "openings": [
+        [
+          270,
+          672,
+          22,
+          7,
+          25
+        ],
+        [
+          747,
+          674,
+          20,
+          7,
+          -25
         ]
       ]
     }
@@ -254,19 +278,41 @@ export const avatarLayers={
     ],
     "profile": "long-sleeve",
     "neckline": {
-      "shift": -40,
+      "shift": -35,
       "opening": [
         [
           463,
-          262
+          260
         ],
         [
-          499,
-          283
+          495,
+          299
         ],
         [
           533,
-          266
+          270
+        ]
+      ],
+      "scale": 0.65,
+      "lift": -16
+    },
+    "cuffs": {
+      "scale": 0.65,
+      "rightShift": -18,
+      "openings": [
+        [
+          270,
+          672,
+          22,
+          7,
+          25
+        ],
+        [
+          747,
+          674,
+          20,
+          7,
+          -25
         ]
       ]
     }
@@ -287,19 +333,41 @@ export const avatarLayers={
     ],
     "profile": "coat",
     "neckline": {
-      "shift": -35,
+      "shift": -30,
       "opening": [
         [
           463,
-          270
+          260
         ],
         [
           499,
-          300
+          290
         ],
         [
           533,
-          270
+          265
+        ]
+      ],
+      "scale": 0.65,
+      "lift": 0
+    },
+    "cuffs": {
+      "scale": 0.65,
+      "rightShift": -18,
+      "openings": [
+        [
+          270,
+          672,
+          22,
+          7,
+          25
+        ],
+        [
+          747,
+          674,
+          20,
+          7,
+          -25
         ]
       ]
     }
@@ -692,19 +760,41 @@ export const avatarLayers={
     ],
     "profile": "long-sleeve",
     "neckline": {
-      "shift": -25,
+      "shift": -20,
       "opening": [
         [
           463,
-          253
+          255
         ],
         [
-          499,
-          275
+          495,
+          287
         ],
         [
           533,
-          257
+          265
+        ]
+      ],
+      "scale": 0.65,
+      "lift": -10
+    },
+    "cuffs": {
+      "scale": 0.65,
+      "rightShift": -18,
+      "openings": [
+        [
+          270,
+          672,
+          22,
+          7,
+          25
+        ],
+        [
+          747,
+          674,
+          20,
+          7,
+          -25
         ]
       ]
     }
@@ -835,19 +925,41 @@ export const avatarLayers={
     ],
     "profile": "long-sleeve",
     "neckline": {
-      "shift": -20,
+      "shift": -16,
       "opening": [
         [
           463,
           253
         ],
         [
-          499,
-          278
+          495,
+          286
         ],
         [
           533,
-          257
+          263
+        ]
+      ],
+      "scale": 0.65,
+      "lift": -10
+    },
+    "cuffs": {
+      "scale": 0.65,
+      "rightShift": -18,
+      "openings": [
+        [
+          270,
+          672,
+          22,
+          7,
+          25
+        ],
+        [
+          747,
+          674,
+          20,
+          7,
+          -25
         ]
       ]
     }
@@ -978,19 +1090,41 @@ export const avatarLayers={
     ],
     "profile": "long-sleeve",
     "neckline": {
-      "shift": -35,
+      "shift": -25,
       "opening": [
         [
           463,
-          245
+          240
         ],
         [
-          499,
-          265
+          495,
+          272
         ],
         [
           533,
-          248
+          250
+        ]
+      ],
+      "scale": 0.65,
+      "lift": -12
+    },
+    "cuffs": {
+      "scale": 0.65,
+      "rightShift": -18,
+      "openings": [
+        [
+          270,
+          672,
+          22,
+          7,
+          25
+        ],
+        [
+          747,
+          674,
+          20,
+          7,
+          -25
         ]
       ]
     }
@@ -1121,19 +1255,41 @@ export const avatarLayers={
     ],
     "profile": "long-sleeve",
     "neckline": {
-      "shift": -30,
+      "shift": -26,
       "opening": [
         [
           463,
-          244
+          240
         ],
         [
-          499,
-          265
+          495,
+          274
         ],
         [
           533,
-          248
+          251
+        ]
+      ],
+      "scale": 0.65,
+      "lift": -12
+    },
+    "cuffs": {
+      "scale": 0.65,
+      "rightShift": -18,
+      "openings": [
+        [
+          270,
+          672,
+          22,
+          7,
+          25
+        ],
+        [
+          747,
+          674,
+          20,
+          7,
+          -25
         ]
       ]
     }
@@ -1264,19 +1420,41 @@ export const avatarLayers={
     ],
     "profile": "long-sleeve",
     "neckline": {
-      "shift": -35,
+      "shift": -24,
       "opening": [
         [
           463,
-          245
+          240
         ],
         [
-          499,
-          265
+          495,
+          273
         ],
         [
           533,
-          248
+          250
+        ]
+      ],
+      "scale": 0.65,
+      "lift": -12
+    },
+    "cuffs": {
+      "scale": 0.65,
+      "rightShift": -18,
+      "openings": [
+        [
+          270,
+          672,
+          22,
+          7,
+          25
+        ],
+        [
+          747,
+          674,
+          20,
+          7,
+          -25
         ]
       ]
     }

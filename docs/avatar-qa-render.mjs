@@ -26,6 +26,12 @@ export async function inspectAvatarCase(test){
    expect(neck.pixel(x,y)[3]<25,'neck-opening-clear',[x,y]);
    expect(pixel(x,y)[3]>220,'neck-skin-connected',[x,y]);
   }
+  const cuffs=avatarLayers[test.outfit.top].cuffs;
+  if(cuffs){
+   for(const [x,y]of cuffs.openings){expect(neck.pixel(x,y)[3]<25,'wrist-opening-clear',[x,y]);expect(pixel(x,y)[3]>220,'wrist-connected',[x,y]);}
+   for(const [x,y]of [[265,715],[770,715]]){expect(neck.pixel(x,y)[3]<25,'sleeve-clear-of-palm',[x,y]);expect(pixel(x,y)[3]>200,'palm-connected',[x,y]);}
+   for(const [x,y]of [[281,650],[760,650]])expect(neck.pixel(x,y)[3]>160,'cuff-fabric-preserved',[x,y]);
+  }
   if(fit('top').outer)for(const [x,y]of [[495,285],[510,295],[520,320]])expect(pixel(x,y)[3]>220,'coat-inner-neck-connected',[x,y]);
   if(!fit('top').outer)expect(neck.pixel(510,295)[3]>200,'front-collar-preserved',[510,295]);
  }

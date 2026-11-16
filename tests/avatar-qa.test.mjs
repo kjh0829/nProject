@@ -22,3 +22,8 @@ console.log('New items in all six slots automatically enter isolated and paired 
 for(const mutate of [a=>delete a.neckline,a=>a.neckline.shift=-60,a=>a.neckline.opening[0][1]=NaN,a=>a.neckline.opening='path']){const layers=copy(avatarLayers);mutate(layers['top-stripe']);assert(validateAvatarCatalog(avatarItems,layers).some(e=>e.includes('neckline')));}
 assert.equal(plan.pairCounts['top-look'],avatarItems.filter(i=>i.slot==='top').length*12);
 console.log('Every top requires a safe neckline registration and all 12 skin/expression combinations PASS');
+
+for(const mutate of [a=>delete a.cuffs,a=>a.cuffs.scale=1.4,a=>a.cuffs.rightShift=-100,a=>a.cuffs.openings.pop()]){const layers=copy(avatarLayers);mutate(layers['top-mint']);assert(validateAvatarCatalog(avatarItems,layers).some(e=>e.includes('cuff')));}
+for(const mutate of [a=>delete a.neckline.scale,a=>a.neckline.scale=.1,a=>a.neckline.lift=-100]){const layers=copy(avatarLayers);mutate(layers['top-stripe']);assert(validateAvatarCatalog(avatarItems,layers).some(e=>e.includes('neckline')));}
+
+{const layers=copy(avatarLayers);Object.assign(layers['top-stripe'].neckline,{shift:-45,scale:1.2});assert(validateAvatarCatalog(avatarItems,layers).some(e=>e.includes('neckline')));}

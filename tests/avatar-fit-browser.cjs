@@ -42,6 +42,11 @@ const results=await p.evaluate(async()=>{
   if(broken.some((v,i)=>Math.abs(v-neckReference[i])>20))rejected++;
  }
  expect(rejected>=4,'Neck regression no longer rejects opaque collar fixtures');
+ const {avatarLayers}=await import('./avatar-layers.mjs'),mintCuffs=structuredClone(avatarLayers['top-mint'].cuffs);
+ const goodWrist=(await render({...basic,top:'top-mint'})).pixel(265,715);
+ let badWrist;try{Object.assign(avatarLayers['top-mint'].cuffs,{scale:1,rightShift:0});badWrist=(await render({...basic,top:'top-mint'})).pixel(265,715);}finally{avatarLayers['top-mint'].cuffs=mintCuffs;}
+ expect(goodWrist[0]>goodWrist[2]+25,'Sleeve covers the left palm');
+ expect(badWrist.some((v,i)=>Math.abs(v-goodWrist[i])>30),'Regression did not reject the old sleeve length');
  let html='';for(const top of ['top-stripe','top-mint','top-coral','top-night'])for(const bottom of ['bottom-denim','bottom-lilac','bottom-check','bottom-overall'])html+=`<figure style="margin:0;height:600px"><figcaption style="font:14px sans-serif">${top} / ${bottom}</figcaption>${avatarArt({},{outfit:{...basic,top,bottom}})}</figure>`;
  document.body.innerHTML='<main style="display:grid;grid-template-columns:repeat(4,400px);width:1600px;background:#e8f5f6">'+html+'</main>';document.body.style.margin='0';return checks;
 });assert.equal(results.length,16);await p.screenshot({path:'test-results/avatar-fit-matrix.png',fullPage:true});assert.equal(await p.evaluate(()=>localStorage.getItem('teum-avatar-v1')),before);console.log('Rendered pixel regression: 16 waists, body fragments, coat lining, continuous overalls, 4 crowns, 12 moon hair/face/hat fits and 16 trouser/shoe pairs, all top necks and rejected opaque-collar fixtures; original wallet unchanged PASS');}finally{await b.close();}})().catch(e=>{console.error(e);process.exit(1)});
