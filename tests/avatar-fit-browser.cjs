@@ -4,8 +4,8 @@ const results=await p.evaluate(async()=>{
  const {avatarArt}=await import('./avatar-art.mjs'),cache=new Map();
  // Decode the actual SVG composition with inline copies of its local textures.
  // Canvas is read only: sample pixels, never modify or replace the source PNGs.
- async function render(outfit){
-  const doc=new DOMParser().parseFromString(avatarArt({skin:'peach',face:'smile'},{outfit}).replace('160 -100 700 1640','0 0 1024 1536'),'image/svg+xml'),svg=doc.documentElement;
+ async function render(outfit,look={}){
+  const doc=new DOMParser().parseFromString(avatarArt({skin:'peach',face:'smile',...look},{outfit}).replace('160 -100 700 1640','0 0 1024 1536'),'image/svg+xml'),svg=doc.documentElement;
   svg.setAttribute('width','1024');svg.setAttribute('height','1536');
   for(const node of svg.querySelectorAll('image')){const href=node.getAttribute('href');if(!cache.has(href)){const blob=await(await fetch(href)).blob();cache.set(href,await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onerror=reject;reader.onload=()=>resolve(reader.result);reader.readAsDataURL(blob);}));}node.setAttribute('href',cache.get(href));}
   const url=URL.createObjectURL(new Blob([new XMLSerializer().serializeToString(svg)],{type:'image/svg+xml'}));
@@ -25,7 +25,14 @@ const results=await p.evaluate(async()=>{
  const coral=await render({...basic,top:'top-coral'});expect(coral.pixel(430,670)[3]>200,'Gap between knit hem and denim waistband');
  const coat=await render({...basic,top:'top-night'});expect(coat.pixel(485,500)[3]<40,'Undershirt protrudes into coat armpit cut-out');
  for(const hair of ['hair-cocoa','hair-peach','hair-lilac','hair-silver']){const {pixel}=await render({...basic,hair});expect(pixel(520,55)[3]>180,'Uncovered crown: '+hair);if(hair==='hair-lilac'){const [r,,blue]=pixel(445,85);expect(blue>r,'Bald scalp showing beside lilac crown');}}
- for(const shoes of ['shoes-canvas','shoes-red','shoes-lilac','shoes-star']){const {pixel}=await render({...basic,shoes,bottom:'bottom-lilac'});for(const x of [330,595])for(let y=1320;y<=1380;y+=5)expect(pixel(x,y)[3]>150,`Detached ankle: ${shoes} ${x},${y}`);}
+ for(const face of ['smile','sparkle','calm'])for(const hat of [null,'hat-beret','hat-sprout','hat-wizard']){const {pixel}=await render({...basic,hair:'hair-silver',hat},{face});const [r,,blue,a]=pixel(520,180);expect(a>200&&r>blue+25,`Moon ponytail crosses the cheek/nose: ${face}/${hat}`);}
+ for(const shoes of ['shoes-canvas','shoes-red','shoes-lilac','shoes-star']){
+  const reference=await render({...basic,shoes,bottom:'bottom-lilac'});
+  for(const bottom of ['bottom-denim','bottom-lilac','bottom-check','bottom-overall']){
+   const {pixel}=await render({...basic,shoes,bottom});for(const x of [330,595])for(let y=1320;y<=1380;y+=5)expect(pixel(x,y)[3]>150,`Detached ankle: ${bottom}/${shoes} ${x},${y}`);
+   if(['shoes-red','shoes-star'].includes(shoes))for(const [x,y]of [[330,1360],[590,1360],[600,1400]]){const expected=reference.pixel(x,y),actual=pixel(x,y);expect(actual.every((v,i)=>Math.abs(v-expected[i])<5),`Trousers cover the boot front: ${bottom}/${shoes} ${x},${y}`);}
+  }
+ }
  let html='';for(const top of ['top-stripe','top-mint','top-coral','top-night'])for(const bottom of ['bottom-denim','bottom-lilac','bottom-check','bottom-overall'])html+=`<figure style="margin:0;height:600px"><figcaption style="font:14px sans-serif">${top} / ${bottom}</figcaption>${avatarArt({},{outfit:{...basic,top,bottom}})}</figure>`;
  document.body.innerHTML='<main style="display:grid;grid-template-columns:repeat(4,400px);width:1600px;background:#e8f5f6">'+html+'</main>';document.body.style.margin='0';return checks;
-});assert.equal(results.length,16);await p.screenshot({path:'test-results/avatar-fit-matrix.png',fullPage:true});assert.equal(await p.evaluate(()=>localStorage.getItem('teum-avatar-v1')),before);console.log('Rendered pixel regression: 16 waists, body fragments, coat lining, continuous overalls, 4 crowns and 4 shoe ankle joins; original wallet unchanged PASS');}finally{await b.close();}})().catch(e=>{console.error(e);process.exit(1)});
+});assert.equal(results.length,16);await p.screenshot({path:'test-results/avatar-fit-matrix.png',fullPage:true});assert.equal(await p.evaluate(()=>localStorage.getItem('teum-avatar-v1')),before);console.log('Rendered pixel regression: 16 waists, body fragments, coat lining, continuous overalls, 4 crowns, 12 moon hair/face/hat fits and 16 trouser/shoe pairs; original wallet unchanged PASS');}finally{await b.close();}})().catch(e=>{console.error(e);process.exit(1)});

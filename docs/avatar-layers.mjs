@@ -47,6 +47,7 @@ export const avatarLayers={
       325
     ]
   },
+  // Align the face opening, not the asymmetric ponytail bounding-box centre.
   "hair-silver": {
     "atlas": "hair",
     "source": [
@@ -56,7 +57,7 @@ export const avatarLayers={
       656
     ],
     "target": [
-      383,
+      353,
       5,
       265,
       345
