@@ -1,12 +1,18 @@
 {
-  "attemptedAt": "2026-11-16T01:16:37.766803+00:00",
+  "attemptedAt": "2026-11-17T04:04:50.907984+00:00",
   "sources": {
     "fire": {
       "name": "Google 뉴스 · FIRE/경제적 자유",
       "feedUrl": "https://news.google.com/rss/search?q=FIRE%20%EA%B2%BD%EC%A0%9C%EC%A0%81%EC%9E%90%EC%9C%A0%20when%3A30d&hl=ko&gl=KR&ceid=KR:ko",
-      "updatedAt": "2026-11-16T01:16:37.766803+00:00",
+      "updatedAt": "2026-11-17T04:04:50.907984+00:00",
       "stale": false,
       "items": [
+        {
+          "title": "\"경제적 자유가 행복 보장하진 않아\"…파이어족 꿈 접은 이유 - 뉴시스",
+          "url": "https://news.google.com/rss/articles/CBMiYkFVX3lxTFBLQjA0dVNWNlVwdFpSUVNSQmpjaGk3Mmdla1VpQTF6MVl2bjVWQlhzS3d4ZUZqd2pDX1F1TTR5LVNMN240SFdGR0N1WmM1U29hMVgwTnI4NVhBOXdEMDluYmxn?oc=5",
+          "publisher": "뉴시스",
+          "published": "Sun, 25 Oct 2026 07:00:00 GMT"
+        },
         {
           "title": "보증금 빼서 주식에...6억→13억, '파이어' 한 40대 투자 비결 - 머니투데이 - 머니투데이",
           "url": "https://news.google.com/rss/articles/CBMiaEFVX3lxTE1sZVVWbjVqMmg0TVBZUExaOWhrczQ5VEV3S0JPX3ZFZmlIeGUyQnR5a3NVengxeE5hMnowWWRlSzRLMUNlRFIxSzFCaWJUMjBHVllfMi1lS21BNWFUY1BSaDg1X2ZNaFlt0gFuQVVfeXFMT05MQkZGSmRYWWtmaERsZW43S21tamUtTFR0RkVRd3FsQnVWSlVlU285ZHh1bVFYWjc1TzNPbzNndzk5MThtZUxIRlBfNjhkbW8yQjIzUGdXNFhRSWw3cy1GQTY5d3dNOHR0Yi1BNlE?oc=5",
@@ -18,26 +24,20 @@
           "url": "https://news.google.com/rss/articles/CBMiZ0FVX3lxTFBWU2RZeUMtT2JCLWZyVDBQZEVScUR1OFg1VGp0dXJaZUQwQ1NRVndzd0FONzgxQ2tHb1ZEYndnemJMeTNKWG5zQVVaZFVvMkQwRmtQM0xxa2s0Y2hQS2xSbWlUaE4zODA?oc=5",
           "publisher": "시사통신",
           "published": "Mon, 02 Nov 2026 04:51:00 GMT"
-        },
-        {
-          "title": "\"QQQ만 투자하긴 아쉬워요\" 40대 파이어족의 수익률 높이는 레버리지 투자 전략 공개[싱글파이어] - 머니투데이",
-          "url": "https://news.google.com/rss/articles/CBMiU0FVX3lxTE1Eal9OQlQtZHpUVjI2SGZ3SkJ5SVY0Y3Vha1ZHSUFRNFd5R0FrNTZDX21oMUJZWm1rR2dOWDVfLVBlVkxwODZKOWY5YlJ1NU1NLVow?oc=5",
-          "publisher": "머니투데이",
-          "published": "Thu, 22 Oct 2026 07:00:00 GMT"
         }
       ]
     },
     "discovery": {
       "name": "NASA · Image of the Day (영문)",
       "feedUrl": "https://www.nasa.gov/feeds/iotd-feed/",
-      "updatedAt": "2026-11-16T01:16:37.766803+00:00",
+      "updatedAt": "2026-11-17T04:04:50.907984+00:00",
       "stale": false,
       "items": [
         {
-          "title": "Outbursts from a Massive Star",
-          "url": "https://www.nasa.gov/image-detail/a-giant-star-in-a-distant-galaxy-has-been-mysteriously-erupting-for-at-least-15-years-new-data-from-nasas-chandra-explains-what-is-causing-these-huge-outbursts/",
+          "title": "Thunderbirds in Formation",
+          "url": "https://www.nasa.gov/image-detail/11072026-ksc-max-power-airdotshow-2orig/",
           "publisher": "NASA Image of the Day",
-          "published": "Fri, 13 Nov 2026 16:41 GMT"
+          "published": "Mon, 16 Nov 2026 18:35 GMT"
         }
       ]
     }
