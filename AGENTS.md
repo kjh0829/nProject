@@ -14,7 +14,7 @@
 
 ## 현재 구현과 배포
 - `docs/`가 GitHub Pages 배포 디렉터리다. 현재 메인 앱은 `docs/index.html`이다.
-- 주 메뉴는 `#home`(홈), `#arcade`(게임), `#fire`(목표), `#fire-life`(월예산), `#read`(기록)다. `#saved-meals`, `#meal-compose`는 맥락별 링크와 기록 허브에서 연다. 상세는 `#meal?id=...`, 이전 놀이터는 `#arcade`다. `#challenge`, `#story`, `#fire`, `#play`, `#community`의 기능과 저장 데이터도 유지한다.
+- 주 메뉴는 `#home`(홈), `#arcade`(게임), `#avatar`(꾸미기), `#read`(내 기록) 4개다. FIRE/월예산은 내 기록의 접힌 생활 도구에서 연다. `#saved-meals`, `#meal-compose`는 맥락별 링크와 기록 허브에서 연다. 상세는 `#meal?id=...`, 이전 놀이터는 `#arcade`다. `#challenge`, `#story`, `#fire`, `#play`, `#community`의 기능과 저장 데이터도 유지한다.
 - 화면 전환과 탭별 스크롤 복원은 `docs/navigation.mjs`, 최근 7일 도전 표시는 `docs/challenge-history.mjs`에 둔다. 브라우저 기본 fragment 스크롤과 중복되지 않도록 내부 링크 경로를 유지한다.
 - 식사 데이터·계산·UI는 `docs/meal-data.mjs`, `meal-core.mjs`, `meals.mjs`, `meals.css`에 있다. 기록 키는 `teum-meals-v1`이며 사진을 포함해 브라우저에만 저장한다.
 - 새 퍼즐 엔진은 `docs/puzzle-core.mjs`, UI는 `docs/puzzle.mjs`다. 이야기는 `docs/story-data.mjs`, `docs/story.mjs`에 둔다. 퍼즐 변경 시 `node tests/puzzle.test.mjs`와 관련 모바일 CI를 확인한다.
@@ -54,11 +54,11 @@
 
 - 생활비 기준표의 7개 항목은 ON/OFF 가능하다. OFF 금액은 0이며 나머지 ON 항목의 원래 가중치에 비례해 재배분한다. 금액과 표시 비율은 각각 나머지 배분으로 합계를 맞춘다. 전부 OFF이면 전액 미배분으로 표시하고 가상 선택을 잠시 중단한다. excluded 목록을 현재 계획/기록에 보관하며 미지정인 과거 계획은 모두 ON으로 해석한다.
 
-- 홈/기록 허브는 `docs/hub.mjs`, `hub.css`에 있다. 예전 읽기·퀴즈·일기는 `#read-archive`, 예전 자유 매치/게시판 링크는 `#prototype-archive`에 접어둔다. 해당 기능의 QA는 먼저 보관함을 연다. 상단과 하단의 5개 경로를 일치시키고, 홈페이지에는 실제 기록 개수/진행 여부만 표시하며 재무 금액은 자동 노출하지 않는다. [전체 재검토](team/briefs/SITE-REVIEW.md).
+- 홈/기록 허브는 `docs/hub.mjs`, `hub.css`에 있다. 예전 읽기·퀴즈·일기는 `#read-archive`, 예전 자유 매치/게시판 링크는 `#prototype-archive`에 접어둔다. 해당 기능의 QA는 먼저 보관함을 연다. 상단과 하단의 4개 경로를 일치시키고, 홈페이지에는 실제 기록 개수/진행 여부만 표시하며 재무 금액은 자동 노출하지 않는다. [전체 재검토](team/briefs/SITE-REVIEW.md).
 
 - 장바구니 최적화기는 `docs/cart-{data,core,worker}.mjs`, `cart.mjs`, `cart.css`다. 10개 기획 예시 내 1~7끼 조합을 전수 비교하며 실제 시장 최저가가 아니다. 포장 단위 구매비와 사용량 원가를 구분한다. 별도 키 `teum-cart-v1`에 재고/진행/최근 6개 계획을 저장한다. 구매·조리 명시 동작만 재고에 반영하고 마지막 동작만 되돌린다. 기존 식탁 도구/저장 키는 보존한다. [범위와 검증](team/briefs/CART-OPTIMIZER.md).
 
-- 소프트 아케이드 디자인은 `docs/soft-theme.css`, `soft-theme.mjs`, `soft-graphics.mjs`가 담당한다. 홈은 게임 우선이며 장보기는 홈과 기록의 맥락 링크로 유지한다. 게임/선택극/기존 자유매치는 게임 탭, 식사 기록/게시판은 기록 탭으로 표시한다. 퍼즐 아이콘은 고정 벡터이고 접근성 이름과 게임 판정/저장은 기존 엔진을 유지한다. [디자인 결정](team/briefs/SOFT-ARCADE.md).
+- 소프트 아케이드 디자인은 `docs/soft-theme.css`, `soft-theme.mjs`, `soft-graphics.mjs`가 담당한다. 홈은 게임 우선이며 장보기는 홈과 기록의 맥락 링크로 유지한다. 게임/선택극/기존 자유매치는 게임 탭, 꾸미기는 독립 탭, 생활 도구/식사 기록/게시판은 내 기록 탭으로 표시한다. 퍼즐 아이콘은 고정 벡터이고 접근성 이름과 게임 판정/저장은 기존 엔진을 유지한다. [디자인 결정](team/briefs/SOFT-ARCADE.md).
 
 - 특수 조각 규칙은 `docs/puzzle-specials.mjs`(4개 직선 방향 번개, T/L 폭탄, 5개 직선 무지개와 특수 교환 조합), `puzzle-fx.mjs`는 해당 프레임 effects/births/combination만 표현한다. 변경 시 puzzle-specials 단위/브라우저 검사와 기존 점수·저장·모션 회귀를 실행한다. 저장된 row/bomb과 새 col/rainbow를 모두 검증한다.
 
@@ -87,3 +87,5 @@
 - 카라에는 neckline.tilt, 긴 소매에는 좌우 독립 cuffs.frames(pivot/angle/turn/width/shift)를 등록한다. avatarWristRig의 실제 손목 중심/각도와 맞추며, 소매 앞 원단을 유지하고 그 아래로 손이 나오게 한다. 손목 축의 연결과 위쪽 원단 지점을 검사하고, 가이드를 끈 확대 화면에서 피부 구멍/V자 절개가 없는지 확인한다.
 
 - 전신 피팅은 [검토 기록](team/briefs/AVATAR-FULL-FIT.md)을 따른다. 긴 하의 legFit, 부츠 openings, 안경 lensAnchors를 필수 등록한다. 가방 끈은 어깨 표면/머리 뒤에 두고 새 소품 perchPoints의 모든 상의 접촉을 확인하며 피부색으로 스타킹·안감이 바뀌지 않게 한다. 원본 PNG와 지갑을 유지하고 전신/부분/피부색별 육안 검토 및 776개 동적 검사·누락 집계를 확인한다.
+
+- 메뉴 간소화: `menu-focus.mjs/css`는 검증된 여행·지갑을 읽어 홈/게임 이어하기와 기록 요약만 표시한다. 저장 키를 초기화·이관하지 않는다. 게임의 날짜별/연습 판은 `#game-more-modes`, 생활 도구는 `#life-tools`, 예전 기록은 `#legacy-archive`, 원화 참고는 `#avatar-reference-menu`를 먼저 펼친다. 기존 주소/DOM ID/저장 구조는 보존한다. [메뉴 정리](team/briefs/MENU-FOCUS.md).

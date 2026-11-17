@@ -8,7 +8,7 @@ function display(){
  document.body.dataset.view=route.view;
  for(const id of views)document.getElementById(id).hidden=id!==route.view;
  for(const selector of ['.hero','.strip']){const el=document.querySelector(selector);if(el)el.hidden=true;}
- for(const a of document.querySelectorAll('nav a')){if(a.getAttribute('href')==='#'+navView(route.view))a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');}
+ for(const a of document.querySelectorAll('header nav a,.bottom-nav a')){if(a.getAttribute('href')==='#'+navView(route.view))a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');}
  document.title=viewNames[route.view]+' · 알찬끼';
  const announcement=document.getElementById('view-announcement');if(announcement)announcement.textContent=viewNames[route.view]+' 화면';
  const y=positions.get(route.key)||0;

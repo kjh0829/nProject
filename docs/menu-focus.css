@@ -1,0 +1,46 @@
+/* Four destinations, a single continuing game and progressive disclosure. */
+.bottom-nav{grid-template-columns:repeat(4,minmax(0,1fr))}
+.bottom-nav a{flex:1;min-width:0}
+.dress-nav-icon{font-size:26px;line-height:28px;height:28px;display:block}
+#home .soft-game-copy>p{min-height:0}
+#home .home-game-paths{grid-template-columns:1.15fr 1fr}
+.next-reward-card{display:flex;flex-direction:column;justify-content:center;gap:10px;padding:26px 28px;border:1px solid #eee2bd;border-radius:24px;background:#fff9e8;color:#514731;text-decoration:none;min-width:0}
+.next-reward-card strong{font-size:21px;line-height:1.5;letter-spacing:-.6px}
+.next-reward-card p{font-size:14px;line-height:1.7;margin:0;color:#786d59}
+.reward-link{font-size:14px;font-weight:700;margin-top:5px}
+#arcade .game-primary{min-height:184px;margin-bottom:8px;background:linear-gradient(115deg,#f0edf9,#e8f3ee);border-color:#ded9ed;box-shadow:0 6px 22px #63527d0a}
+#arcade .game-primary strong{font-size:30px;line-height:1.4}
+#arcade .game-primary em{display:block;margin-top:18px;font-style:normal;font-weight:800;color:#584471}
+#arcade .game-primary [data-menu-journey-summary]{display:block;line-height:1.6}
+.stage-map-link{display:block;width:fit-content;min-height:44px;padding:9px 4px;margin:0 0 22px;color:#6d677e;font-size:14px}
+#arcade .score-mode-card{margin-top:0;margin-bottom:26px;box-shadow:none}
+#arcade .score-mode-card h2{font-size:25px}
+.game-options,.avatar-reference-menu,#read>.home-secondary{border:1px solid #e2ded5;border-radius:18px;background:#fffdfa;padding:0 20px;margin:18px 0}
+.game-options>summary,.avatar-reference-menu>summary,#read>.home-secondary>summary{padding:19px 0;min-height:56px;font-weight:750;font-size:15px;cursor:pointer;color:#5d5969}
+.game-options[open]{padding-bottom:22px}
+.menu-option-note{font-size:14px;color:#787482;line-height:1.7}
+.game-options .feature-game{margin-top:24px}
+#arcade .lab-experiments{margin-top:14px}
+#arcade .play-test-note{font-size:12px;line-height:1.8;color:#8a8591}
+#read>.home-secondary{margin-top:28px}
+#read .home-secondary .soft-discover{margin-bottom:20px}
+.life-record-link{display:block;border-top:1px solid #e8e2d6;padding:18px 4px;color:inherit;text-decoration:none}
+.life-record-link h2{font-size:17px;margin:5px 0}
+.life-record-link p{font-size:14px;color:#756f7b}
+#read .tiny-discovery{margin-top:20px}
+.avatar-reference-menu{margin-top:32px}
+.avatar-reference-menu .avatar-view-switch{margin-top:0;margin-bottom:20px}
+@media(max-width:699px){
+ #home .home-game-paths{grid-template-columns:1fr;gap:14px}
+ .next-reward-card{padding:20px 22px;border-radius:20px;gap:6px}
+ .next-reward-card strong{font-size:19px}
+ #arcade .game-primary{min-height:166px;padding:22px 18px;gap:16px}
+ #arcade .game-primary strong{font-size:24px}
+ #arcade .game-primary .journey-entry-art{width:62px;flex:0 0 62px;font-size:42px}
+ .game-options,.avatar-reference-menu,#read>.home-secondary{padding-left:16px;padding-right:16px}
+ #arcade .score-mode-card{padding:22px}
+ #arcade .score-mode-card .soft-play-button{width:100%;justify-content:center}
+}
+#arcade .play-intro h1{font-size:34px;line-height:1.3;letter-spacing:-1.5px;margin:12px 0}
+#read>.home-secondary>summary{display:list-item;list-style:disclosure-closed}
+#read>.home-secondary[open]>summary{list-style:disclosure-open}
