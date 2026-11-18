@@ -10,7 +10,9 @@ const assert=require('node:assert/strict');
   await page.goto('http://127.0.0.1:8000/#challenge?stage=1');await page.waitForSelector('.puzzle-tile');
   assert.equal(await page.locator('#puzzle-sound').getAttribute('aria-pressed'),'false');
   assert.equal(await page.locator('#puzzle-board').evaluate(el=>getComputedStyle(el).touchAction),'manipulation');
-  await page.locator('#puzzle-sound').click();assert.equal(await page.locator('#puzzle-sound').getAttribute('aria-pressed'),'true');await page.locator('#puzzle-sound').click();
+  await page.locator('#puzzle-sound').click();assert.equal(await page.locator('#puzzle-sound').getAttribute('aria-pressed'),'true');
+  if(width===390){await page.reload();assert.equal(await page.locator('#puzzle-sound').getAttribute('aria-pressed'),'true');}
+  await page.locator('#puzzle-sound').click();
   // A horizontal drag takes exactly one legal move, with no trailing click selecting a tile.
   const initial=createPuzzle(1),pair=legalMoves(initial.board).find(([a,b])=>Math.abs(a-b)===1);assert(pair);
   await page.locator('#puzzle-board').evaluate(el=>el.scrollIntoView({block:'center',behavior:'instant'}));
@@ -26,6 +28,15 @@ const assert=require('node:assert/strict');
   assert.equal(await page.locator('#puzzle-score').textContent(),expected.score+'점');assert.equal(await page.locator('#puzzle-result').isVisible(),true);
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
   if(width===390&&!reduced){await page.screenshot({path:'test-results/puzzle-fx-win-390.png',fullPage:true});}
+  const finale=page.locator('dialog.puzzle-finale');
+  assert(await finale.evaluate(el=>el.open));
+  assert.equal(await finale.evaluate(el=>el.classList.contains('is-celebrating')),!reduced);
+  await page.keyboard.press('Escape');
+  assert.equal(await finale.evaluate(el=>el.open),false);
+  assert.equal(await page.evaluate(()=>document.activeElement.id),'puzzle-reopen-result');
+  await page.locator('#puzzle-reopen-result').click();
+  assert(await finale.evaluate(el=>el.open&&!el.classList.contains('is-celebrating')));
+  await finale.getByRole('button',{name:'닫기',exact:true}).click();
   await page.locator('header nav a[href="#home"]').click();assert.equal(await page.locator('.puzzle-particle').count(),0);assert.equal(await page.locator('#challenge .puzzle-burst').textContent(),'');
   assert.deepEqual(errors,[]);await context.close();console.log(`FX ${width}px reduced=${reduced} PASS`);
  }}finally{await browser.close();}
