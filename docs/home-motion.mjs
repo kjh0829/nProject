@@ -10,7 +10,6 @@ const control = home.querySelector('.home-demo-control');
 const start = home.querySelector('[data-menu-journey-action]');
 const avatarCard = home.querySelector('.avatar-entry');
 const motion = matchMedia('(prefers-reduced-motion: reduce)');
-const seenKey = 'teum-home-demo-seen-v1';
 // A deterministic three-wave move from the real engine, isolated from saved games.
 const initial = createScorePuzzle('home-demo-v1');
 const pair = [3, 9];
@@ -19,12 +18,13 @@ const animations = new Set();
 let playing = false;
 let generation = 0;
 let onHome = false;
-let seen = false;
+let paused = false;
+let repeatTimer = null;
+let cueShown = false;
 let inView = false;
 let entered = false;
 let lastRecords = recordSignature();
 let lastOutfit = outfitSignature();
-try { seen = localStorage.getItem(seenKey) === '1'; } catch {}
 
 function visible() {
   return document.body.dataset.view === 'home' && !document.hidden;
@@ -75,9 +75,11 @@ function pulse(el) {
 
 function stop() {
   generation++;
+  clearTimeout(repeatTimer);
+  repeatTimer = null;
   playing = false;
   home.removeAttribute('data-demo-playing');
-  control.textContent = '연쇄 미리보기 ↗';
+  updateControl();
   for (const animation of animations) animation.cancel();
   animations.clear();
   draw(initial.board);
@@ -106,15 +108,13 @@ async function fall(previous, next) {
 }
 
 async function play() {
-  if (playing || !visible() || motion.matches || !board.animate) return;
+  if (playing || paused || !inView || !visible() || motion.matches || !board.animate) return;
   stop();
   const token = generation;
-  const current = () => token === generation && visible() && !motion.matches;
+  const current = () => token === generation && inView && visible() && !motion.matches;
   playing = true;
-  seen = true;
-  try { localStorage.setItem(seenKey, '1'); } catch {}
   home.dataset.demoPlaying = 'true';
-  control.textContent = '시연 건너뛰기';
+  updateControl();
   const positions = pair.map(index => ({x: board.children[index].offsetLeft, y: board.children[index].offsetTop}));
   await Promise.all(pair.map((index, n) => animate(board.children[index], [
     {transform: 'translate(0,0) scale(.94)'},
@@ -138,12 +138,18 @@ async function play() {
   if (!current()) return;
   playing = false;
   home.removeAttribute('data-demo-playing');
-  control.textContent = '연쇄 다시 보기 ↗';
-  void pulse(start);
+  if (!cueShown) {
+    cueShown = true;
+    void pulse(start);
+  }
+  repeatTimer = setTimeout(() => {
+    repeatTimer = null;
+    maybePlay();
+  }, 1000);
 }
 
 function maybePlay() {
-  if (inView && !seen && visible() && !motion.matches) void play();
+  if (inView && !paused && !playing && repeatTimer === null && visible() && !motion.matches) void play();
 }
 
 function refresh() {
@@ -155,9 +161,6 @@ function refresh() {
   }
   const records = recordSignature();
   const outfit = outfitSignature();
-  const returning = Object.keys(readJourney().value.records).length > 0 ||
-    Object.values(readJourney().value.slots).some(slot => slot.state.turns.length > 0);
-  if (returning) seen = true;
   if (!onHome) {
     onHome = true;
     if (!entered && !motion.matches) {
@@ -168,23 +171,27 @@ function refresh() {
         {opacity: 1, transform: 'translateY(0)'}
       ], {duration: 280, delay: Math.min(index * 35, 175), easing: 'ease-out'}));
     }
-    maybePlay();
   }
+  maybePlay();
   if (records !== lastRecords) void pulse(start);
   if (outfit !== lastOutfit) void pulse(avatarCard);
   lastRecords = records;
   lastOutfit = outfit;
 }
 
+function updateControl() {
+  control.textContent = paused ? '시연 재생 ▶' : '시연 일시정지 Ⅱ';
+}
+
 control.addEventListener('click', () => {
-  if (playing) stop();
-  else void play();
+  paused = !paused;
+  stop();
+  maybePlay();
 });
 window.addEventListener('hashchange', refresh);
 document.addEventListener('visibilitychange', refresh);
 window.addEventListener('teum-avatar-changed', refresh);
 window.addEventListener('storage', event => {
-  if (event.key === seenKey && event.newValue === '1') { seen = true; stop(); }
   if (event.key === null || event.key === JOURNEY_KEY || event.key === AVATAR_KEY) refresh();
 });
 motion.addEventListener('change', () => {
@@ -193,11 +200,12 @@ motion.addEventListener('change', () => {
   refresh();
 });
 draw(initial.board);
+updateControl();
 control.hidden = motion.matches;
 if ('IntersectionObserver' in window) {
   const observer = new IntersectionObserver(entries => {
-    inView = entries[0].isIntersecting;
-    if (!inView && playing) stop();
+    inView = entries[0].isIntersecting && entries[0].intersectionRatio >= .2;
+    if (!inView) stop();
     maybePlay();
   }, {threshold: .2});
   observer.observe(board);
