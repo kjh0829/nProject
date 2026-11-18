@@ -1,0 +1,82 @@
+.soft-game-visual {
+  padding-bottom: 72px;
+}
+
+#home .soft-preview {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  position: relative;
+  overflow: hidden;
+}
+
+#home .soft-piece {
+  position: relative;
+  min-width: 0;
+}
+
+.home-demo-special {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  font-size: 15px;
+  font-weight: 800;
+  color: #5b367b;
+  background: #fff8d8;
+  border-radius: 50%;
+  line-height: 1;
+}
+
+.home-demo-control {
+  position: absolute;
+  bottom: 10px;
+  z-index: 2;
+  min-height: 44px;
+  padding: 8px 16px;
+  border-radius: 22px;
+  border: 1px solid #c5b2e64d;
+  background: #302940;
+  color: #f2e7fc;
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.home-demo-control:hover {
+  background: #4a3d61;
+}
+
+.home-demo-control:focus-visible {
+  outline: 2px solid #ffdb98;
+  outline-offset: 3px;
+}
+
+#home .avatar-entry,
+#home .next-reward-card {
+  transition: transform .16s ease, box-shadow .16s ease;
+}
+
+#home .avatar-entry:hover,
+#home .next-reward-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px #38274e12;
+}
+
+#home .avatar-entry:active,
+#home .next-reward-card:active {
+  transform: scale(.99);
+}
+
+@media (max-width: 700px) {
+  #home .soft-game-visual { min-height: 320px; }
+  #home .soft-preview { gap: 5px; padding: 11px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #home .avatar-entry,
+  #home .next-reward-card { transition: none; }
+  #home .avatar-entry:hover,
+  #home .next-reward-card:hover,
+  #home .avatar-entry:active,
+  #home .next-reward-card:active { transform: none; }
+  .home-demo-control { display: none; }
+}
