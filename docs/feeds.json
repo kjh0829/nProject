@@ -1,15 +1,15 @@
 {
-  "attemptedAt": "2026-11-17T04:04:50.907984+00:00",
+  "attemptedAt": "2026-11-18T03:02:15.549584+00:00",
   "sources": {
     "fire": {
       "name": "Google 뉴스 · FIRE/경제적 자유",
       "feedUrl": "https://news.google.com/rss/search?q=FIRE%20%EA%B2%BD%EC%A0%9C%EC%A0%81%EC%9E%90%EC%9C%A0%20when%3A30d&hl=ko&gl=KR&ceid=KR:ko",
-      "updatedAt": "2026-11-17T04:04:50.907984+00:00",
+      "updatedAt": "2026-11-18T03:02:15.549584+00:00",
       "stale": false,
       "items": [
         {
           "title": "\"경제적 자유가 행복 보장하진 않아\"…파이어족 꿈 접은 이유 - 뉴시스",
-          "url": "https://news.google.com/rss/articles/CBMiYkFVX3lxTFBLQjA0dVNWNlVwdFpSUVNSQmpjaGk3Mmdla1VpQTF6MVl2bjVWQlhzS3d4ZUZqd2pDX1F1TTR5LVNMN240SFdGR0N1WmM1U29hMVgwTnI4NVhBOXdEMDluYmxn?oc=5",
+          "url": "https://news.google.com/rss/articles/CBMiYEFVX3lxTFBRQkJxMVRtTHBYQWpOek5iNVZLbGJ0YVQ5LXBBbnMwWkxOUzRVams2Ym9PNGVzS241SWVGTFZad2lia1czSlBIV3NWMmxfT2VrN3RPelgxTTg5ZWJqRlRRc9IBeEFVX3lxTFA2Zk9KX2lqdnowQVFVVW52WWJELVYxQjA1ZlFISUptYVpIYmk5eldpcS01STFyeGFmY0NxbnNaTy00bGhqYzNobFlDdTVjUmtxS1FxN1NiRkZSNGJZZ2szM3Jra1dZaWEySkluMFFZdG5CUGJzMWs5Ug?oc=5",
           "publisher": "뉴시스",
           "published": "Sun, 25 Oct 2026 07:00:00 GMT"
         },
@@ -30,14 +30,14 @@
     "discovery": {
       "name": "NASA · Image of the Day (영문)",
       "feedUrl": "https://www.nasa.gov/feeds/iotd-feed/",
-      "updatedAt": "2026-11-17T04:04:50.907984+00:00",
+      "updatedAt": "2026-11-18T03:02:15.549584+00:00",
       "stale": false,
       "items": [
         {
-          "title": "Thunderbirds in Formation",
-          "url": "https://www.nasa.gov/image-detail/11072026-ksc-max-power-airdotshow-2orig/",
+          "title": "Space Selfie",
+          "url": "https://www.nasa.gov/image-detail/iss075e0253155/",
           "publisher": "NASA Image of the Day",
-          "published": "Mon, 16 Nov 2026 18:35 GMT"
+          "published": "Tue, 17 Nov 2026 16:52 GMT"
         }
       ]
     }
