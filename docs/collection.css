@@ -59,3 +59,6 @@
 #home .avatar-entry[data-collection-background=starlight-station] strong {color:#fff6e4}
 #home .avatar-entry[data-collection-background=starlight-station] small,
 #home .avatar-entry[data-collection-background=starlight-station] > span:nth-child(2) > span {color:#eaddf4}
+
+.collection-management {display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start;margin-top:20px}
+@media(max-width:700px){.collection-management{grid-template-columns:1fr;gap:0}}
