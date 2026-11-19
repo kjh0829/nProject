@@ -21,3 +21,12 @@ window.addEventListener('hashchange',render);window.addEventListener('storage',r
 function afterNavigation(fn){requestAnimationFrame(()=>requestAnimationFrame(()=>requestAnimationFrame(fn)));}
 document.addEventListener('click',event=>{const a=event.target.closest?.('a[data-journal-target]');if(!a||event.button!==0||event.ctrlKey||event.metaKey||event.shiftKey||event.altKey)return;const expected=a.getAttribute('href');afterNavigation(()=>{if(location.hash===expected)document.getElementById(a.dataset.journalTarget)?.scrollIntoView({block:'start',behavior:'instant'});});});
 $('life-start').onclick=()=>{$('life-stage').scrollIntoView({block:'start',behavior:'instant'});$('life-stage').focus({preventScroll:true});};
+
+// Reveal expanded tools below the sticky header instead of underneath mobile navigation.
+const lifeTools=document.getElementById('life-tools');
+lifeTools.addEventListener('toggle',()=>{
+ if(!lifeTools.open||document.body.dataset.view!=='read')return;
+ requestAnimationFrame(()=>{
+  if(lifeTools.open&&document.body.dataset.view==='read')lifeTools.querySelector('summary').scrollIntoView({block:'start',behavior:'instant'});
+ });
+});
