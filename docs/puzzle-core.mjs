@@ -1,3 +1,4 @@
+import {missionGain,missionComplete} from './puzzle-missions.mjs';
 import {journeyLevels} from './journey-data.mjs';
 import {specialBirths,resolveSpecials} from './puzzle-specials.mjs';
 export const SIZE=6;
@@ -24,7 +25,7 @@ function collapse(s,combo=0){const fresh=[];for(let c=0;c<6;c++){const column=[]
  // arriving tiles change; every displayed cascade still requires a real match.
  if(s.feel==='burst-v1'&&combo<=2&&fresh.length){let chosen=copyBoard(s.board),value=matchGroups(chosen).reduce((n,g)=>n+g.length,0);for(let attempt=0;attempt<2;attempt++){const candidate=copyBoard(s.board);for(const i of fresh)candidate[i]=tile(s);const next=matchGroups(candidate).reduce((n,g)=>n+g.length,0);if(next>value){chosen=candidate;value=next;}}s.board=chosen;}}
 export const configFor=s=>s.mode==='journey'?journeyLevels[s.level-1]:stages[s.stage-1];
-export function createJourneyPuzzle(level){const config=journeyLevels[level-1];if(!config)throw Error('Invalid journey level');const s=createScorePuzzle('journey-v1-'+level);s.mode='journey';s.level=level;s.moves=config.moves;s.ice=Array.from({length:36},(_,i)=>config.ice.includes(i));return s;}
+export function createJourneyPuzzle(level){const config=journeyLevels[level-1];if(!config)throw Error('Invalid journey level');const s=createScorePuzzle('journey-v1-'+level);s.mode='journey';s.level=level;if(config.mission)s.missionCount=0;s.moves=config.moves;s.ice=Array.from({length:36},(_,i)=>config.ice.includes(i));return s;}
 export function applyMove(original,a,b){
  if(original.status!=='playing'||!adjacent(a,b))return {valid:false,state:original,frames:[]};
  const s={...original,board:copyBoard(original.board),ice:[...original.ice],turns:[...original.turns]};
@@ -40,11 +41,12 @@ export function applyMove(original,a,b){
   for(const i of clear){if(s.board[i]?.color===configFor(s).color)s.collected++;if(s.ice[i]){s.ice[i]=false;s.cleared++;}}
   s.score+=clear.length*10*combo+expanded.fired*30;
   frames.push({board:copyBoard(s.board),ice:[...s.ice],clear,collect:clear.filter(i=>s.board[i]?.color===configFor(s).color),combo,fired:expanded.fired,created:births.size,births:[...births].map(([at,special])=>({at,special})),effects:expanded.effects,combination:expanded.combination,score:s.score,collected:s.collected,cleared:s.cleared});
+  if(configFor(s).mission){s.missionCount+=missionGain(configFor(s).mission,frames.at(-1));frames.at(-1).missionCount=s.missionCount;}
   for(const i of clear)s.board[i]=null;for(const [i,special]of births)s.board[i]={...s.board[i],special};
   collapse(s,combo);forced=[];groups=matchGroups(s.board);
   if(combo>=40&&groups.length){s.board=freshBoard(s);groups=[];}
  }
- const config=configFor(s);s.turns.push(combo);if(s.mode==='score'){if(s.moves===0)s.status='won';}else if(s.collected>=config.target&&s.cleared>=config.ice.length)s.status='won';else if(s.moves===0)s.status='lost';
+ const config=configFor(s);s.turns.push(combo);if(s.mode==='score'){if(s.moves===0)s.status='won';}else if(s.collected>=config.target&&s.cleared>=config.ice.length&&missionComplete(s,config))s.status='won';else if(s.moves===0)s.status='lost';
  let reshuffled=false;if(s.status==='playing'&&!legalMoves(s.board).length){s.board=freshBoard(s);reshuffled=true;}
  return {valid:true,state:s,frames,reshuffled};
 }
@@ -56,7 +58,8 @@ export function validSnapshot(s){
  if(!Array.isArray(s.ice)||s.ice.length!==36||!s.ice.every((x,i)=>typeof x==='boolean'&&(!x||config.ice.includes(i)))||s.cleared!==config.ice.length-s.ice.filter(Boolean).length)return false;
  if(!Array.isArray(s.turns)||s.turns.length!==total-s.moves||!s.turns.every(x=>Number.isInteger(x)&&x>=1&&x<=40)||matchGroups(s.board).length)return false;
  if(scoreMode)return s.status==='won'?s.moves===0:s.status==='playing'&&s.moves>0&&legalMoves(s.board).length>0;
- const won=s.collected>=config.target&&s.cleared>=config.ice.length;
+ if(config.mission&&(!Number.isInteger(s.missionCount)||s.missionCount<0||s.missionCount>100000))return false;
+ const won=s.collected>=config.target&&s.cleared>=config.ice.length&&missionComplete(s,config);
  return s.status==='won'?won:s.status==='lost'?s.moves===0&&!won:s.moves>0&&!won&&legalMoves(s.board).length>0;
 }
 const dailySeeds=new Map();
@@ -79,6 +82,6 @@ export function dailySeed(date){
  const fallback='teum-stage-3';dailySeeds.set(date,fallback);return fallback;
 }
 export function starsFor(state){if(state.mode==='score'||state.status!=='won')return 0;const total=configFor(state).moves;return state.moves>=Math.ceil(total/2)?3:state.moves>=Math.ceil(total/4)?2:1;}
-export function hintValue(state,turn){const first=turn.frames[0];if(!first)return {value:-Infinity,collected:0,ice:0,specials:0};if(state.mode==='score')return {value:first.score-state.score+first.created*10,collected:0,ice:0,specials:first.created};const config=configFor(state),collected=Math.min(config.target,first.collected)-Math.min(config.target,state.collected),ice=first.cleared-state.cleared,specials=first.created;return {value:collected*3+ice*8+specials*2+(first.fired?1:0),collected,ice,specials};}
+export function hintValue(state,turn){const first=turn.frames[0];if(!first)return {value:-Infinity,collected:0,ice:0,specials:0};if(state.mode==='score')return {value:first.score-state.score+first.created*10,collected:0,ice:0,specials:first.created};const config=configFor(state),collected=Math.min(config.target,first.collected)-Math.min(config.target,state.collected),ice=first.cleared-state.cleared,specials=first.created;const mission=config.mission?Math.min(Math.max(0,config.mission.target-state.missionCount),Math.max(0,turn.state.missionCount-state.missionCount)):0;return {value:mission*120+collected*3+ice*8+specials*2+(first.fired?1:0),collected,ice,specials};}
 export function bestHint(state){if(state.status!=='playing')return null;let best=null;for(const pair of legalMoves(state.board)){const turn=applyMove(state,...pair),benefit=hintValue(state,turn);if(!best||benefit.value>best.value)best={pair,...benefit};}return best;}
 export function recordStars(record,stage){if(!record)return 0;if(Number.isInteger(record.stars)&&record.stars>=1&&record.stars<=3)return record.stars;const total=stages[stage-1]?.moves,used=Number(record.moves);return Number.isFinite(total)&&Number.isFinite(used)&&used>=0&&used<=total?starsFor({stage,status:'won',moves:total-used}):1;}

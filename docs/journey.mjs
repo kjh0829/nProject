@@ -42,6 +42,7 @@ function render(){
  const paging=$('journey-page-nav');paging.hidden=m.pageCount<=1;$('journey-page-label').textContent=`${m.page+1} / ${m.pageCount} 구간`;setLink($('journey-page-prev'),m.page>0?mapURL(chapter.id,m.page-1):null);setLink($('journey-page-next'),m.page<m.pageCount-1?mapURL(chapter.id,m.page+1):null);
  const locked=selected.id>current,record=v.records[selected.id],preview=$('journey-level-preview');preview.replaceChildren();
  const info=element('div','journey-preview-info');info.append(element('small','',record?'배달 완료 · 다시 도전':locked?'아직 열리지 않은 길':'이번 배달의 목표'),element('h3','',`${selected.id}. ${selected.name}`),element('p','',`${pieces[selected.color].name} ${selected.target}개${selected.ice.length?' · 얼음 '+selected.ice.length+'칸':''} · ${selected.moves}수`));
+ if(selected.mission)info.append(element('p','journey-mission',selected.mission.label+' '+selected.mission.target+'회 달성'));
  if(record)info.append(element('p','journey-preview-best',`★ ${record.stars} / 3 · 내 최고 ${record.score.toLocaleString('ko-KR')}점`));preview.append(info);
  if(locked)preview.append(element('p','journey-locked-note',`${selected.id-1}번 스테이지를 통과하면 열려요.`));else{const play=element('a','journey-play',record?'다시 도전 →':v.slots[selected.id]?.state.turns.length?'계속하기 →':'시작하기 →');play.href='#challenge?journey='+selected.id;preview.append(play);}
 }

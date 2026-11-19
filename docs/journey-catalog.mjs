@@ -1,3 +1,4 @@
+import {missionKinds} from './puzzle-missions.mjs';
 // Append packs and IDs; published level IDs/seeds/rules must remain stable for saved games.
 export function createJourneyCatalog(packs){
  if(!Array.isArray(packs)||!packs.length)throw Error('Journey needs region packs');
@@ -7,6 +8,7 @@ export function createJourneyCatalog(packs){
   ids.add(pack.id);const chapter=chapters.length,levelIds=[];
   for(const level of pack.levels){
    if(!level||level.id!==levels.length+1||!['name','subtitle'].every(k=>typeof level[k]==='string'&&level[k].length)||!Number.isInteger(level.color)||level.color<0||level.color>3||!Number.isInteger(level.target)||level.target<1||!Number.isInteger(level.moves)||level.moves<1||!Array.isArray(level.ice)||new Set(level.ice).size!==level.ice.length||!level.ice.every(i=>Number.isInteger(i)&&i>=0&&i<36))throw Error('Invalid or reordered journey level');
+   if(level.mission&&(!missionKinds.includes(level.mission.kind)||!Number.isInteger(level.mission.target)||level.mission.target<1||typeof level.mission.label!=='string'||!level.mission.label))throw Error('Invalid mission');
    levels.push({...level,chapter,chapterId:pack.id});levelIds.push(level.id);
   }
   const {levels:unused,...meta}=pack;chapters.push({...meta,levelIds,firstLevel:levelIds[0],lastLevel:levelIds.at(-1)});

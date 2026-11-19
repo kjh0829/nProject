@@ -66,6 +66,7 @@ jobs:
           NODE_PATH="$RUNNER_TEMP/teum-qa/node_modules" node tests/avatar-themes-browser.cjs
           NODE_PATH="$RUNNER_TEMP/teum-qa/node_modules" node tests/avatar-browser.cjs
           NODE_PATH="$RUNNER_TEMP/teum-qa/node_modules" node tests/collection-browser.cjs
+          NODE_PATH="$RUNNER_TEMP/teum-qa/node_modules" node tests/play-upgrades-browser.cjs
           NODE_PATH="$RUNNER_TEMP/teum-qa/node_modules" node tests/avatar-cel-browser.cjs
           NODE_PATH="$RUNNER_TEMP/teum-qa/node_modules" node tests/avatar-fit-browser.cjs
           NODE_PATH="$RUNNER_TEMP/teum-qa/node_modules" node tests/avatar-quality-browser.cjs

@@ -1,0 +1,43 @@
+#challenge .puzzle-tile {touch-action:pinch-zoom}
+#challenge .puzzle-tile.is-dragging {position:relative;z-index:8;transition:none;cursor:grabbing;box-shadow:0 6px 14px #17112666}
+#challenge .puzzle-tile.drag-target {outline:3px solid #ffe09b;outline-offset:-3px;filter:brightness(1.14)}
+#challenge .puzzle-tile.guide-tile {outline:2px dashed #fff1bf;outline-offset:-3px}
+.puzzle-guide {display:flex;align-items:center;gap:9px;border-radius:12px;background:#fff2d8;color:#4d3b53;padding:9px 12px;font-size:12px;line-height:1.6;margin:0 0 12px}
+.puzzle-guide span {flex:1}
+.puzzle-guide button {min-height:44px;padding:5px 8px;font:inherit;font-size:11px;color:#6d547c;border:1px solid #d9bedf;background:#fffaf0;border-radius:9px;cursor:pointer}
+.puzzle-mission {border:1px solid #d5bbf175;padding:8px 12px;border-radius:12px;margin-bottom:12px;background:#5d436333;color:#fbe6ad;font-size:14px;text-align:center;font-weight:750}
+.journey-mission {font-weight:750;color:#6b4c83!important}
+.score-chase {font-size:12px;line-height:1.5;color:#ffe5b4;margin:0 0 12px}
+.score-chase>div {height:4px;background:#ffffff22;border-radius:3px;margin-top:5px;overflow:hidden}
+.score-chase i {display:block;height:100%;background:#ffd282;max-width:100%;transition:width .13s ease-out}
+.score-history-details {border:1px solid #d9cce1;border-radius:16px;padding:12px 16px;margin:18px 0;background:#fcf6ed;color:#57455e}
+.score-history-details summary {min-height:44px;cursor:pointer;display:list-item;padding:10px 0;font-size:13px;font-weight:700}
+[data-score-history] h3 {font-size:16px;margin:12px 0}
+.score-history-bars {display:flex;gap:6px;align-items:end;list-style:none;padding:0;margin:12px 0;min-height:132px}
+.score-history-bars li {flex:1;min-width:0;display:flex;align-items:center;flex-direction:column;gap:5px}
+.score-history-bars span {font-size:9px;letter-spacing:-.5px;font-variant-numeric:tabular-nums}
+.score-history-bars i {display:block;background:linear-gradient(#c7acd8,#8d70a0);width:min(100%,32px);border-radius:5px 5px 0 0}
+.score-history-bars li:last-child i {background:linear-gradient(#edca7b,#c39141)}
+.score-history-bars small {font-size:8px;white-space:normal;text-align:center}
+.avatar-shop-tools {display:grid;grid-template-columns:1.3fr 1fr 1fr;gap:9px;margin:16px 0}
+.avatar-shop-tools label {font-size:12px;color:#796382;min-width:0}
+.avatar-shop-tools input,.avatar-shop-tools select {width:100%;margin-top:7px;min-height:44px;border:1px solid #cdbbd8;border-radius:11px;background:#fffaf1;color:#51405b;padding:8px;font:inherit;font-size:16px}
+.outfit-export {margin:26px 0;padding:22px;border:1px solid #decee7;background:#faf3ff;border-radius:22px}
+.outfit-export h2 {font-size:22px;margin:0 0 16px}
+.outfit-export label {font-size:13px;display:block}
+#outfit-card-name {display:block;width:min(100%,360px);font:inherit;font-size:16px;padding:11px;margin:8px 0 14px;border:1px solid #ccb5db;background:#fff;border-radius:11px}
+.outfit-export button,.outfit-export a {display:inline-flex;justify-content:center;align-items:center;min-height:44px;padding:10px 18px;border:1px solid #b395c2;border-radius:12px;font:inherit;font-size:14px;color:#fff7eb;background:#6c4d7d;cursor:pointer;margin-right:8px}
+.outfit-export button:disabled {opacity:.5}
+#outfit-export-status {font-size:13px;line-height:1.7;color:#74617e}
+#outfit-export-preview img {display:block;max-width:min(100%,360px);height:auto;border-radius:18px;margin:14px 0;box-shadow:0 8px 22px #5d386b26}
+[data-collection-background=prism-workshop] {background:radial-gradient(ellipse at top,#effaff,#a4b9d4)!important}
+[data-collection-background=prism-workshop] .collection-room-prop {color:#6678a7;background:linear-gradient(135deg,#f7ddf0,#d5e7ff);border-radius:20%;transform:rotate(-10deg)}
+@media(max-width:700px){.avatar-shop-tools{grid-template-columns:1fr 1fr}.avatar-shop-tools label:first-child{grid-column:1/-1}}
+@media(max-height:520px) and (min-width:600px){.is-game-focused .puzzle-guide,.is-game-focused .puzzle-mission,.is-game-focused .score-chase{grid-column:2}.is-game-focused .puzzle-guide{font-size:11px}}
+@media(prefers-reduced-motion:reduce){.score-chase i{transition:none}#challenge .puzzle-tile.drag-target{filter:none}}
+
+.score-history-bars span{max-width:100%;overflow-wrap:anywhere}
+
+.score-history-note{font-size:11px!important;line-height:1.6!important;color:#806d86}
+.score-history-bars small{min-height:24px}
+.score-history-bars span{min-height:22px;display:flex;align-items:end;justify-content:center}

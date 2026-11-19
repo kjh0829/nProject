@@ -62,27 +62,27 @@ const {chromium}=require('playwright'),assert=require('node:assert/strict');
  }
  const page=await browser.newPage({viewport:{width:390,height:900},reducedMotion:'reduce'});
  const complete={version:1,records:{},slots:{}};
- for(let id=1;id<=15;id++)complete.records[id]={stars:3,score:300,moves:2};
+ for(let id=1;id<=20;id++)complete.records[id]={stars:3,score:300,moves:2};
  await page.addInitScript(progress=>localStorage.setItem('teum-journey-v1',JSON.stringify(progress)),complete);
  await page.goto('http://127.0.0.1:8000/#avatar');await page.waitForSelector('.avatar-item');
  await page.locator('.collection-prizes>summary').click();
- for(const id of ['citrus-lane','glass-garden','starlight-station']){
+ for(const id of ['citrus-lane','glass-garden','starlight-station','prism-workshop']){
   await page.locator('[data-background="'+id+'"]').click();
   assert.equal(await page.locator('.avatar-room').getAttribute('data-collection-background'),id);
   assert.equal(await page.locator('.avatar-room .collection-room-prop').isVisible(),true);
  }
  await page.locator('header nav a[href="#home"]').click();
- assert.match(await page.locator('#home-region-badge').innerText(),/별빛 여행자/);
+ assert.match(await page.locator('#home-region-badge').innerText(),/빛의 장인/);
  await page.screenshot({path:'test-results/collection-starlight-home.png',fullPage:true});
  await page.evaluate(async()=>{
   const {emptyAvatar,grantAvatarReward,dressAvatar,wishAvatar}=await import('./avatar-core.mjs');
-  let value=grantAvatarReward(emptyAvatar(),{id:'journey:15',kind:'journey',amount:80}).value;
+  let value=grantAvatarReward(emptyAvatar(),{id:'journey:20',kind:'journey',amount:80}).value;
   value=dressAvatar(value,{hat:'hat-beret'}).value;
   value=wishAvatar(value,'hat-wizard').value;
   localStorage.setItem('teum-avatar-v1',JSON.stringify(value));
  });
  await page.reload();await page.waitForSelector('#home [data-wish-target] a');
  assert.equal(await page.locator('#home [data-wish-target] a').first().getAttribute('href'),'#challenge?mode=score');
- await page.close();console.log('All three regional bundles, applied ornaments, home badge and repeatable point route after completion PASS');
+ await page.close();console.log('All four regional bundles, applied ornaments, home badge and repeatable point route after completion PASS');
  }finally{await browser.close();}
 })().catch(e=>{console.error(e);process.exit(1)});

@@ -6,7 +6,8 @@ export const collectionOf = value => value.collection || collectionDefaults();
 export const regionPrizes = [
  {id:'citrus-lane',name:'귤빛 골목',background:'햇살 우체국',badge:'첫 편지 배달부',prop:'황금 편지함',symbol:'✉'},
  {id:'glass-garden',name:'유리 온실',background:'초록빛 온실',badge:'온실의 정원사',prop:'유리 꽃 화분',symbol:'❋'},
- {id:'starlight-station',name:'밤하늘 정거장',background:'별빛 승강장',badge:'별빛 여행자',prop:'별빛 랜턴',symbol:'✦'}
+ {id:'starlight-station',name:'밤하늘 정거장',background:'별빛 승강장',badge:'별빛 여행자',prop:'별빛 랜턴',symbol:'✦'},
+ {id:'prism-workshop',name:'프리즘 공방',background:'프리즘 작업실',badge:'빛의 장인',prop:'프리즘 오브제',symbol:'◇'}
 ];
 export function unlockedPrizes(progress) {
  return regionPrizes.filter(prize => {
