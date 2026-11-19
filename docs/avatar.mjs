@@ -77,7 +77,7 @@ function renderLooks(value,enabled){
    void mutate(()=>saveLook(index,name,{...draft}),'코디를 저장했어요.');
   };
   const load=document.createElement('button');load.type='button';load.textContent='입기';load.disabled=!enabled||!look;load.dataset.loadLook=index;
-  load.onclick=()=>void mutate(()=>loadLook(index),'저장한 코디로 갈아입었어요.',true);
+  load.onclick=()=>{selected=null;void mutate(()=>loadLook(index),'저장한 코디로 갈아입었어요.',true);};
   row.append(name,save,load);container.append(row);
  });
 }

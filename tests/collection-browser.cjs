@@ -74,6 +74,15 @@ const {chromium}=require('playwright'),assert=require('node:assert/strict');
  await page.locator('header nav a[href="#home"]').click();
  assert.match(await page.locator('#home-region-badge').innerText(),/별빛 여행자/);
  await page.screenshot({path:'test-results/collection-starlight-home.png',fullPage:true});
- await page.close();console.log('All three regional bundles, applied ornaments and home badge PASS');
+ await page.evaluate(async()=>{
+  const {emptyAvatar,grantAvatarReward,dressAvatar,wishAvatar}=await import('./avatar-core.mjs');
+  let value=grantAvatarReward(emptyAvatar(),{id:'journey:15',kind:'journey',amount:80}).value;
+  value=dressAvatar(value,{hat:'hat-beret'}).value;
+  value=wishAvatar(value,'hat-wizard').value;
+  localStorage.setItem('teum-avatar-v1',JSON.stringify(value));
+ });
+ await page.reload();await page.waitForSelector('#home [data-wish-target] a');
+ assert.equal(await page.locator('#home [data-wish-target] a').first().getAttribute('href'),'#challenge?mode=score');
+ await page.close();console.log('All three regional bundles, applied ornaments, home badge and repeatable point route after completion PASS');
  }finally{await browser.close();}
 })().catch(e=>{console.error(e);process.exit(1)});

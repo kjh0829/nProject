@@ -48,7 +48,11 @@ function render() {
    element('p','',!avatar.writable?'저장 상태를 확인해 주세요.':owned?'구매 완료! 다음 코디를 골라보세요.':needed?needed+' P 더 모으면 구매할 수 있어요.':'지금 구매할 수 있어요!'));
   const link=element('a','',owned?'입어보기 →':needed?'포인트 모으기 →':'구매하고 입기 →');
   const next=(()=>{let id=1;while(id<journeyCatalog.levels.length&&progress.value.records[id])id++;return id;})();
-  link.href=needed&&!owned?'#challenge?journey='+next:'#avatar?item='+wish.id;
+  const journeyRewardAvailable=!Object.hasOwn(value.claims,'journey:'+next);
+  if(needed&&!owned){
+   link.href=journeyRewardAvailable?'#challenge?journey='+next:'#challenge?mode=score';
+   if(!journeyRewardAvailable)link.textContent='20수로 포인트 모으기 →';
+  }else link.href='#avatar?item='+wish.id;
   const inspect=element('a','collection-wish-inspect','의상 보기');inspect.href='#avatar?item='+wish.id;
   const remove=element('button','collection-wish-clear','찜 해제');remove.type='button';remove.disabled=!avatar.writable;
   remove.onclick=async()=>{const result=await setAvatarWish(null);if(!result.ok){remove.textContent='저장 실패 · 다시 시도';}};
