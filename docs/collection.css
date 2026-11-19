@@ -1,0 +1,61 @@
+.collection-wish {
+ display:flex;align-items:center;justify-content:space-between;gap:20px;padding:20px 24px;
+ margin:22px 0;border:1px solid #dbc3e3;border-radius:20px;background:#f4eafa;color:#45354f;
+}
+.collection-wish-copy small {display:block;font-size:11px;color:#80658d;margin-bottom:5px}
+.collection-wish-copy strong {font-size:20px}
+.collection-wish-copy p {font-size:13px;margin:8px 0 0;line-height:1.6}
+.collection-wish-actions {display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+.collection-wish-actions a,.collection-wish-actions button {display:inline-flex;align-items:center;justify-content:center;min-height:44px;font:inherit;font-size:13px}
+.collection-wish-actions a:first-child {padding:9px 15px;border-radius:12px;background:#51405f;color:#fff6e7;font-weight:700}
+.collection-wish-clear {border:0;background:transparent;color:#75647c;cursor:pointer}
+.collection-item-actions {display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+#avatar-wish {min-height:44px;border-radius:12px;padding:10px 14px;border:1px solid #c8a5d7;background:#f7eafa;color:#6c3d7b;font:inherit;font-size:13px}
+#avatar-wish[aria-pressed=true] {background:#765086;color:#fff}
+.collection-looks,.collection-prizes {border:1px solid #ded2e7;background:#fffaf2;padding:12px 16px;border-radius:17px;margin-top:16px}
+.collection-looks summary,.collection-prizes summary {cursor:pointer;min-height:44px;padding:10px 0;font-size:14px;font-weight:700}
+.collection-looks p {font-size:12px;line-height:1.7}
+.collection-looks label {font-size:13px;display:block}
+#collection-look-name {display:block;width:100%;font:inherit;font-size:16px;border:1px solid #cdbdd9;border-radius:10px;padding:11px;margin-top:8px;background:#fff}
+.collection-look {display:flex;gap:8px;align-items:center;border-top:1px solid #e5dce7;padding:12px 0;margin-top:12px}
+.collection-look strong {flex:1;min-width:0;overflow-wrap:anywhere;font-size:14px}
+.collection-look button,#collection-backgrounds button {min-height:44px;border:1px solid #cdbbd8;background:#f5edf8;color:#55405d;border-radius:10px;padding:10px;font:inherit;font-size:12px;cursor:pointer}
+.collection-look button:disabled,#collection-backgrounds button:disabled {opacity:.5;cursor:default}
+#collection-backgrounds {display:grid;gap:8px}
+#collection-backgrounds button {text-align:left;line-height:1.5}
+#collection-backgrounds button[aria-pressed=true] {background:#66506f;color:white}
+#home .avatar-entry {position:relative;display:grid;grid-template-columns:140px minmax(0,1fr);align-items:center;gap:12px;min-height:355px;padding:24px 20px;overflow:hidden}
+#home [data-home-avatar] {width:140px;height:300px;display:block;grid-column:1;grid-row:1/4;z-index:1}
+#home [data-home-avatar] > svg {width:100%;height:100%;display:block;overflow:hidden;filter:drop-shadow(0 10px 8px #4a31522b)}
+#home .avatar-entry > span:not([data-home-avatar]):not(.collection-room-prop) {position:relative;z-index:2;min-width:0}
+#home .avatar-entry > b {font-size:18px;justify-self:start;align-self:start;z-index:2}
+#home .collection-home-badge {font-size:12px;line-height:1.6;color:#6c5175;align-self:start}
+[data-collection-background=studio] .collection-room-prop {display:none}
+.avatar-room[data-collection-background=citrus-lane],#home .avatar-entry[data-collection-background=citrus-lane] {background:radial-gradient(ellipse at 20% 20%,#fff8c9,transparent 50%),linear-gradient(140deg,#fce8c7,#e7bb91)}
+.avatar-room[data-collection-background=glass-garden],#home .avatar-entry[data-collection-background=glass-garden] {background:repeating-linear-gradient(90deg,transparent 0 23%,#ffffff55 24% 25%),radial-gradient(ellipse at top,#f3ffe7,#b9d4c4)}
+.avatar-room[data-collection-background=starlight-station],#home .avatar-entry[data-collection-background=starlight-station] {background:radial-gradient(circle at 20% 20%,#fff6bb 1px,transparent 3px),radial-gradient(circle at 80% 35%,#fff6bb 2px,transparent 4px),linear-gradient(145deg,#47415e,#a497be)}
+#home .avatar-entry[data-collection-background=starlight-station] {color:#fff8ed}
+#home .avatar-entry[data-collection-background=starlight-station] .collection-home-badge {color:#fff0c6}
+.collection-room-prop {position:absolute;bottom:22px;right:12px;z-index:0;width:62px;height:80px;border:2px solid #fff9d699;border-radius:24px 24px 10px 10px;display:grid;place-items:center;font-size:37px;color:#a76c29;background:linear-gradient(145deg,#fff2cbcc,#d1a96777);box-shadow:0 4px 20px #f8de8b66;pointer-events:none}
+[data-collection-background=glass-garden] .collection-room-prop {color:#3e7760;border-radius:40% 40% 15px 15px;background:linear-gradient(#f6ffedd9,#97c3ad)}
+[data-collection-background=starlight-station] .collection-room-prop {color:#fff1ba;border-radius:30px;background:radial-gradient(#fff2b166,#c1aad944);border-color:#fff1b9;box-shadow:0 0 28px #ffe3a899}
+.collection-region-prize,.collection-finish-prize {border:1px solid #e4d5b1;border-radius:18px;padding:18px;margin:20px 0;background:#fff7e7}
+.collection-region-prize>p {font-size:12px;color:#8a7255;margin:0 0 10px}
+.collection-prize-copy {display:grid;grid-template-columns:auto 1fr;gap:6px 12px;align-items:center}
+.collection-prize-symbol {font-size:32px;grid-row:1/4;color:#9d7333}
+.collection-prize-copy strong {font-size:17px}
+.collection-prize-copy p {font-size:12px!important;line-height:1.6;margin:0}
+.collection-prize-copy a {font-size:13px;min-height:44px;display:flex;align-items:center;color:#695076}
+#challenge .collection-wish {text-align:left;display:block;padding:14px}
+#challenge .collection-wish-actions {margin-top:8px;gap:8px}
+@media(max-width:699px) {
+ .collection-wish {flex-direction:column;align-items:stretch;padding:18px;gap:12px}
+ #home .avatar-entry {grid-template-columns:145px minmax(0,1fr);min-height:330px;padding:16px}
+ #home [data-home-avatar] {width:145px;height:290px}
+ #home .avatar-entry strong {font-size:18px}
+ .collection-look {gap:5px}
+}
+#home .collection-room-prop {right:12px;bottom:12px;width:44px;height:60px;font-size:28px;opacity:.85}
+#home .avatar-entry[data-collection-background=starlight-station] strong {color:#fff6e4}
+#home .avatar-entry[data-collection-background=starlight-station] small,
+#home .avatar-entry[data-collection-background=starlight-station] > span:nth-child(2) > span {color:#eaddf4}

@@ -89,3 +89,5 @@
 - 전신 피팅은 [검토 기록](team/briefs/AVATAR-FULL-FIT.md)을 따른다. 긴 하의 legFit, 부츠 openings, 안경 lensAnchors를 필수 등록한다. 가방 끈은 어깨 표면/머리 뒤에 두고 새 소품 perchPoints의 모든 상의 접촉을 확인하며 피부색으로 스타킹·안감이 바뀌지 않게 한다. 원본 PNG와 지갑을 유지하고 전신/부분/피부색별 육안 검토 및 776개 동적 검사·누락 집계를 확인한다.
 
 - 메뉴 간소화: `menu-focus.mjs/css`는 검증된 여행·지갑을 읽어 홈/게임 이어하기와 기록 요약만 표시한다. 저장 키를 초기화·이관하지 않는다. 게임의 날짜별/연습 판은 `#game-more-modes`, 생활 도구는 `#life-tools`, 예전 기록은 `#legacy-archive`, 원화 참고는 `#avatar-reference-menu`를 먼저 펼친다. 기존 주소/DOM ID/저장 구조는 보존한다. [메뉴 정리](team/briefs/MENU-FOCUS.md).
+
+- 의상 찜·코디 3칸·지역 기념 배경/장식/배지는 `collection-core.mjs`, `collection-ui.mjs`, `collection.css`에서 제공한다. `teum-avatar-v1`의 선택적 collection 필드로 기존 지갑을 읽으며, 구매·전체 코디 착용은 단일 지갑 트랜잭션이다. 지역 해금은 journeyCatalog의 실제 지역 levelIds 전체 완료로 판단한다. 기존 의상 ID/가격/원화와 저장 구조는 유지한다. tests/collection.test.mjs와 collection-browser.cjs를 확인한다.

@@ -30,6 +30,7 @@ jobs:
           node tests/journey-catalog.test.mjs
           node tests/avatar-themes.test.mjs
           node tests/avatar.test.mjs
+          node tests/collection.test.mjs
           node tests/avatar-cel.test.mjs
           node tests/puzzle-improvements.test.mjs
           node tests/navigation.test.mjs
@@ -64,6 +65,7 @@ jobs:
           NODE_PATH="$RUNNER_TEMP/teum-qa/node_modules" node tests/journey-map-browser.cjs
           NODE_PATH="$RUNNER_TEMP/teum-qa/node_modules" node tests/avatar-themes-browser.cjs
           NODE_PATH="$RUNNER_TEMP/teum-qa/node_modules" node tests/avatar-browser.cjs
+          NODE_PATH="$RUNNER_TEMP/teum-qa/node_modules" node tests/collection-browser.cjs
           NODE_PATH="$RUNNER_TEMP/teum-qa/node_modules" node tests/avatar-cel-browser.cjs
           NODE_PATH="$RUNNER_TEMP/teum-qa/node_modules" node tests/avatar-fit-browser.cjs
           NODE_PATH="$RUNNER_TEMP/teum-qa/node_modules" node tests/avatar-quality-browser.cjs

@@ -1,3 +1,4 @@
+import {collectionOf} from './collection-core.mjs';
 import {pieceArt} from './soft-graphics.mjs';
 import {createScorePuzzle,applyMove} from './puzzle-core.mjs';
 import {specialMarks} from './puzzle-specials.mjs';
@@ -36,7 +37,7 @@ function recordSignature() {
 
 function outfitSignature() {
   const value = readAvatar().value;
-  return JSON.stringify([value.skin, value.face, value.equipped]);
+  return JSON.stringify([value.skin, value.face, value.equipped, collectionOf(value).background]);
 }
 
 function draw(tiles, births = []) {

@@ -1,4 +1,6 @@
-import {emptyAvatar,validAvatar,buyAvatarItem,wearAvatarItem,changeAvatarLook,grantAvatarReward} from './avatar-core.mjs';
+import {collectionOf,unlockedPrizes} from './collection-core.mjs';
+import {readJourney} from './journey-saves.mjs';
+import {emptyAvatar,validAvatar,buyAvatarItem,wearAvatarItem,changeAvatarLook,grantAvatarReward,dressAvatar,wishAvatar,saveAvatarLook,loadAvatarLook} from './avatar-core.mjs';
 import {avatarGameReceipt} from './avatar-reward-core.mjs';
 export const AVATAR_KEY='teum-avatar-v1';
 export function readAvatar(storage){try{storage??=globalThis.localStorage;const raw=storage.getItem(AVATAR_KEY);if(raw===null)return {value:emptyAvatar(),writable:true,exists:false};const value=JSON.parse(raw);if(!validAvatar(value))throw Error();return {value,writable:true,exists:true};}catch{return {value:emptyAvatar(),writable:false,exists:false};}}
@@ -8,3 +10,15 @@ export const purchaseAvatar=(id,storage)=>transact(v=>buyAvatarItem(v,id),storag
 export const equipAvatar=(slot,id,storage)=>transact(v=>wearAvatarItem(v,slot,id),storage);
 export const setAvatarLook=(key,id,storage)=>transact(v=>changeAvatarLook(v,key,id),storage);
 export const claimAvatarGame=(game,storage)=>{let receipt;try{receipt=avatarGameReceipt(game);}catch{return Promise.resolve({ok:false,reason:'ineligible'});}return receipt?transact(v=>grantAvatarReward(v,receipt),storage):Promise.resolve({ok:false,reason:'ineligible'});};
+
+export const purchaseAndWearAvatar=(patch,storage)=>transact(v=>dressAvatar(v,patch),storage);
+export const setAvatarWish=(id,storage)=>transact(v=>wishAvatar(v,id),storage);
+export const saveLook=(index,name,patch,storage)=>transact(v=>saveAvatarLook(v,index,name,patch),storage);
+export const loadLook=(index,storage)=>transact(v=>loadAvatarLook(v,index),storage);
+export const setAvatarBackground=(id,storage,journeyStorage)=>transact(v=>{
+ const progress=readJourney(journeyStorage ?? storage);
+ if (id !== 'studio' && (!progress.writable || !unlockedPrizes(progress.value).some(p=>p.id===id))) {
+  return {ok:false,reason:'locked',value:v};
+ }
+ return {ok:true,value:{...v,collection:{...collectionOf(v),background:id}}};
+},storage);
