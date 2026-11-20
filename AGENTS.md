@@ -93,3 +93,5 @@
 - 의상 찜·코디 3칸·지역 기념 배경/장식/배지는 `collection-core.mjs`, `collection-ui.mjs`, `collection.css`에서 제공한다. `teum-avatar-v1`의 선택적 collection 필드로 기존 지갑을 읽으며, 구매·전체 코디 착용은 단일 지갑 트랜잭션이다. 지역 해금은 journeyCatalog의 실제 지역 levelIds 전체 완료로 판단한다. 기존 의상 ID/가격/원화와 저장 구조는 유지한다. tests/collection.test.mjs와 collection-browser.cjs를 확인한다.
 
 - 새 미션판은 `puzzle-missions.mjs`와 `journey-content/prism-workshop.mjs`에 있다. 16~20번만 missionCount를 저장하며 1~15번의 판정·RNG·프레임을 이전 엔진과 동일하게 유지한다. 실제 드래그는 `puzzle-drag.mjs`이고 게임판의 조각은 pinch-zoom으로 페이지 확대를 허용한다. `puzzle-guide.mjs`는 처음 한 수/특수 조각 안내, `score-journal.mjs`는 최고 기록 추격/최근10판이다. `outfit-export.mjs`는 동일 출처 원화를 내장한 SVG를 캔버스에 그려 저장된 코디의 PNG를 만든다. PNG 생성·내려받기와 실제 터치 입력은 `tests/play-upgrades-browser.cjs`로 검증한다.
+
+- 목표 피드백은 `puzzle-objectives.mjs/css`의 표현 계층이다. 결과의 부족분은 실제 config/state에서 계산하며 20수 점수판에는 수집 목표를 표시하지 않는다. 실패 결과의 마지막 한 수 복원은 기존 undo 슬롯을 사용하고 보상/별/클리어 기록을 지급하지 않는다. `tests/puzzle-objectives-browser.cjs`에서 모바일/가로 집중 모드·실제 실패/복원·저장 재열기·미션 힌트를 확인한다.

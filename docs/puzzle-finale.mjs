@@ -53,6 +53,7 @@ export function createPuzzleFinale(section) {
   }
 
   function setStars(symbols, label) {
+    stars.classList.toggle('is-message', !/^[★☆]+$/.test(symbols));
     if (!/^[★☆]+$/.test(symbols)) {
       stars.removeAttribute('role');
       stars.removeAttribute('aria-label');

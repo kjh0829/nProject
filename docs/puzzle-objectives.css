@@ -1,0 +1,25 @@
+/* A checked label accompanies the color change, including in reduced motion. */
+#challenge #puzzle-collection-goal[data-complete],#challenge #puzzle-ice-wrap[data-complete] {color:#c0edda}
+#challenge [data-complete] .puzzle-goal-label {color:#c0edda}
+#challenge #puzzle-collection-goal[data-complete] .puzzle-goal-label::after,
+#challenge #puzzle-ice-wrap[data-complete] .puzzle-goal-label::after {content:' ✓';font-weight:900}
+#challenge #puzzle-mission[data-complete] {border-color:#9fe1bf;background:#28645455}
+#challenge #puzzle-mission[data-complete]::after {content:' ✓ 완료'}
+#challenge .objective-arrived {animation:puzzle-objective-arrive .48s ease-out}
+#challenge [data-low-moves] {color:#ffdb9e}
+#challenge [data-low-moves] .puzzle-goal-label {color:#ffdb9e}
+.puzzle-turn-note {margin:0 0 10px;text-align:center;color:#ffe6b6;font-size:12px;line-height:1.5}
+.puzzle-result-objectives {margin:16px 0;padding:13px 14px;border:1px solid #e2d6e6;border-radius:15px;background:#fffdf7;text-align:left}
+.puzzle-result-objectives ul {list-style:none;padding:0;margin:0;display:grid;gap:10px}
+.puzzle-result-objectives li {display:flex;gap:12px;justify-content:space-between;align-items:baseline;font-size:13px;color:#65506f}
+.puzzle-result-objectives li span {min-width:0;overflow-wrap:anywhere}
+.puzzle-result-objectives strong {white-space:nowrap;color:#946323;font-size:12px}
+.puzzle-result-objectives li[data-complete=true] strong {color:#316e5b}
+#challenge .puzzle-result-objectives p {font-size:12px;line-height:1.7;margin:12px 0 0;color:#796582}
+#challenge #puzzle-result-undo {width:100%;min-height:48px}
+#challenge .puzzle-stars.is-message {font-size:14px;line-height:1.6;letter-spacing:0;margin:10px 0}
+#challenge .puzzle-stars:empty {display:none}
+@keyframes puzzle-objective-arrive {40%{transform:translateY(-2px);filter:brightness(1.5)}to{transform:none;filter:none}}
+@media(max-height:520px) and (min-width:600px){.is-game-focused .puzzle-turn-note{grid-column:2}}
+@media(prefers-reduced-motion:reduce){#challenge .objective-arrived{animation:none}}
+#challenge .puzzle-finale .result-actions #puzzle-next.secondary {width:auto}
