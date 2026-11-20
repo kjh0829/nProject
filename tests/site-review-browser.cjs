@@ -32,7 +32,9 @@ const {chromium}=require('playwright'),assert=require('node:assert/strict');
   assert((await page.locator('#home [data-menu-journey-action]').textContent()).includes('이어하기'));
   await page.locator(nav+' a[href="#read"]').click();
   assert((await page.locator('[data-menu-progress]').textContent()).includes('현재 스테이지 1'));
-  for(const id of ['life-tools','legacy-archive','food-tools-archive','read-archive','prototype-archive'])assert.equal(await page.locator('#'+id).getAttribute('open'),null);
+  assert.equal(await page.locator('#life-tools').getAttribute('open'),null);
+  assert.equal(await page.locator('#legacy-archive,#food-tools-archive,#read-archive,#prototype-archive,#daily-home,#external-feeds').count(),0);
+  assert.equal(await page.locator('#read a[href="#saved-meals"],#read a[href="#community"],#read a[href="#play"]').count(),0);
   await page.locator('#life-tools>summary').click();
   await page.locator('#life-tools a[href="#fire"]').click();
   assert.equal(await page.locator(nav+' a[href="#read"]').getAttribute('aria-current'),'page');
@@ -41,14 +43,6 @@ const {chromium}=require('playwright'),assert=require('node:assert/strict');
   await page.waitForFunction(()=>document.querySelector('#life-journal').getBoundingClientRect().top<innerHeight);
   await page.locator('#life-start').click();
   assert(await page.locator('#life-stage').evaluate(e=>{const r=e.getBoundingClientRect();return r.top>=0&&r.top<innerHeight}));
-  await page.locator(nav+' a[href="#read"]').click();await page.locator('#legacy-archive>summary').click();
-  await page.locator('#food-tools-archive>summary').click();await page.locator('#food-tools-archive a[href="#saved-meals"]').click();
-  assert.equal(await page.locator(nav+' a[href="#read"]').getAttribute('aria-current'),'page');
-  await page.locator(nav+' a[href="#read"]').click();await page.locator('#read-archive>summary').click();
-  assert.equal(await page.locator('#daily-home').isVisible(),true);
-  await page.locator('#illusion-reveal').click();assert((await page.locator('#illusion-answer').textContent()).includes('같은 크기'));
-  await page.locator('#read-archive>summary').click();await page.locator('#prototype-archive>summary').click();
-  await page.locator('#prototype-archive a[href="#community"]').click();await page.waitForFunction(()=>document.body.dataset.view==='community');
   assert.equal(await page.evaluate(()=>localStorage.getItem('teum-journey-v1')),saved);
   await page.locator(nav+' a[href="#read"]').click();await page.screenshot({path:`test-results/review-records-${width}.png`,fullPage:true});
   // Existing direct addresses continue to resolve and select their new parent tab.
@@ -58,7 +52,7 @@ const {chromium}=require('playwright'),assert=require('node:assert/strict');
   }
   assert.equal(await page.locator('#avatar-reference-menu').getAttribute('open'),'');
   assert.deepEqual(errors,[]);await page.close();
-  console.log(width+'px four tabs, real resume, secondary tools/archives, old links, save preservation and touch targets PASS');
+  console.log(width+'px four tabs, real resume, secondary tools, removed archive, old links, save preservation and touch targets PASS');
  }
  // Returning after a clear should enter the next unlocked level without rewriting saves.
  const page=await browser.newPage({viewport:{width:390,height:844}});

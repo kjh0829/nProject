@@ -1,6 +1,5 @@
 import {readCart} from './cart-core.mjs';
 import {readFire,validate} from './fire-core.mjs';
-import {readMeals} from './meal-core.mjs';
 import {readSolo} from './meal-solo-core.mjs';
 import {readLife} from './fire-life-core.mjs';
 const $=id=>document.getElementById(id);
@@ -9,14 +8,11 @@ function render(){
  let hasPlan=!!readFire().value;try{const raw=localStorage.getItem('teum-fire-quick-v1');if(raw!==null){validate(JSON.parse(raw));hasPlan=true;}}catch{}
  $('hub-fire-summary').textContent=hasPlan?'저장한 계획 이어보기 · 필요하면 가정 바꾸기':'세 금액으로 목표까지 남은 시간 확인';
  const life=readLife();$('hub-life-summary').textContent=life.writable&&life.state.logs.length?`가상 한 달 ${life.state.logs.length}개 기록 · 다른 생활도 그려보기`:'생활비 기준표와 가상 한 달';$('hub-life-records').textContent=life.writable?`가상 한 달 ${life.state.logs.length}개 · 이 브라우저에 보관 중`:'기존 가상 생활 기록을 읽지 못했어요.';
- if(view!=='meal-archive'&&!$('food-tools-archive').open)return;
- const meals=readMeals(),solo=readSolo(),cart=readCart(),remaining=cart.state.active?Object.values(cart.state.active.remaining).reduce((n,v)=>n+v,0):0;
+ if(view!=='meal-archive')return;
+ const solo=readSolo(),cart=readCart(),remaining=cart.state.active?Object.values(cart.state.active.remaining).reduce((n,v)=>n+v,0):0;
  document.querySelector('.home-progress').hidden=!(solo.writable&&solo.state.logs.length);if(solo.writable&&solo.state.logs.length)$('solo-home-summary').textContent='내 식사 일지 '+solo.state.logs.length+'건';
- $('hub-cart-records').textContent=cart.writable?(cart.state.active?'진행 계획 '+remaining+'끼 남음 · 이전 계획 '+cart.state.archives.length+'개':'포장 단위 구매 계획과 남은 재료'):'장보기 기록을 읽지 못했어요.';
  $('hub-food-summary').textContent=cart.writable&&cart.state.active?(remaining?'진행 중인 장보기 계획 · 남은 '+remaining+'끼':'이전 재고로 다음 장보기 계산하기'):'포장 단위 구매비로 여러 끼 조합 계산';
- $('hub-meals-records').textContent=meals.writable&&solo.writable?`저장한 한끼 ${meals.state.saved.length}개 · 식사 일지 ${solo.state.logs.length}건`:'기존 기록을 읽지 못했어요. 저장소 설정을 확인해주세요.';
 }
-$('food-tools-archive').addEventListener('toggle',render);
 window.addEventListener('hashchange',render);window.addEventListener('storage',render);window.addEventListener('teum-meals-updated',render);render();
 function afterNavigation(fn){requestAnimationFrame(()=>requestAnimationFrame(()=>requestAnimationFrame(fn)));}
 document.addEventListener('click',event=>{const a=event.target.closest?.('a[data-journal-target]');if(!a||event.button!==0||event.ctrlKey||event.metaKey||event.shiftKey||event.altKey)return;const expected=a.getAttribute('href');afterNavigation(()=>{if(location.hash===expected)document.getElementById(a.dataset.journalTarget)?.scrollIntoView({block:'start',behavior:'instant'});});});

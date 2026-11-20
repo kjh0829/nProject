@@ -1,7 +1,7 @@
 # 알찬끼 프로젝트 작업 규칙
 
 ## 제품
-- 현재 중심 경험은 3매치 퍼즐 → 여행 진행 → 포인트/의상 수집 → 2D 캐릭터 꾸미기다. 식사 피드·레시피·장보기는 메인에서 제외하고 기존 개인 기록을 보관함에서 보존한다. FIRE/월예산은 기존 도구로 유지한다.
+- 현재 중심 경험은 3매치 퍼즐 → 여행 진행 → 포인트/의상 수집 → 2D 캐릭터 꾸미기다. 식사 피드·레시피·장보기는 메인에서 제외하고 기존 개인 저장 데이터는 유지하되 이전 기록 보관함은 사용자 요청으로 제거했다. FIRE/월예산은 기존 도구로 유지한다.
 - 서비스의 현재 기능과 제약은 `team/README.md`, 우선 과제는 `team/BACKLOG.md`를 읽는다.
 - 사용자 요청이 최우선이다. 역할 문서는 구현을 돕는 기준이며 추가 승인 절차를 만들지 않는다.
 
@@ -88,10 +88,12 @@
 
 - 전신 피팅은 [검토 기록](team/briefs/AVATAR-FULL-FIT.md)을 따른다. 긴 하의 legFit, 부츠 openings, 안경 lensAnchors를 필수 등록한다. 가방 끈은 어깨 표면/머리 뒤에 두고 새 소품 perchPoints의 모든 상의 접촉을 확인하며 피부색으로 스타킹·안감이 바뀌지 않게 한다. 원본 PNG와 지갑을 유지하고 전신/부분/피부색별 육안 검토 및 776개 동적 검사·누락 집계를 확인한다.
 
-- 메뉴 간소화: `menu-focus.mjs/css`는 검증된 여행·지갑을 읽어 홈/게임 이어하기와 기록 요약만 표시한다. 저장 키를 초기화·이관하지 않는다. 게임의 날짜별/연습 판은 `#game-more-modes`, 생활 도구는 `#life-tools`, 예전 기록은 `#legacy-archive`, 원화 참고는 `#avatar-reference-menu`를 먼저 펼친다. 기존 주소/DOM ID/저장 구조는 보존한다. [메뉴 정리](team/briefs/MENU-FOCUS.md).
+- 메뉴 간소화: `menu-focus.mjs/css`는 검증된 여행·지갑을 읽어 홈/게임 이어하기와 기록 요약만 표시한다. 저장 키를 초기화·이관하지 않는다. 게임의 날짜별/연습 판은 `#game-more-modes`, 생활 도구는 `#life-tools`, 원화 참고는 `#avatar-reference-menu`를 먼저 펼친다. 기존 주소/DOM ID/저장 구조는 보존한다. [메뉴 정리](team/briefs/MENU-FOCUS.md).
 
 - 의상 찜·코디 3칸·지역 기념 배경/장식/배지는 `collection-core.mjs`, `collection-ui.mjs`, `collection.css`에서 제공한다. `teum-avatar-v1`의 선택적 collection 필드로 기존 지갑을 읽으며, 구매·전체 코디 착용은 단일 지갑 트랜잭션이다. 지역 해금은 journeyCatalog의 실제 지역 levelIds 전체 완료로 판단한다. 기존 의상 ID/가격/원화와 저장 구조는 유지한다. tests/collection.test.mjs와 collection-browser.cjs를 확인한다.
 
 - 새 미션판은 `puzzle-missions.mjs`와 `journey-content/prism-workshop.mjs`에 있다. 16~20번만 missionCount를 저장하며 1~15번의 판정·RNG·프레임을 이전 엔진과 동일하게 유지한다. 실제 드래그는 `puzzle-drag.mjs`이고 게임판의 조각은 pinch-zoom으로 페이지 확대를 허용한다. `puzzle-guide.mjs`는 처음 한 수/특수 조각 안내, `score-journal.mjs`는 최고 기록 추격/최근10판이다. `outfit-export.mjs`는 동일 출처 원화를 내장한 SVG를 캔버스에 그려 저장된 코디의 PNG를 만든다. PNG 생성·내려받기와 실제 터치 입력은 `tests/play-upgrades-browser.cjs`로 검증한다.
 
 - 목표 피드백은 `puzzle-objectives.mjs/css`의 표현 계층이다. 결과의 부족분은 실제 config/state에서 계산하며 20수 점수판에는 수집 목표를 표시하지 않는다. 실패 결과의 마지막 한 수 복원은 기존 undo 슬롯을 사용하고 보상/별/클리어 기록을 지급하지 않는다. `tests/puzzle-objectives-browser.cjs`에서 모바일/가로 집중 모드·실제 실패/복원·저장 재열기·미션 힌트를 확인한다.
+
+- 이전 기록 보관함(`legacy-archive`)과 내부 식사/읽기/일기/실험 메뉴는 사용자 요청으로 제거했다. 관련 daily UI와 피드 조회/착시 UI도 메인에서 제거했으며 다시 노출하지 않는다. 기존 브라우저 저장 키와 예전 직접 주소의 식사·게임·게시판 기능은 유지한다. 생활 도구와 게임/코디 기록은 그대로 제공한다.
