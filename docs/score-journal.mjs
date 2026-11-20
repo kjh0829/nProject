@@ -12,7 +12,7 @@ function render(){
   box.replaceChildren();
   const title=document.createElement('h3');title.textContent='최근 10판 점수';box.append(title);
   const note=document.createElement('p');note.className='score-history-note';note.textContent='같은 판의 재도전은 최고 점수를 표시해요. 오래된 기록부터 최근 순서입니다.';box.append(note);
-  if(!saved.writable||!saved.value.history.length){const p=document.createElement('p');p.textContent=saved.writable?'20수를 마치면 점수 변화가 여기에 쌓여요.':'점수 기록을 읽지 못했어요.';box.append(p);continue;}
+  if(!saved.writable||!saved.value.history.length){const p=document.createElement('p');p.textContent=saved.writable?'랜덤 한 판을 마치면 점수 변화가 여기에 쌓여요.':'점수 기록을 읽지 못했어요.';box.append(p);continue;}
   const list=document.createElement('ol');list.className='score-history-bars';
   const history=[...saved.value.history].reverse(),max=Math.max(1,...history.map(h=>h.score));
   history.forEach((entry,index)=>{

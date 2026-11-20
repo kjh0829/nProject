@@ -10,7 +10,12 @@ const {chromium}=require('playwright'),assert=require('node:assert/strict');
   for(const nav of ['header nav','.bottom-nav'])assert.deepEqual(await page.locator(nav+' a').evaluateAll(a=>a.map(x=>x.getAttribute('href'))),expected);
   assert.equal(await page.locator('#home .hub-card,#home #meal-feed,#home a[href="#cart"],#home a[href="#fire"]').count(),0);
   assert.equal(await page.locator('#home .home-game-paths .avatar-entry').count(),1);
-  assert.equal(await page.locator('#home .soft-play-button').getAttribute('href'),'#challenge?journey=1');
+  assert.equal(await page.locator('#home [data-menu-journey-action]').getAttribute('href'),'#challenge?journey=1');
+  for(const route of ['home','arcade']){
+   assert.deepEqual(await page.locator('#'+route+' .play-mode-card>strong').allTextContents(),['스테이지','랜덤 한 판']);
+   assert.equal(await page.locator('#'+route+' [data-menu-score-action]').getAttribute('href'),'#challenge?mode=score');
+   assert.equal(await page.locator('#'+route+' .play-mode-grid').evaluate(el=>!!el.closest('details')),false);
+  }
   assert.equal(await page.locator('#meal-feed-grid .meal-card').count(),0);
   assert.equal(await page.locator('.hero,.strip,.meal-hero-visual,.meal-bottom-banner').count(),0);
   const nav=width<700?'.bottom-nav':'header nav';
