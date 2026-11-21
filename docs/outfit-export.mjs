@@ -1,5 +1,5 @@
 import {readAvatar} from './avatar-store.mjs';
-import {avatarArt} from './avatar-art.mjs';
+import {avatarArt,ensureAvatarArt} from './avatar-runtime.mjs';
 import {collectionOf,unlockedPrizes} from './collection-core.mjs';
 import {readJourney} from './journey-saves.mjs';
 
@@ -16,7 +16,9 @@ async function inlineTexture(url) {
  return textures.get(url);
 }
 async function characterImage(value) {
+ await ensureAvatarArt();
  const svg=new DOMParser().parseFromString(avatarArt(value,{decorative:true}),'image/svg+xml').documentElement;
+ if(svg.localName!=='svg')throw Error('캐릭터 미리보기를 다시 불러온 뒤 시도해 주세요.');
  svg.setAttribute('width','600');svg.setAttribute('height','960');svg.setAttribute('overflow','hidden');
  await Promise.all([...svg.querySelectorAll('image')].map(async image=>{
   const url=new URL(image.getAttribute('href'),document.baseURI);

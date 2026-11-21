@@ -101,3 +101,5 @@
 - 홈/게임 상단의 두 진입은 동일한 `스테이지`와 `랜덤 한 판` 이름과 동등한 카드로 표시한다. 랜덤의 20번 교환은 규칙 설명으로 둔다. `menu-focus.mjs`가 검증된 점수 저장을 읽어 시작/이어하기/완료 후 새 판 링크를 표시하며 `round=new`는 완료판에만 새 판을 만들고 즉시 URL에서 소비한다. 진행 중인 저장은 같은 링크로 초기화하지 않는다. `play-modes.css`와 기존 score/site-review/home-motion 브라우저 검사로 확인한다.
 
 - 상·하의 허리는 `avatar-waist.mjs`의 공통 L/F/R 자세로 맞춘다. 모든 top/bottom의 필수 `waist.points/rise`는 보정 전 target 좌표에 등록하며 42px 늘리기 방식은 폐기했다. 목·손목·무릎/발목은 유지한다. `avatar-mesh.mjs`의 작은 화면 겹침과 원단 전용 알파 보정을 유지하고, `avatar-qa-render.mjs`의 실제 원화 표식 검사/잘못된 변환 fixture와 176px 분할선 회귀를 실행한다. 신규 의상은 [허리 피팅 규격](team/briefs/AVATAR-WAIST-FIT.md)을 따른다. 전체 776건/13분할 집계를 확인하고 육안 품질과 자동 결과를 구분한다.
+
+- 제품의 아바타 렌더링은 `avatar-runtime.mjs`의 선택적 비동기 경계를 사용한다. 렌더러 실패가 메뉴·게임·보상 저장을 막지 않게 하고 숨겨진 옷장의 SVG를 미리 그리지 않는다. 캐시된 이전 등록의 누락 필드는 런타임에서 호환하되 신규 의상 QA의 필수 필드는 완화하지 않는다. `tests/avatar-recovery-browser.cjs`로 실패/지연 로드·기록 보존·실제 보상을 검사한다. [진입 복구 기준](team/briefs/AVATAR-RECOVERY.md).

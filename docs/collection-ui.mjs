@@ -3,7 +3,7 @@ import {itemById} from './avatar-data.mjs';
 import {avatarBalance} from './avatar-core.mjs';
 import {readAvatar,setAvatarWish} from './avatar-store.mjs';
 import {readJourney} from './journey-saves.mjs';
-import {avatarArt} from './avatar-art.mjs';
+import {avatarArt} from './avatar-runtime.mjs';
 import {collectionOf,regionPrizes,unlockedPrizes} from './collection-core.mjs';
 
 function element(tag,className,text) {
@@ -34,7 +34,7 @@ function render() {
   prop.textContent=selected?.symbol||'';
  }
  for(const el of document.querySelectorAll('[data-home-avatar]')) {
-  el.innerHTML=avatarArt(value,{decorative:true});
+  if(document.body.dataset.view==='home')el.innerHTML=avatarArt(value,{decorative:true});else el.replaceChildren();
  }
  const badge=document.getElementById('home-region-badge');
  badge.textContent=selected?selected.symbol+' '+selected.badge:prizes.length?prizes.at(-1).symbol+' '+prizes.at(-1).badge:'나만의 코디';
@@ -77,6 +77,7 @@ function render() {
 function prizeLastLevel(id) {
  return journeyCatalog.chapters.find(chapter=>chapter.id===id)?.lastLevel;
 }
+window.addEventListener('teum-avatar-art-ready',render);
 window.addEventListener('hashchange',render);
 window.addEventListener('teum-avatar-changed',render);
 window.addEventListener('teum-journey-saved',render);

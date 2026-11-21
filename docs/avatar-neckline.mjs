@@ -1,5 +1,5 @@
 import {avatarMeshTriangle as triangle} from './avatar-mesh.mjs';
-import {fitAvatarWaist,avatarWaistMeshAxes} from './avatar-waist.mjs';
+import {fitAvatarWaist,avatarWaistMeshAxes} from './avatar-waist.mjs?recovery=20261121';
 // Wrist sections measured on the unchanged body atlas (rows 660–680).
 export const avatarWristRig=[{center:[275,672],angle:23},{center:[744,674],angle:-27}];
 

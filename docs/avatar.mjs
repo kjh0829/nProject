@@ -3,12 +3,14 @@ import {readJourney} from './journey-saves.mjs';
 import {avatarItems,avatarSlots,itemById,skins,faces,avatarThemes} from './avatar-data.mjs';
 import {avatarBalance} from './avatar-core.mjs';
 import {readAvatar,ensureAvatar,purchaseAndWearAvatar,equipAvatar,setAvatarLook,setAvatarWish,saveLook,loadLook,setAvatarBackground} from './avatar-store.mjs';
-import {avatarArt} from './avatar-art.mjs';
-import {refreshAvatarBadges} from './avatar-rewards.mjs';
+import {avatarArt,isAvatarArtReady} from './avatar-runtime.mjs';
+import {refreshAvatarBadges} from './avatar-rewards.mjs?recovery=20261121';
 const $=id=>document.getElementById(id);let tab='shop',slot='top',selected=null,busy=false,ready=false,pose='idle',theme='all',draft={},search='',availability='all',sort='catalog';
 const matchesTheme=item=>theme==='all'||theme==='classic'&&!item.theme||item.theme===theme;
 const say=text=>{$('avatar-status').textContent=text;};
+function clearPreview(){for(const id of ['avatar-stage','avatar-zoom-stage','avatar-items'])$(id).replaceChildren();}
 function render(){
+ if(document.body.dataset.view!=='avatar'||new URLSearchParams(location.hash.split('?')[1]||'').get('view')==='reference'){clearPreview();return;}
  $('avatar').classList.toggle('avatar-themed',theme!=='all');
  const {value:v,writable,exists}=readAvatar(),item=itemById(selected),outfit={...v.equipped,...draft},preview=Object.keys(draft).some(slot=>draft[slot]!==v.equipped[slot]);
  const focus=document.activeElement?.dataset.avatarItem;for(const b of document.querySelectorAll('[data-avatar-pose]'))b.setAttribute('aria-pressed',String(b.dataset.avatarPose===pose));
@@ -23,7 +25,7 @@ function render(){
  if(comparators[sort])items.sort(comparators[sort]);
  $('avatar-availability').disabled=tab!=='shop';$('avatar-availability').closest('label').hidden=tab!=='shop';
  const grid=$('avatar-items');grid.replaceChildren();
- for(const it of items){const owned=v.owned.includes(it.id),b=document.createElement('button');b.type='button';b.className='avatar-item'+(selected===it.id?' selected':'');b.dataset.avatarItem=it.id;b.setAttribute('aria-pressed',String(selected===it.id));b.setAttribute('aria-label',it.name+' · '+(v.equipped[it.slot]===it.id?'착용 중':owned?'보유 중':it.price+' 포인트')+' · 미리보기');b.disabled=busy;const art=document.createElement('span');art.className='avatar-item-art';art.innerHTML=avatarArt(v,{outfit:{...outfit,[it.slot]:it.id},decorative:true,framing:'slot',focusSlot:it.slot});const name=document.createElement('strong');name.textContent=it.name;const label=document.createElement('small');label.textContent=v.equipped[it.slot]===it.id?'착용 중':owned?'보유 중':it.price+' P';b.append(art,name,label);b.onclick=()=>{selected=it.id;draft[it.slot]=it.id;render();};grid.append(b);}
+ for(const it of items){const owned=v.owned.includes(it.id),b=document.createElement('button');b.type='button';b.className='avatar-item'+(selected===it.id?' selected':'');b.dataset.avatarItem=it.id;b.setAttribute('aria-pressed',String(selected===it.id));b.setAttribute('aria-label',it.name+' · '+(v.equipped[it.slot]===it.id?'착용 중':owned?'보유 중':it.price+' 포인트')+' · 미리보기');b.disabled=busy||!isAvatarArtReady();const art=document.createElement('span');art.className='avatar-item-art';art.innerHTML=avatarArt(v,{outfit:{...outfit,[it.slot]:it.id},decorative:true,framing:'slot',focusSlot:it.slot});const name=document.createElement('strong');name.textContent=it.name;const label=document.createElement('small');label.textContent=v.equipped[it.slot]===it.id?'착용 중':owned?'보유 중':it.price+' P';b.append(art,name,label);b.onclick=()=>{selected=it.id;draft[it.slot]=it.id;render();};grid.append(b);}
  $('avatar-empty').hidden=items.length!==0;
  const action=$('avatar-item-action');action.hidden=!item;
  const cost=outfitPrice(v,draft) ?? 0;
@@ -33,20 +35,20 @@ function render(){
   const changed=Object.keys(draft).filter(slot=>draft[slot]!==v.equipped[slot]).length;
   $('avatar-item-description').textContent=preview?'바꿀 의상 '+changed+'개 · 구매 '+cost+' P'+(cost>avatarBalance(v)?' · '+(cost-avatarBalance(v))+' P 더 필요해요.':'. 다른 부위도 함께 골라보세요.'):'현재 저장된 코디입니다.';
   action.textContent=!preview?'착용 중':cost>0?cost+' P로 코디 구매하고 입기':'이 코디 입기';
-  action.disabled=!ready||busy||!writable||!exists||!preview||avatarBalance(v)<cost;
+  action.disabled=!isAvatarArtReady()||!ready||busy||!writable||!exists||!preview||avatarBalance(v)<cost;
   const wish=$('avatar-wish');
   wish.textContent=collectionOf(v).wish===item.id?'♥ 목표 의상 찜 해제':owned?'보유한 의상':'♡ 목표 의상으로 찜';
   wish.disabled=busy||!ready||!writable||!exists||(owned&&collectionOf(v).wish!==item.id);
   wish.setAttribute('aria-pressed',String(collectionOf(v).wish===item.id));
   $('avatar-item-detail').hidden=false;
  }else $('avatar-item-detail').hidden=true;
- renderLooks(v,writable&&exists&&ready&&!busy);
- renderBackgrounds(v,writable&&exists&&ready&&!busy);
+ renderLooks(v,writable&&exists&&ready&&!busy&&isAvatarArtReady());
+ renderBackgrounds(v,writable&&exists&&ready&&!busy&&isAvatarArtReady());
  $('avatar-preview-cancel').hidden=!preview;$('avatar-remove').hidden=!['hat','accessory'].includes(slot)||!v.equipped[slot];$('avatar-remove').textContent=slot==='hat'?'모자 벗기':'소품 빼기';$('avatar-remove').disabled=busy||!ready||!writable||!exists;
  for(const b of document.querySelectorAll('[data-avatar-look]')){const [key,id]=b.dataset.avatarLook.split(':');b.setAttribute('aria-pressed',String(v[key]===id));b.disabled=busy||!ready||!writable||!exists;}
  if(focus)grid.querySelector(`[data-avatar-item="${focus}"]`)?.focus({preventScroll:true});refreshAvatarBadges();
 }
-async function mutate(action,success,resetDraft=false){if(busy)return;busy=true;render();const result=await action();busy=false;if(result.ok){if(resetDraft)draft={};say(success);}else say(({funds:'포인트가 부족해요. 게임을 완료하고 다시 골라주세요.',owned:'이미 보유한 아이템이에요. 추가 포인트는 쓰지 않았어요.','not-owned':'미리 입은 옷을 구매한 뒤 코디를 저장해 주세요.',locked:'이 지역을 완주하면 사용할 수 있어요.',storage:'저장하지 못했어요. 포인트를 차감하거나 착장을 바꾸지 않았습니다.'})[result.reason]||'이 아이템을 적용할 수 없어요. 보유한 옷을 확인해 주세요.');render();return result;}
+async function mutate(action,success,resetDraft=false){if(busy)return;if(!isAvatarArtReady()){say('미리보기를 불러온 뒤 다시 시도해 주세요.');return;}busy=true;render();const result=await action();busy=false;if(result.ok){if(resetDraft)draft={};say(success);}else say(({funds:'포인트가 부족해요. 게임을 완료하고 다시 골라주세요.',owned:'이미 보유한 아이템이에요. 추가 포인트는 쓰지 않았어요.','not-owned':'미리 입은 옷을 구매한 뒤 코디를 저장해 주세요.',locked:'이 지역을 완주하면 사용할 수 있어요.',storage:'저장하지 못했어요. 포인트를 차감하거나 착장을 바꾸지 않았습니다.'})[result.reason]||'이 아이템을 적용할 수 없어요. 보유한 옷을 확인해 주세요.');render();return result;}
 function chooseSlot(next){
  slot=next;
  const value=readAvatar().value;
@@ -100,7 +102,8 @@ function renderBackgrounds(value,enabled){
   container.append(button);
  }
 }
-window.addEventListener('teum-avatar-changed',()=>{if(!busy)render();});window.addEventListener('storage',e=>{if(e.key==='teum-avatar-v1')render();});window.addEventListener('hashchange',()=>{if(location.hash.slice(1).split('?')[0]==='avatar'){selected=null;draft={};const id=new URLSearchParams(location.hash.split('?')[1]||'').get('item');const item=itemById(id);if(item){selected=id;slot=item.slot;theme='all';themeSelect.value='all';search='';availability='all';$('avatar-search').value='';$('avatar-availability').value='all';draft[slot]=id;}render();}});
+window.addEventListener('teum-avatar-art-ready',render);
+window.addEventListener('teum-avatar-changed',()=>{if(!busy)render();});window.addEventListener('storage',e=>{if(e.key==='teum-avatar-v1')render();});window.addEventListener('hashchange',()=>{if(location.hash.slice(1).split('?')[0]==='avatar'){selected=null;draft={};const id=new URLSearchParams(location.hash.split('?')[1]||'').get('item');const item=itemById(id);if(item){selected=id;slot=item.slot;theme='all';themeSelect.value='all';search='';availability='all';$('avatar-search').value='';$('avatar-availability').value='all';draft[slot]=id;}render();}else clearPreview();});
 const themeLabel=document.createElement('label');themeLabel.className='avatar-theme-filter';themeLabel.textContent='테마 ';const themeSelect=document.createElement('select');themeSelect.id='avatar-theme';themeSelect.setAttribute('aria-label','코디 테마');themeSelect.append(new Option('전체 컬렉션','all'),new Option('기본 컬렉션','classic'));for(const t of avatarThemes)themeSelect.append(new Option(t.name,t.id));themeSelect.onchange=()=>{theme=themeSelect.value;chooseSlot(slot);say('선택한 테마의 아이템을 보여드려요. 착장은 아직 바꾸지 않았습니다.');};themeLabel.append(themeSelect);$('avatar-slots').before(themeLabel);
 $('avatar-search').addEventListener('input',event=>{search=event.target.value;render();});
 $('avatar-availability').addEventListener('change',event=>{availability=event.target.value;render();});

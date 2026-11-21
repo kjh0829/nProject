@@ -4,7 +4,7 @@ import {avatarMeshTriangle} from './avatar-mesh.mjs';
 // Left side, front centre, right side. Knees/feet, neck and hands stay fixed.
 export const avatarWaistRig={version:'waist-v1',points:[[425,620],[568,648],[668,632]],top:{start:480,end:850,bounds:[400,710]},bottom:{start:500,end:900},overall:{start:440,end:950}};
 const smooth=t=>{const n=Math.max(0,Math.min(1,t));return n*n*(3-2*n);};
-const region=(layer,slot)=>avatarWaistRig[slot==='top'?'top':layer.waist.rise<0?'overall':'bottom'];
+const region=(layer,slot)=>avatarWaistRig[slot==='top'?'top':(layer.waist?.rise??0)<0?'overall':'bottom'];
 const lerp=(a,b,t)=>a+(b-a)*t;
 function segment(points,x){let i=0;while(i<points.length-2&&x>points[i+1][0])i++;return {i,t:Math.max(0,Math.min(1,(x-points[i][0])/(points[i+1][0]-points[i][0])))};}
 export function fitAvatarWaist(point,layer,slot){
@@ -17,10 +17,12 @@ export function fitAvatarWaist(point,layer,slot){
  return[x+dx*weight,y+dy*weight];
 }
 export function avatarWaistMeshAxes(layer,bounds,slot='top'){
+ if(!layer.waist)return{xs:[],ys:[]};
  const r=region(layer,slot),[x,y,w,h]=bounds,edges=r.bounds||[x,x+w];
  return{xs:[edges[0],...layer.waist.points.map(p=>p[0]),edges[1]].filter(v=>v>=x&&v<=x+w),ys:[r.start,...layer.waist.points.map(p=>p[1]),720,780,r.end].filter(v=>v>=y&&v<=y+h)};
 }
 export function fittedAvatarBottom(layer,uid,source){
+ if(!layer.waist)return{defs:'',art:source};
  const sourceId=uid+'-waist-source',r=region(layer,'bottom'),[x,y,w,h]=layer.target;
  const axes=avatarWaistMeshAxes(layer,[x,Math.min(y,r.start),w,y+h-Math.min(y,r.start)],'bottom');
  const xs=[...new Set([x,...axes.xs,x+w])].sort((a,b)=>a-b),ys=[...new Set([r.start,...axes.ys,r.end])].sort((a,b)=>a-b);

@@ -2,7 +2,7 @@ import {createObjectiveFeedback,objectiveHint} from './puzzle-objectives.mjs';
 import {updateScoreChase} from './score-journal.mjs';
 import {createPuzzleDrag} from './puzzle-drag.mjs';
 import {createPuzzleGuide} from './puzzle-guide.mjs';
-import {syncAvatarReward} from './avatar-rewards.mjs';
+import {syncAvatarReward} from './avatar-rewards.mjs?recovery=20261121';
 import {journeyLevels,chapters,nextJourneyLevel,isJourneyChapterEnd} from './journey-data.mjs';
 import {readJourney,saveJourney,unlockedLevel} from './journey-saves.mjs';
 import {specialNames,specialMarks} from './puzzle-specials.mjs';
