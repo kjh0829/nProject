@@ -1,18 +1,18 @@
 const {chromium}=require('playwright'),assert=require('node:assert/strict');
-(async()=>{const b=await chromium.launch({headless:true,...(process.env.CHROMIUM_EXECUTABLE_PATH?{executablePath:process.env.CHROMIUM_EXECUTABLE_PATH,args:['--no-sandbox']}: {})});try{const p=await b.newPage({viewport:{width:1600,height:2400}});await p.goto('http://127.0.0.1:8000/#avatar');await p.waitForSelector('#avatar-stage .avatar-raster');const before=await p.evaluate(()=>localStorage.getItem('teum-avatar-v1'));
+(async()=>{const b=await chromium.launch({headless:true,...(process.env.CHROMIUM_EXECUTABLE_PATH?{executablePath:process.env.CHROMIUM_EXECUTABLE_PATH,args:['--no-sandbox']}: {})});try{const p=await b.newPage({viewport:{width:1600,height:2400}});await p.goto('http://127.0.0.1:8000/#avatar');await p.waitForSelector('#avatar-stage .avatar-raster');const before=await p.evaluate(()=>localStorage.getItem('teum-avatar-v1'));p.on('console',m=>{if(m.type()==='log'&&m.text().startsWith('Rendered waist frame'))console.log(m.text());});
 const results=await p.evaluate(async()=>{
  const {avatarArt}=await import('./avatar-art.mjs'),cache=new Map();
  // Decode the actual SVG composition with inline copies of its local textures.
  // Canvas is read only: sample pixels, never modify or replace the source PNGs.
- async function render(outfit,look={},withoutNeckMask=false,solidTop=false,closedCuff=false){
+ async function render(outfit,look={},withoutNeckMask=false,solidTop=false,closedCuff=false,size=1024){
   const doc=new DOMParser().parseFromString(avatarArt({skin:'peach',face:'smile',...look},{outfit}).replace('160 -100 700 1640','0 0 1024 1536'),'image/svg+xml'),svg=doc.documentElement;
   if(closedCuff){const {avatarLayers}=await import('./avatar-layers.mjs');svg.querySelector('clipPath[id$="-cuff-opening"]').innerHTML=avatarLayers[outfit.top].cuffs.openings.map(([cx,cy,rx,ry,angle])=>`<ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" transform="rotate(${angle} ${cx} ${cy})"/>`).join('');}
-  if(solidTop){const {avatarLayers}=await import('./avatar-layers.mjs'),[x,y,width,height]=avatarLayers[outfit.top].target,source=svg.querySelector('g[id$="-top-source"]'),rect=doc.createElementNS('http://www.w3.org/2000/svg','rect');for(const [key,value]of Object.entries({x,y,width,height,fill:'#183048',opacity:.992}))rect.setAttribute(key,value);source.replaceChildren(rect);const top=svg.querySelector(`[data-item="${outfit.top}"]`);for(const child of [...svg.children])if(child.tagName!=='defs'&&child!==top)child.remove();}
+  if(solidTop){const {avatarLayers}=await import('./avatar-layers.mjs'),[x,y,width,height]=avatarLayers[outfit.top].target,source=svg.querySelector('g[id$="-top-source"]'),rect=doc.createElementNS('http://www.w3.org/2000/svg','rect');for(const [key,value]of Object.entries({x,y,width,height,fill:'#183048',opacity:.992,filter:`url(#${svg.querySelector('filter[id$="-fabric-alpha"]').id})`}))rect.setAttribute(key,value);source.replaceChildren(rect);const top=svg.querySelector(`[data-item="${outfit.top}"]`);for(const child of [...svg.children])if(child.tagName!=='defs'&&child!==top)child.remove();}
   if(withoutNeckMask)for(const node of svg.querySelectorAll('[mask]'))node.removeAttribute('mask');
-  svg.setAttribute('width','1024');svg.setAttribute('height','1536');
+  svg.setAttribute('width',String(size));svg.setAttribute('height',String(size*1.5));
   for(const node of svg.querySelectorAll('image')){const href=node.getAttribute('href');if(!cache.has(href)){const blob=await(await fetch(href)).blob();cache.set(href,await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onerror=reject;reader.onload=()=>resolve(reader.result);reader.readAsDataURL(blob);}));}node.setAttribute('href',cache.get(href));}
   const url=URL.createObjectURL(new Blob([new XMLSerializer().serializeToString(svg)],{type:'image/svg+xml'}));
-  try{const img=new Image();img.src=url;await img.decode();const canvas=document.createElement('canvas');canvas.width=1024;canvas.height=1536;const ctx=canvas.getContext('2d');ctx.drawImage(img,0,0);const data=ctx.getImageData(0,0,1024,1536).data;return{svg,pixel:(x,y)=>[...data.slice((y*1024+x)*4,(y*1024+x)*4+4)]};}finally{URL.revokeObjectURL(url);}
+  try{const img=new Image();img.src=url;await img.decode();const canvas=document.createElement('canvas');canvas.width=size;canvas.height=size*1.5;const ctx=canvas.getContext('2d');ctx.drawImage(img,0,0);const data=ctx.getImageData(0,0,size,size*1.5).data;return{svg,pixel:(x,y)=>{const i=(Math.round(y*size/1024)*size+Math.round(x*size/1024))*4;return [...data.slice(i,i+4)]}};}finally{URL.revokeObjectURL(url);}
  }
  const basic={hair:'hair-cocoa',hat:null,top:'top-stripe',bottom:'bottom-denim',shoes:'shoes-canvas',accessory:null},checks=[];
  const expect=(ok,message)=>{if(!ok)throw Error(message);};
@@ -63,6 +63,20 @@ const results=await p.evaluate(async()=>{
  await brokenSvg(bagCase,svg=>svg.querySelector('[mask$="-shoulder)"]').removeAttribute('mask'),'bag-shoulder-clipping');
  await brokenSvg(bootCase,svg=>svg.querySelector('[data-item="shoes-red"]')?.removeAttribute('mask'),'boot-leg-insertion');
  const fittedLegs=structuredClone(avatarLayers['bottom-denim'].legFit);try{avatarLayers['bottom-denim'].legFit.shifts=[0,0];expect((await inspectAvatarCase(legCase)).failures.some(f=>f.rule==='hem-ankle-alignment'),'Fixture did not reject displaced trouser hems');}finally{avatarLayers['bottom-denim'].legFit=fittedLegs;}
+ const waistCase=plan.cases.find(c=>c.groups.includes('top-bottom')&&c.outfit.top==='top-forest'&&c.outfit.bottom==='bottom-denim');
+ for(const [part,rule]of [['waist','waist-frame:bottom:front'],['sleeve','waist-frame:top:front']])await brokenSvg(waistCase,svg=>{for(const node of svg.querySelectorAll('g[clip-path] > use[transform]'))if(node.parentElement.getAttribute('clip-path').includes('-'+part+'-'))node.removeAttribute('transform');},rule);
+ // Actual small UI scale: a flat fabric source makes clipping seams measurable.
+ const minFabric=picture=>{let min=255;for(let x=440;x<=650;x+=4)for(let y=420;y<=670;y+=4)min=Math.min(min,picture.pixel(x,y)[3]);return min;};
+ const small=await render({...basic,top:'top-mint'},{},false,true,false,176),goodAlpha=minFabric(small);
+ expect(goodAlpha>=253,'Small-scale fabric mesh has pale seams: '+goodAlpha);
+ const parse=DOMParser.prototype.parseFromString;let oldAlpha;
+ DOMParser.prototype.parseFromString=function(text,type){const doc=parse.call(this,text,type);for(const node of doc.querySelectorAll('clipPath[id*="-sleeve-"] polygon,clipPath[id*="-collar-"] polygon')){
+  const points=node.getAttribute('points').split(' ').map(p=>p.split(',').map(Number)),[a,b,c]=points,lengths=[Math.hypot(b[0]-c[0],b[1]-c[1]),Math.hypot(a[0]-c[0],a[1]-c[1]),Math.hypot(a[0]-b[0],a[1]-b[1])],sum=lengths.reduce((a,b)=>a+b,0),center=[0,1].map(k=>points.reduce((n,p,i)=>n+p[k]*lengths[i],0)/sum),radius=Math.abs((b[0]-a[0])*(c[1]-a[1])-(b[1]-a[1])*(c[0]-a[0]))/sum;
+  node.setAttribute('points',points.map(p=>p.map((v,k)=>center[k]+(v-center[k])*(1-2.2/radius)).join(',')).join(' '));
+ }return doc;};
+ try{oldAlpha=minFabric(await render({...basic,top:'top-mint'},{},false,true,false,176));}finally{DOMParser.prototype.parseFromString=parse;}
+ expect(oldAlpha<goodAlpha-2,'Regression did not reject subpixel triangle overlap at mobile scale: '+oldAlpha+'/'+goodAlpha);
+ console.log('Rendered waist frame rejects missing top/bottom fitting; mobile fabric alpha '+goodAlpha+' vs old overlap '+oldAlpha);
  const {skins}=await import('./avatar-data.mjs');
  for(const outfit of [{...basic,bottom:'bottom-check'},{...basic,top:'top-night',bottom:'bottom-check'}]){
   const reference=await render(outfit,{skin:'peach'});

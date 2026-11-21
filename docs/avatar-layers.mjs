@@ -173,6 +173,7 @@ export const avatarLayers={
     "profile": "hat"
   },
   "top-stripe": {
+    "waist": {"points":[[425,628],[552,650],[672,634]],"rise":0},
     "atlas": "tops",
     "source": [
       142,
@@ -209,6 +210,7 @@ export const avatarLayers={
     }
   },
   "top-mint": {
+    "waist": {"points":[[427,636],[566,654],[676,631]],"rise":0},
     "atlas": "tops",
     "source": [
       652,
@@ -293,6 +295,7 @@ export const avatarLayers={
     }
   },
   "top-coral": {
+    "waist": {"points":[[430,628],[560,650],[675,630]],"rise":0},
     "atlas": "tops",
     "source": [
       38,
@@ -377,6 +380,7 @@ export const avatarLayers={
     }
   },
   "top-night": {
+    "waist": {"points":[[425,620],[558,650],[670,632]],"rise":0},
     "atlas": "tops",
     "source": [
       709,
@@ -461,6 +465,7 @@ export const avatarLayers={
     }
   },
   "bottom-denim": {
+    "waist": {"points":[[468,638],[591,662],[637,647]],"rise":0},
     "atlas": "bottoms",
     "source": [
       149,
@@ -485,6 +490,7 @@ export const avatarLayers={
     }
   },
   "bottom-lilac": {
+    "waist": {"points":[[432,628],[598,660],[667,631]],"rise":0},
     "atlas": "bottoms",
     "source": [
       714,
@@ -501,6 +507,7 @@ export const avatarLayers={
     "profile": "shorts"
   },
   "bottom-check": {
+    "waist": {"points":[[444,626],[563,654],[659,632]],"rise":0},
     "atlas": "bottoms",
     "source": [
       63,
@@ -517,6 +524,7 @@ export const avatarLayers={
     "profile": "skirt"
   },
   "bottom-overall": {
+    "waist": {"points":[[443,565],[565,592],[645,577]],"rise":-40},
     "atlas": "bottoms",
     "source": [
       797,
@@ -901,6 +909,7 @@ export const avatarLayers={
     "profile": "hat"
   },
   "top-blossom": {
+    "waist": {"points":[[430,628],[570,652],[675,631]],"rise":0},
     "atlas": "theme-tops",
     "source": [
       12,
@@ -985,6 +994,7 @@ export const avatarLayers={
     }
   },
   "bottom-blossom": {
+    "waist": {"points":[[443,632],[570,658],[645,636]],"rise":0},
     "atlas": "theme-bottoms",
     "source": [
       21,
@@ -1095,6 +1105,7 @@ export const avatarLayers={
     "profile": "hat"
   },
   "top-coast": {
+    "waist": {"points":[[430,628],[564,650],[674,630]],"rise":0},
     "atlas": "theme-tops",
     "source": [
       524,
@@ -1179,6 +1190,7 @@ export const avatarLayers={
     }
   },
   "bottom-coast": {
+    "waist": {"points":[[446,633],[575,654],[640,634]],"rise":0},
     "atlas": "theme-bottoms",
     "source": [
       530,
@@ -1289,6 +1301,7 @@ export const avatarLayers={
     "profile": "hat"
   },
   "top-starlit": {
+    "waist": {"points":[[430,630],[566,652],[672,632]],"rise":0},
     "atlas": "theme-tops",
     "source": [
       13,
@@ -1373,6 +1386,7 @@ export const avatarLayers={
     }
   },
   "bottom-starlit": {
+    "waist": {"points":[[450,633],[557,655],[640,634]],"rise":0},
     "atlas": "theme-bottoms",
     "source": [
       17,
@@ -1483,6 +1497,7 @@ export const avatarLayers={
     "profile": "hat"
   },
   "top-forest": {
+    "waist": {"points":[[430,638],[580,655],[680,634]],"rise":0},
     "atlas": "theme-tops",
     "source": [
       524,
@@ -1567,6 +1582,7 @@ export const avatarLayers={
     }
   },
   "bottom-forest": {
+    "waist": {"points":[[445,632],[570,663],[643,634]],"rise":0},
     "atlas": "theme-bottoms",
     "source": [
       530,
@@ -1677,6 +1693,7 @@ export const avatarLayers={
     "profile": "hat"
   },
   "top-cafe": {
+    "waist": {"points":[[420,632],[555,652],[670,630]],"rise":0},
     "atlas": "theme-tops",
     "source": [
       11,
@@ -1761,6 +1778,7 @@ export const avatarLayers={
     }
   },
   "bottom-cafe": {
+    "waist": {"points":[[447,638],[563,677],[644,640]],"rise":0},
     "atlas": "theme-bottoms",
     "source": [
       16,

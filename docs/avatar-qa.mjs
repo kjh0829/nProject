@@ -1,18 +1,31 @@
+import {avatarWaistRig,fitAvatarWaist,avatarWaistMeshAxes} from './avatar-waist.mjs';
 import {avatarEyeRig} from './avatar-rig.mjs';
 import {avatarWristRig} from './avatar-neckline.mjs';
 import {avatarItems,avatarSlots,starterOutfit,skins,faces} from './avatar-data.mjs';
 import {avatarLayers,avatarAtlases,avatarFaceSources} from './avatar-layers.mjs';
 import {avatarProfiles} from './avatar-profiles.mjs';
-export const avatarQaVersion='wardrobe-qa-v1';
+export const avatarQaVersion='wardrobe-qa-v2';
 const rect=(r,positive=false)=>Array.isArray(r)&&r.length===4&&r.every(Number.isFinite)&&r[2]>0&&r[3]>0&&(!positive||r[0]>=0&&r[1]>=0);
 export function validateAvatarCatalog(items=avatarItems,layers=avatarLayers,atlases=avatarAtlases,profiles=avatarProfiles){
  const errors=[],ids=new Set(),slots=new Set(avatarSlots.map(s=>s.id));
- const profileKeys=new Set('slot kind probes framing bareArms faceClear longLegs waistJoin waistLift legStart overTop boot mirror behindHair faceClip segmentCount lining outer shoulderClip eyeFit perch'.split(' '));
- for(const [name,p]of Object.entries(profiles)){if(p.framing!==undefined&&typeof p.framing!=='string')errors.push(`profile ${name}: invalid preview framing`);if(Object.keys(p).some(k=>!profileKeys.has(k))||['bareArms','faceClear','longLegs','overTop','boot','mirror','behindHair','faceClip','lining','outer','shoulderClip','eyeFit','perch'].some(k=>p[k]!==undefined&&typeof p[k]!=='boolean'))errors.push(`profile ${name}: unknown/invalid fields`);if(p.kind==='waist'&&(!Number.isFinite(p.waistLift)||p.waistLift<0||p.waistLift>128))errors.push(`profile ${name}: invalid waist lift`);}
+ const profileKeys=new Set('slot kind probes framing bareArms faceClear longLegs legStart overTop boot mirror behindHair faceClip segmentCount lining outer shoulderClip eyeFit perch'.split(' '));
+ for(const [name,p]of Object.entries(profiles)){if(p.framing!==undefined&&typeof p.framing!=='string')errors.push(`profile ${name}: invalid preview framing`);if(Object.keys(p).some(k=>!profileKeys.has(k))||['bareArms','faceClear','longLegs','overTop','boot','mirror','behindHair','faceClip','lining','outer','shoulderClip','eyeFit','perch'].some(k=>p[k]!==undefined&&typeof p[k]!=='boolean'))errors.push(`profile ${name}: unknown/invalid fields`);}
  for(const [name,p]of Object.entries(profiles))if(!slots.has(p.slot)||!['plain','segments','waist'].includes(p.kind)||!Array.isArray(p.probes)||!p.probes.every(v=>Array.isArray(v)&&v.length===2&&v.every(Number.isFinite)&&v[0]>=0&&v[0]<1024&&v[1]>=0&&v[1]<1536)||p.kind==='segments'&&(!Number.isInteger(p.segmentCount)||p.segmentCount<1))errors.push(`profile ${name}: invalid fitting rules`);
  for(const [name,a]of Object.entries(atlases))if(!/^[a-z][a-z0-9-]*$/.test(name)||!Number.isInteger(a.width)||!Number.isInteger(a.height)||a.width<1||a.height<1)errors.push(`atlas ${name}: invalid name/dimensions`);
  for(const item of items){const id=item.id;if(!/^[a-z][a-z0-9-]*$/.test(id)||ids.has(id))errors.push(`${id}: duplicate/unsafe ID`);ids.add(id);if(!slots.has(item.slot))errors.push(`${id}: unknown slot`);const a=layers[id];if(!a){errors.push(`${id}: missing artwork registration`);continue;}const p=profiles[a.profile],atlas=atlases[a.atlas];if(!p||p.slot!==item.slot){errors.push(`${id}: missing/incompatible fitting profile`);continue;}if(!atlas){errors.push(`${id}: unregistered atlas`);continue;}
   const boxes=[a,...(Array.isArray(a.segments)?a.segments:[])];for(const box of boxes){if(!rect(box.source,true)||box.source[0]+box.source[2]>atlas.width||box.source[1]+box.source[3]>atlas.height)errors.push(`${id}: source rectangle outside atlas`);if(!rect(box.target)||box.target[0]<160||box.target[1]<-100||box.target[0]+box.target[2]>860||box.target[1]+box.target[3]>1540)errors.push(`${id}: target rectangle outside full view`);}
+  if(['top','bottom'].includes(item.slot)){
+   const f=a.waist,point=v=>Array.isArray(v)&&v.length===2&&v.every(Number.isFinite);
+   const okay=f&&Object.keys(f).every(k=>['points','rise'].includes(k))&&Array.isArray(f.points)&&f.points.length===3&&f.points.every(point)&&f.points[0][0]>=405&&f.points[0][0]<500&&f.points[1][0]>500&&f.points[1][0]<620&&f.points[2][0]>620&&f.points[2][0]<=700&&f.points.every(p=>p[1]>=540&&p[1]<=700)&&Math.abs(f.points[2][1]-f.points[0][1])<35&&f.points[1][1]>=Math.max(f.points[0][1],f.points[2][1])-4&&f.points[1][1]<=Math.max(f.points[0][1],f.points[2][1])+55&&Number.isFinite(f.rise)&&f.rise>=-50&&f.rise<=20&&(item.slot!=='top'||f.rise===0)&&(!p.overTop||f.rise<0)&&rect(a.target)&&f.points.every(v=>v[0]>a.target[0]&&v[0]<a.target[0]+a.target[2]&&v[1]>a.target[1]&&v[1]<a.target[1]+a.target[3]);
+   if(!okay)errors.push(`${id}: invalid/missing waist registration`);
+   else {
+    const axes=avatarWaistMeshAxes(a,a.target,item.slot),xs=[...new Set([a.target[0],...axes.xs,a.target[0]+a.target[2]])].sort((a,b)=>a-b),ys=[...new Set([Math.max(a.target[1],item.slot==='top'?480:p.overTop?440:500),...axes.ys,Math.min(a.target[1]+a.target[3],item.slot==='top'?850:p.overTop?950:900)])].sort((a,b)=>a-b);
+    for(let j=0;j<ys.length-1;j++)for(let i=0;i<xs.length-1;i++)for(const tri of [[[xs[i],ys[j]],[xs[i+1],ys[j]],[xs[i+1],ys[j+1]]],[[xs[i],ys[j]],[xs[i+1],ys[j+1]],[xs[i],ys[j+1]]]]){
+     const [A,B,C]=tri.map(v=>fitAvatarWaist(v,a,item.slot)),area=(B[0]-A[0])*(C[1]-A[1])-(B[1]-A[1])*(C[0]-A[0]);
+     if(!Number.isFinite(area)||area<.18*(xs[i+1]-xs[i])*(ys[j+1]-ys[j]))errors.push(`${id}: folded waist mesh`);
+    }
+   }
+  }else if(a.waist!==undefined)errors.push(`${id}: waist registration on incompatible slot`);
   if(item.slot==='top'){
    const n=a.neckline;
    if(!n||Object.keys(n).some(k=>!['shift','scale','lift','opening','tilt'].includes(k))||!Number.isFinite(n.tilt)||Math.abs(n.tilt)>12||!Number.isFinite(n.scale)||n.scale<.5||n.scale>1.2||!Number.isFinite(n.lift)||n.lift< -25||n.lift>5||!Number.isFinite(n.shift)||n.shift< -45||n.shift>20||460+n.shift-70*(n.scale-1)<=420||600+n.shift+70*(n.scale-1)>=690||!Array.isArray(n.opening)||n.opening.length!==3||!n.opening.every(v=>Array.isArray(v)&&v.length===2&&v.every(Number.isFinite)&&v[0]>=450&&v[0]<=550&&v[1]>=235&&v[1]<=305)||!(n.opening[0][0]<n.opening[1][0]&&n.opening[1][0]<n.opening[2][0])||n.opening[1][1]<Math.max(n.opening[0][1],n.opening[2][1])||!rect(a.target)||a.target[0]>=420||a.target[0]+a.target[2]<=690||a.target[1]>=290||a.target[1]+a.target[3]<=380)errors.push(`${id}: invalid/missing neckline fitting`);
@@ -24,14 +37,13 @@ export function validateAvatarCatalog(items=avatarItems,layers=avatarLayers,atla
   }
   if(a.legFit&&!p.longLegs)errors.push(`${id}: leg fitting on incompatible profile`);
   if(a.openings&&!p.boot)errors.push(`${id}: boot openings on incompatible profile`);
-  if(p.longLegs){const f=a.legFit;if(!f||Object.keys(f).some(k=>!['start','end','shifts'].includes(k))||!Number.isFinite(f.start)||f.start<1100||f.start>1250||!Number.isFinite(f.end)||!rect(a.target)||f.end<=f.start||f.start<=a.target[1]||a.target[0]>=480||a.target[0]+a.target[2]<=480||p.kind==='waist'&&p.waistJoin>=f.start||Math.abs(f.end-(a.target[1]+a.target[3]))>2||!Array.isArray(f.shifts)||f.shifts.length!==2||!f.shifts.every(v=>Number.isFinite(v)&&Math.abs(v)<=20))errors.push(`${id}: invalid/missing leg fitting`);}
+  if(p.longLegs){const f=a.legFit;if(!f||Object.keys(f).some(k=>!['start','end','shifts'].includes(k))||!Number.isFinite(f.start)||f.start<1100||f.start>1250||!Number.isFinite(f.end)||!rect(a.target)||f.end<=f.start||f.start<=a.target[1]||a.target[0]>=480||a.target[0]+a.target[2]<=480||Math.abs(f.end-(a.target[1]+a.target[3]))>2||!Array.isArray(f.shifts)||f.shifts.length!==2||!f.shifts.every(v=>Number.isFinite(v)&&Math.abs(v)<=20))errors.push(`${id}: invalid/missing leg fitting`);}
   if(p.boot){if(!Array.isArray(a.openings)||a.openings.length!==2||!a.openings.every((o,i)=>Array.isArray(o)&&o.length===5&&o.every(Number.isFinite)&&o[0]>(i?560:300)&&o[0]<(i?620:350)&&o[1]>1280&&o[1]<1340&&o[2]>10&&o[2]<40&&o[3]>2&&o[3]<15&&Math.abs(o[4])<=30))errors.push(`${id}: invalid/missing boot openings`);}
   if(p.eyeFit){const anchors=a.lensAnchors;if(!Array.isArray(anchors)||anchors.length!==2||!anchors.every((point,i)=>{if(!Array.isArray(point)||point.length!==2||!point.every(Number.isFinite))return false;const box=(Array.isArray(a.segments)?a.segments:[]).find(b=>rect(b.source)&&point[0]>=b.source[0]&&point[0]<=b.source[0]+b.source[2]&&point[1]>=b.source[1]&&point[1]<=b.source[1]+b.source[3]);if(!box||!rect(box.target))return false;const x=box.target[0]+(point[0]-box.source[0])*box.target[2]/box.source[2],y=box.target[1]+(point[1]-box.source[1])*box.target[3]/box.source[3];return Math.hypot(x-avatarEyeRig[i][0],y-avatarEyeRig[i][1])<4;}))errors.push(`${id}: missing/misaligned eye anchors`);}
   if(p.eyeFit&&(!Array.isArray(a.segments)||a.segments.some((b,i,all)=>i>0&&(!rect(b.target)||!rect(all[i-1].target)||Math.abs(b.target[0]-all[i-1].target[0]-all[i-1].target[2])>.5||Math.abs(b.target[1]-all[0].target[1])>.5||Math.abs(b.target[3]-all[0].target[3])>.5))))errors.push(`${id}: disconnected lens segments`);
   if(p.perch&&(!Array.isArray(a.perchPoints)||a.perchPoints.length!==2||!a.perchPoints.every(v=>Array.isArray(v)&&v.length===2&&v.every(Number.isFinite)&&rect(a.target)&&v[0]>=a.target[0]&&v[0]<=a.target[0]+a.target[2]&&v[1]>=a.target[1]&&v[1]<=a.target[1]+a.target[3])))errors.push(`${id}: invalid/missing perch points`);
   if(p.kind!=='segments'&&a.segments!==undefined)errors.push(`${id}: unused segment registration`);
   if(p.kind==='segments'&&(!Array.isArray(a.segments)||a.segments.length!==p.segmentCount))errors.push(`${id}: incomplete registered segments`);
-  if(p.kind==='waist'&&(!rect(a.target)||!Number.isFinite(p.waistJoin)||p.waistJoin<=a.target[1]||p.waistJoin>=a.target[1]+a.target[3]))errors.push(`${id}: invalid waistband join`);
  }
  for(const id of Object.keys(layers))if(!ids.has(id))errors.push(`${id}: artwork has no catalog item`);
  for(const slot of avatarSlots)if(!items.some(i=>i.slot===slot.id))errors.push(`${slot.id}: empty catalog slot`);

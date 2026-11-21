@@ -50,3 +50,16 @@ assert.equal(plan.pairCounts['face-accessory'],avatarItems.filter(i=>i.slot==='h
 console.log('Both lenses align with the eye rig; all expressions and boot skin combinations included PASS');
 
 {const layers=copy(avatarLayers);delete layers['acc-bird'].perchPoints;assert(validateAvatarCatalog(avatarItems,layers).some(e=>e.includes('perch points')));}
+
+const {avatarWaistRig,fitAvatarWaist}=await import('../docs/avatar-waist.mjs');
+for(const item of avatarItems.filter(i=>['top','bottom'].includes(i.slot))){
+ const a=avatarLayers[item.id];
+ for(const [i,point]of a.waist.points.entries())assert.deepEqual(fitAvatarWaist(point,a,item.slot),[avatarWaistRig.points[i][0],avatarWaistRig.points[i][1]+a.waist.rise]);
+ const fixed=item.slot==='top'?[[495,253],[275,672],[744,674],[520,420]]:[[520,300],[400,1000],[330,1350],[595,1350]];
+ for(const point of fixed)assert.deepEqual(fitAvatarWaist(point,a,item.slot),point,'Waist fitting moved another joint: '+item.id);
+}
+for(const mutate of [a=>delete a.waist,a=>a.waist.points.reverse(),a=>a.waist.points[1][0]=NaN,a=>a.waist.rise=100,a=>a.waist.points[0]=[200,630],a=>a.waist.unknown=true]){
+ const layers=copy(avatarLayers);mutate(layers['bottom-denim']);assert(validateAvatarCatalog(avatarItems,layers).some(e=>e.includes('waist')));
+}
+{const layers=copy(avatarLayers);delete layers['top-forest'].waist;assert.throws(()=>buildAvatarQaPlan(avatarItems,layers),/waist/);}
+console.log('All tops/bottoms register the posed waist frame; shared front/angle alignment, fixed neck/hands/knees/ankles and invalid/missing registrations PASS');

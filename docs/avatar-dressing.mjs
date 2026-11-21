@@ -2,12 +2,8 @@
 export function legArtwork(a,p,texture){
  const[sx,sy,sw,sh]=a.source,[x,y,w,h]=a.target,{start,end,shifts}=a.legFit,sourceY=v=>sy+(v-y)*sh/h;
  let art='';
- if(p.kind==='waist'){
-  const join=p.waistJoin,cut=sourceY(join)-sy;
-  art+=texture(a.atlas,[sx,sy,sw,cut],[x,y-p.waistLift,w,join-y+p.waistLift+.5]);
-  art+=texture(a.atlas,[sx,sy+cut,sw,sourceY(start)-sy-cut],[x,join,w,start-join+.5]);
- }else art+=texture(a.atlas,[sx,sy,sw,sourceY(start)-sy],[x,y,w,start-y+.5]);
- const top=start-.25;
+ art+=texture(a.atlas,[sx,sy,sw,sourceY(start+3)-sy],[x,y,w,start+3-y]);
+ const top=start-3;
  for(const [i,left,right]of [[0,x,480],[1,480,x+w]]){
   const k=shifts[i]/(end-start),source=[sx+(left-x)*sw/w,sourceY(top),(right-left)*sw/w,sourceY(y+h)-sourceY(top)];
   art+=`<g transform="matrix(1 0 ${k} 1 ${-k*start} 0)">${texture(a.atlas,source,[left,top,right-left,y+h-top])}</g>`;
