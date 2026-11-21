@@ -3,8 +3,20 @@ import {avatarItems} from './avatar-data.mjs';
 import {avatarArt} from './avatar-art.mjs';
 import {avatarLayers,avatarAssetsRoot} from './avatar-layers.mjs';
 import {avatarProfiles} from './avatar-profiles.mjs';
-const cache=new Map();
+const cache=new Map(),rawAtlases=new Map();
 async function textureUrl(href){if(!href.startsWith(avatarAssetsRoot)||!/^[-a-z0-9]+\.png$/.test(href.slice(avatarAssetsRoot.length)))throw Error('Unexpected QA texture URL');if(!cache.has(href))cache.set(href,(async()=>{const response=await fetch(href);if(!response.ok)throw Error(`Texture failed ${response.status}: ${href}`);const blob=await response.blob();return new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(r.result);r.onerror=reject;r.readAsDataURL(blob);});})().catch(e=>{cache.delete(href);throw e;}));return cache.get(href);}
+// Raw atlas alpha keeps a copied numeric registration from passing on empty space.
+async function waistFabricAlpha(layer){
+ const key=layer.atlas;
+ if(!rawAtlases.has(key))rawAtlases.set(key,(async()=>{
+  const image=new Image();image.src=await textureUrl(avatarAssetsRoot+key+'.png');await image.decode();
+  const canvas=document.createElement('canvas');canvas.width=image.naturalWidth;canvas.height=image.naturalHeight;
+  const ctx=canvas.getContext('2d',{willReadFrequently:true});ctx.drawImage(image,0,0);
+  return{width:canvas.width,data:ctx.getImageData(0,0,canvas.width,canvas.height).data};
+ })());
+ const {width,data}=await rawAtlases.get(key),[sx,sy,sw,sh]=layer.source,[x,y,w,h]=layer.target;
+ return layer.waist.points.map(([px,py])=>data[(Math.round(sy+(py-y)*sh/h)*width+Math.round(sx+(px-x)*sw/w))*4+3]);
+}
 export async function avatarQaPixels(test,isolate=false,options={}){
  const doc=new DOMParser().parseFromString(avatarArt(test.look,{outfit:test.outfit}).replace('160 -100 700 1640','0 0 1024 1536'),'image/svg+xml'),svg=doc.documentElement;svg.setAttribute('width','1024');svg.setAttribute('height','1536');
  if(isolate){const target=svg.querySelector(`[data-item="${test.isolate}"]`);if(!target)throw Error('Missing item layer '+test.isolate);for(const child of [...svg.children])if(child.tagName!=='defs'&&child!==target&&!child.contains(target))child.remove();}
@@ -30,6 +42,7 @@ export async function inspectAvatarCase(test){
   const slots=test.isolate?[avatarItems.find(i=>i.id===test.isolate).slot]:['top','bottom'];
   for(const slot of slots){
    const id=test.outfit[slot],layer=avatarLayers[id],marked=await avatarQaPixels({...test,isolate:id},true,{waistMarkers:slot});
+   const contact=await waistFabricAlpha(layer);for(const [i,alpha]of contact.entries())if(!(slot==='top'&&fit('top').outer&&i===1))expect(alpha>180,'waist-fabric-landmark:'+slot+':'+['left','front','right'][i],layer.waist.points[i]);
    for(const [i,[cx,cy]]of avatarWaistRig.points.entries()){
     const y=cy+layer.waist.rise,color=[[255,0,255],[0,255,255],[255,255,0]][i],hits=[];
     for(let py=y-4;py<=y+4;py++)for(let x=cx-4;x<=cx+4;x++){const rgba=marked.pixel(x,py);if(rgba[3]>220&&color.every((c,k)=>Math.abs(c-rgba[k])<18))hits.push([x,py]);}

@@ -65,18 +65,17 @@ const results=await p.evaluate(async()=>{
  const fittedLegs=structuredClone(avatarLayers['bottom-denim'].legFit);try{avatarLayers['bottom-denim'].legFit.shifts=[0,0];expect((await inspectAvatarCase(legCase)).failures.some(f=>f.rule==='hem-ankle-alignment'),'Fixture did not reject displaced trouser hems');}finally{avatarLayers['bottom-denim'].legFit=fittedLegs;}
  const waistCase=plan.cases.find(c=>c.groups.includes('top-bottom')&&c.outfit.top==='top-forest'&&c.outfit.bottom==='bottom-denim');
  for(const [part,rule]of [['waist','waist-frame:bottom:front'],['sleeve','waist-frame:top:front']])await brokenSvg(waistCase,svg=>{for(const node of svg.querySelectorAll('g[clip-path] > use[transform]'))if(node.parentElement.getAttribute('clip-path').includes('-'+part+'-'))node.removeAttribute('transform');},rule);
+ const badAnchor=structuredClone(avatarLayers['bottom-lilac'].waist);
+ try{avatarLayers['bottom-lilac'].waist.points[0]=[432,628];expect((await inspectAvatarCase(plan.cases.find(c=>c.isolate==='bottom-lilac'))).failures.some(f=>f.rule==='waist-fabric-landmark:bottom:left'),'Copied waist landmark on empty atlas background was accepted');}finally{avatarLayers['bottom-lilac'].waist=badAnchor;}
  // Actual small UI scale: a flat fabric source makes clipping seams measurable.
  const minFabric=picture=>{let min=255;for(let x=440;x<=650;x+=4)for(let y=420;y<=670;y+=4)min=Math.min(min,picture.pixel(x,y)[3]);return min;};
  const small=await render({...basic,top:'top-mint'},{},false,true,false,176),goodAlpha=minFabric(small);
  expect(goodAlpha>=253,'Small-scale fabric mesh has pale seams: '+goodAlpha);
  const parse=DOMParser.prototype.parseFromString;let oldAlpha;
- DOMParser.prototype.parseFromString=function(text,type){const doc=parse.call(this,text,type);for(const node of doc.querySelectorAll('clipPath[id*="-sleeve-"] polygon,clipPath[id*="-collar-"] polygon')){
-  const points=node.getAttribute('points').split(' ').map(p=>p.split(',').map(Number)),[a,b,c]=points,lengths=[Math.hypot(b[0]-c[0],b[1]-c[1]),Math.hypot(a[0]-c[0],a[1]-c[1]),Math.hypot(a[0]-b[0],a[1]-b[1])],sum=lengths.reduce((a,b)=>a+b,0),center=[0,1].map(k=>points.reduce((n,p,i)=>n+p[k]*lengths[i],0)/sum),radius=Math.abs((b[0]-a[0])*(c[1]-a[1])-(b[1]-a[1])*(c[0]-a[0]))/sum;
-  node.setAttribute('points',points.map(p=>p.map((v,k)=>center[k]+(v-center[k])*(1-2.2/radius)).join(',')).join(' '));
- }return doc;};
+ DOMParser.prototype.parseFromString=function(text,type){const doc=parse.call(this,text,type);doc.documentElement.querySelector('[data-layer="top"]').removeAttribute('filter');return doc;};
  try{oldAlpha=minFabric(await render({...basic,top:'top-mint'},{},false,true,false,176));}finally{DOMParser.prototype.parseFromString=parse;}
- expect(oldAlpha<goodAlpha-2,'Regression did not reject subpixel triangle overlap at mobile scale: '+oldAlpha+'/'+goodAlpha);
- console.log('Rendered waist frame rejects missing top/bottom fitting; mobile fabric alpha '+goodAlpha+' vs old overlap '+oldAlpha);
+ expect(oldAlpha<goodAlpha-2,'Regression did not reject uncompensated mesh alpha at mobile scale: '+oldAlpha+'/'+goodAlpha);
+ console.log('Rendered waist frame rejects missing top/bottom fitting; mobile fabric alpha '+goodAlpha+' vs uncompensated mesh '+oldAlpha);
  const {skins}=await import('./avatar-data.mjs');
  for(const outfit of [{...basic,bottom:'bottom-check'},{...basic,top:'top-night',bottom:'bottom-check'}]){
   const reference=await render(outfit,{skin:'peach'});

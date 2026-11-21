@@ -7,6 +7,6 @@ export function avatarMeshTriangle(src,dst,id,sourceId){
  // along acute triangles, which appear as pale lines on dark fabrics.
  const lengths=dst.map((_,i)=>Math.hypot(dst[(i+1)%3][0]-dst[(i+2)%3][0],dst[(i+1)%3][1]-dst[(i+2)%3][1])),perimeter=lengths.reduce((a,b)=>a+b,0);
  const center=[0,1].map(k=>dst.reduce((sum,p,i)=>sum+p[k]*lengths[i],0)/perimeter),area=Math.abs((Q[0]-P[0])*(R[1]-P[1])-(R[0]-P[0])*(Q[1]-P[1]))/2,radius=2*area/perimeter;
- const points=dst.map(p=>p.map((v,k)=>center[k]+(v-center[k])*(1+3/radius)).join(',')).join(' ');
+ const points=dst.map(p=>p.map((v,k)=>center[k]+(v-center[k])*(1+.8/radius)).join(',')).join(' ');
  return {defs:`<clipPath id="${id}"><polygon points="${points}"/></clipPath>`,art:`<g clip-path="url(#${id})"><use href="#${sourceId}" transform="matrix(${a} ${b} ${c} ${d} ${e} ${f})"/></g>`};
 }
