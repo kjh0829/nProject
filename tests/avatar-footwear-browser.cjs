@@ -9,11 +9,11 @@ const engine=process.env.AVATAR_BROWSER||'chromium',base=process.env.AVATAR_BASE
   await page.goto(base+'#read');await page.waitForFunction(()=>localStorage.getItem('teum-avatar-v1'));
   const before=await page.evaluate(()=>localStorage.getItem('teum-avatar-v1'));
   const result=await page.evaluate(async()=>{
-   const {renderAvatarCanvas,avatarCanvasStats}=await import('./avatar-canvas.mjs?renderer=20261122-detail1');
+   const {renderAvatarCanvas,avatarCanvasStats}=await import('./avatar-canvas.mjs?renderer=20261122-detail2');
    const {avatarItems,starterOutfit,skins}=await import('./avatar-data.mjs');
    const {avatarLayers}=await import('./avatar-layers.mjs');
    const {shoeFitFor}=await import('./avatar-shoe-fit.mjs');
-   const {inspectShoeFit}=await import('./avatar-qa-render.mjs?detail=3');
+   const {inspectShoeFit}=await import('./avatar-qa-render.mjs?detail=4');
    const options={frame:[240,1280,510,256],width:510,height:256};
    function picture(c){const data=c.getContext('2d').getImageData(0,0,c.width,c.height).data;return{data,pixel:(x,y)=>{const index=((Math.round(y)-1280)*510+Math.round(x)-240)*4;return[...data.slice(index,index+4)];}};}
    const gallery=document.createElement('main');gallery.style='display:grid;grid-template-columns:repeat(3,340px);gap:10px;padding:16px;background:#ecf1ed';
@@ -37,7 +37,7 @@ const engine=process.env.AVATAR_BROWSER||'chromium',base=process.env.AVATAR_BASE
   assert(result.stats.texturePixels<=result.stats.limits.texturePixels);
   const detailCount=await page.evaluate(async()=>{
    const {buildAvatarQaPlan}=await import('./avatar-qa.mjs');
-   const {inspectAvatarCase}=await import('./avatar-qa-render.mjs?detail=3');
+   const {inspectAvatarCase}=await import('./avatar-qa-render.mjs?detail=4');
    const ids=new Set(['bottom-overall','acc-cafe','hair-lilac','top-starlit','shoes-red','shoes-star','shoes-forest','shoes-coast']);
    const cases=buildAvatarQaPlan().cases.filter(test=>ids.has(test.isolate)||
     (test.groups.includes('top-bottom')&&test.outfit.top==='top-night'&&test.outfit.bottom==='bottom-overall'));

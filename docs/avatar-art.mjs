@@ -1,5 +1,5 @@
 import {fittedHatTarget, hatLining, seatedHairParts,lilacRearWaves} from './avatar-head-fit.mjs?detail=3';
-import {shoeFitFor,shoeFrame,shoeDepthSvg,bootInsertion,shoeSegmentOutline} from './avatar-shoe-fit.mjs?fit=20261122c';
+import {shoeFitFor,shoeFrame,shoeDepthSvg,bootInsertion,shoeSegmentOutline} from './avatar-shoe-fit.mjs?fit=20261122d';
 import {fittedAvatarBottom} from './avatar-waist.mjs?detail=3';
 import {itemById,starterOutfit,skins,faces} from './avatar-data.mjs';
 import {avatarAssetsRoot,avatarAtlases,avatarLayers,avatarFaceSources} from './avatar-layers.mjs';
@@ -25,7 +25,7 @@ function itemArtwork(id,texture,uid){
  if(profile.kind==='segments') return a.segments.map((segment,i)=>{
   let art=texture(a.atlas,segment.source,segment.target);
   if(profile.slot!=='shoes') return art;
-  if(shoeSegmentOutline(id,a,i)) art=`<g clip-path="url(#${uid}-shoe-edge)">${art}</g>`;
+  if(shoeSegmentOutline(id,a,i)) art=`<g clip-path="url(#${uid}-shoe-edge-${i})">${art}</g>`;
   const fit=shoeFitFor(id,a);
   return fit ? `<g transform="matrix(${shoeFrame(a,i,fit).join(' ')})">${art}</g>` : art;
  }).join('');
@@ -81,8 +81,11 @@ export function avatarArt(value={},options={}){
  const faceForHair = rearWaves ? `<clipPath id="${uid}-rear-waves"><path d="${lilacRearWaves}"/></clipPath><mask id="${uid}-jaw" maskUnits="userSpaceOnUse" x="0" y="0" width="1024" height="1536"><rect width="1024" height="1536" fill="white"/><g clip-path="url(#${uid}-rear-waves)" filter="url(#${uid}-black-neck)">${texture('faces',avatarFaceSources[face],[432,39,159,244])}</g></mask>` : '';
  const hairPaint = rearWaves ? `<g mask="url(#${uid}-jaw)">${strands}</g>` : strands;
  const bibDefs = outfit.bottom==='bottom-overall' ? Object.entries(bibEdges).map(([key,path])=>`<clipPath id="${uid}-bib-${key}"><path d="${path}"/></clipPath>`).join('')+`<clipPath id="${uid}-inside-coat"><path d="${bibInsideCoat}"/></clipPath>` : '';
- const shoeEdge = shoeSegmentOutline(outfit.shoes,avatarLayers[outfit.shoes],0);
- const edgeDef = shoeEdge ? `<clipPath id="${uid}-shoe-edge"><path d="${shoeEdge}"/></clipPath>` : '';
+ const shoe=avatarLayers[outfit.shoes];
+ const edgeDef=(shoe.segments||[]).map((_,i)=>{
+  const outline=shoeSegmentOutline(outfit.shoes,shoe,i);
+  return outline ? `<clipPath id="${uid}-shoe-edge-${i}"><path d="${outline}"/></clipPath>` : '';
+ }).join('');
  const hatLayer = avatarLayers[outfit.hat];
  const brim = hatLayer && hatLining(outfit.hat,hatLayer);
  const brimDefs = brim ? `<clipPath id="${uid}-lining-edge"><path d="${brim}"/></clipPath><mask id="${uid}-hat-depth" maskUnits="userSpaceOnUse" x="160" y="-100" width="700" height="1640"><rect x="160" y="-100" width="700" height="1640" fill="white"/><g clip-path="url(#${uid}-lining-edge)" filter="url(#${uid}-black-neck)">${hairPaint}</g></mask>` : '';

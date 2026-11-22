@@ -88,15 +88,19 @@ export function bootInsertion(id, openings) {
  }).join('');
 }
 
-// In the two closely packed atlas cells the neighbour touches one side of the
-// crop halfway down. Notch only those rows: the toe uses the full crop width.
+// The two coastal shoe cells share a border; either crop can pick up the
+// other shoe. Only notch the affected rows, keeping the full toe width.
+const shoeNotches = {
+ 'shoes-forest': [[170,173,219]],
+ 'shoes-coast': [[165,158,187], [5,215,270]]
+};
 export function shoeSegmentOutline(id, layer, index) {
- if(index !== 0) return null;
- const notch = id === 'shoes-forest' ? [170,173,219] : id === 'shoes-coast' ? [165,158,187] : null;
+ const notch = shoeNotches[id]?.[index];
  if(!notch) return null;
  const [sx,sy] = layer.segments[index].source;
  const [x,y,w,h] = layer.segments[index].target;
  const [cut,top] = shoePoint(layer,index,[sx+notch[0],sy+notch[1]]);
  const [,end] = shoePoint(layer,index,[sx+notch[0],sy+notch[2]]);
+ if(index === 1) return `M${x} ${y}h${w}v${h}H${x}V${end}H${cut}V${top}H${x}Z`;
  return `M${x} ${y}h${w}V${top}H${cut}V${end}H${x+w}V${y+h}H${x}Z`;
 }

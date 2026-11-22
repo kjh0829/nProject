@@ -1,4 +1,4 @@
-import {avatarShoeFits} from './avatar-shoe-fit.mjs?fit=20261122c';
+import {avatarShoeFits} from './avatar-shoe-fit.mjs?fit=20261122d';
 // Registered original textures and fitting data; preserve original PNGs.
 export const avatarAtlasSize=1254;
 export const avatarAssetsRoot="./assets/avatar-art/wardrobe-v1/";

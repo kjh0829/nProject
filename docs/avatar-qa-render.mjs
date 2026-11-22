@@ -1,10 +1,10 @@
-import {renderAvatarCanvas} from './avatar-canvas.mjs?renderer=20261122-detail1';
+import {renderAvatarCanvas} from './avatar-canvas.mjs?renderer=20261122-detail2';
 import {avatarWaistRig} from './avatar-waist.mjs';
 import {avatarItems} from './avatar-data.mjs';
 import {avatarArt} from './avatar-art.mjs';
 import {avatarLayers,avatarAssetsRoot} from './avatar-layers.mjs';
 import {avatarProfiles} from './avatar-profiles.mjs';
-import {shoeFitFor,shoeInsertion,shoeOpeningBounds,shoeShadowAt,fittedShoePoint} from './avatar-shoe-fit.mjs?fit=20261122c';
+import {shoeFitFor,shoeInsertion,shoeOpeningBounds,shoeShadowAt,fittedShoePoint} from './avatar-shoe-fit.mjs?fit=20261122d';
 const cache=new Map(),rawAtlases=new Map();
 async function textureUrl(href){if(!href.startsWith(avatarAssetsRoot)||!/^[-a-z0-9]+\.png$/.test(href.slice(avatarAssetsRoot.length)))throw Error('Unexpected QA texture URL');if(!cache.has(href))cache.set(href,(async()=>{const response=await fetch(href);if(!response.ok)throw Error(`Texture failed ${response.status}: ${href}`);const blob=await response.blob();return new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(r.result);r.onerror=reject;r.readAsDataURL(blob);});})().catch(e=>{cache.delete(href);throw e;}));return cache.get(href);}
 // Raw atlas alpha keeps a copied numeric registration from passing on empty space.
@@ -151,8 +151,8 @@ export async function inspectAvatarCase(test,renderer='svg'){
    expect(alpha(478,201)>200,'front-curl-retained',[478,201]);
   }
   if(test.isolate==='top-starlit') expect(alpha(710,775)<25,'no-thread-below-cuff',[710,775]);
-  const neighbouringShoe={'shoes-forest':[389,1428],'shoes-coast':[391,1424]}[test.isolate];
-  if(neighbouringShoe) expect(alpha(...neighbouringShoe)<25,'no-neighbouring-shoe-pixels',neighbouringShoe);
+  const neighbours={'shoes-forest':[[389,1428]],'shoes-coast':[[391,1424],[547,1481]]};
+  for(const point of neighbours[test.isolate]||[]) expect(alpha(...point)<25,'no-neighbouring-shoe-pixels',point);
   if(p.faceClip){const isolated=await pixels(test,true);expect(isolated.pixel(535,124)[3]<25,'no-floating-glasses-arm',[535,124]);}
  }
  return {id:test.id,passed:failures.length===0,failures};

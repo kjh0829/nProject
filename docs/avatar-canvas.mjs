@@ -9,7 +9,7 @@ import {avatarTopTriangles,avatarNeckOpening,avatarNeckSkin} from './avatar-neck
 import {avatarBottomTriangles,avatarWaistRig} from './avatar-waist.mjs?detail=3';
 import {avatarMeshGeometry} from './avatar-mesh.mjs?detail=3';
 import {ankleSkinBoundary, garmentPieces, bibEdges, coatOpening, bibInsideCoat} from './avatar-dressing.mjs?detail=3';
-import {shoeFitFor,shoeFrame,shoeOpenings,shoeInsertion,shoeOpeningBounds,bootInsertion,shoeSegmentOutline} from './avatar-shoe-fit.mjs?fit=20261122c';
+import {shoeFitFor,shoeFrame,shoeOpenings,shoeInsertion,shoeOpeningBounds,bootInsertion,shoeSegmentOutline} from './avatar-shoe-fit.mjs?fit=20261122d';
 
 export const avatarCanvasLimits={texturePixels:16_000_000,surfacePixels:1_600_000,dimension:1600};
 const textures=new Map(),pins=new Set();let texturePixels=0,queue=Promise.resolve(),working=0,queued=0,dropRequested=false;
