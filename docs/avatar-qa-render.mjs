@@ -4,7 +4,7 @@ import {avatarItems} from './avatar-data.mjs';
 import {avatarArt} from './avatar-art.mjs';
 import {avatarLayers,avatarAssetsRoot} from './avatar-layers.mjs';
 import {avatarProfiles} from './avatar-profiles.mjs';
-import {shoeFitFor,shoeOpening,shoeOpeningBounds,shoeShadowAt,fittedShoePoint} from './avatar-shoe-fit.mjs';
+import {shoeFitFor,shoeInsertion,shoeOpeningBounds,shoeShadowAt,fittedShoePoint} from './avatar-shoe-fit.mjs?fit=20261122b';
 const cache=new Map(),rawAtlases=new Map();
 async function textureUrl(href){if(!href.startsWith(avatarAssetsRoot)||!/^[-a-z0-9]+\.png$/.test(href.slice(avatarAssetsRoot.length)))throw Error('Unexpected QA texture URL');if(!cache.has(href))cache.set(href,(async()=>{const response=await fetch(href);if(!response.ok)throw Error(`Texture failed ${response.status}: ${href}`);const blob=await response.blob();return new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(r.result);r.onerror=reject;r.readAsDataURL(blob);});})().catch(e=>{cache.delete(href);throw e;}));return cache.get(href);}
 // Raw atlas alpha keeps a copied numeric registration from passing on empty space.
@@ -26,10 +26,10 @@ export async function inspectShoeFit(test,picture,isolated){
  const failures=[],expect=(ok,rule,point)=>{if(!ok)failures.push({rule,point});},base=await rawAtlas('base'),atlas=await rawAtlas(layer.atlas),pathContext=document.createElement('canvas').getContext('2d');
  const tone={peach:[1,1,1],honey:[.87,.73,.62],cocoa:[.64,.49,.43],rose:[1,.99,1.04]}[test.look.skin||'peach'],long=avatarProfiles[avatarLayers[test.outfit.bottom].profile].longLegs;
  for(let i=0;i<2;i++){
-  const frame=frames[i],path=new Path2D(shoeOpening(layer,i,frames)),bounds=shoeOpeningBounds(layer,i,frames),[ax,ay]=frame.anchor;
+  const frame=frames[i],path=new Path2D(shoeInsertion(layer,i,frames)),bounds=shoeOpeningBounds(layer,i,frames),[ax,ay]=frame.anchor;
   expect(atlas.data[(Math.round(ay)*atlas.width+Math.round(ax))*4+3]>180,'shoe-heel-on-original-art',frame.anchor);
   let samples=0;const xs=bounds.points.map(p=>p[0]);
-  for(let y=Math.ceil(Math.max(1356,bounds.minY+2));y<bounds.maxY-2;y+=2)for(let x=Math.ceil(Math.min(...xs)+2);x<Math.max(...xs)-2;x+=2){
+  for(let y=1356;y<bounds.maxY-2;y+=2)for(let x=Math.ceil(Math.min(...xs)+2);x<Math.max(...xs)-2;x+=2){
    if(![[0,0],[-1.5,0],[1.5,0],[0,-1.5],[0,1.5]].every(([dx,dy])=>pathContext.isPointInPath(path,x+.5+dx,y+.5+dy)))continue;
    const raw=[...base.data.slice((y*base.width+x)*4,(y*base.width+x)*4+4)];if(raw[3]<250)continue;samples++;
    expect(isolated.pixel(x,y)[3]<25,'shoe-interior-opens-around-foot',[x,y]);expect(picture.pixel(x,y)[3]>220,'shoe-foot-filled-behind-rim',[x,y]);

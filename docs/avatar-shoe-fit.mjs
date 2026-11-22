@@ -3,32 +3,32 @@
 export const avatarFootRig=[{center:[328,1372],turn:-8},{center:[590,1382],turn:0}];
 export const avatarShoeFits={
  'shoes-canvas':[
-  {anchor:[132,190],opening:[[93,230],[134,80],[174,230],[135,195]]},
-  {anchor:[320,212],opening:[[284,235],[282,143],[369,242],[330,260]]}
+  {anchor:[132,190],opening:[[87,225],[134,80],[176,225],[134,186]]},
+  {anchor:[320,212],opening:[[287,189],[282,153],[372,231],[300,292]]}
  ],
  'shoes-lilac':[
-  {anchor:[137,807],opening:[[92,840],[132,689],[181,840],[135,740]]},
-  {anchor:[320,815],opening:[[285,844],[281,738],[376,860],[330,852]]}
+  {anchor:[137,807],opening:[[84,867],[132,689],[189,867],[137,812]]},
+  {anchor:[320,815],opening:[[291,814],[281,738],[365,847],[301,928]]}
  ],
  'shoes-blossom':[
-  {anchor:[112,132],opening:[[62,166],[109,22],[163,166],[110,126]]},
-  {anchor:[278,159],opening:[[243,178],[244,96],[323,195],[281,207]]}
+  {anchor:[112,132],opening:[[65,167],[109,22],[157,167],[111,139]]},
+  {anchor:[278,159],opening:[[246,133],[244,96],[330,182],[253,237]]}
  ],
  'shoes-coast':[
-  {anchor:[622,132],opening:[[573,171],[621,20],[671,169],[621,128]]},
-  {anchor:[784,170],opening:[[747,187],[747,107],[833,208],[789,216]]}
+  {anchor:[622,132],opening:[[574,175],[621,20],[666,175],[621,133]]},
+  {anchor:[784,170],opening:[[749,142],[747,107],[832,190],[763,245]]}
  ],
  'shoes-starlit':[
-  {anchor:[119,633],opening:[[65,670],[118,523],[171,670],[120,604]]},
-  {anchor:[279,663],opening:[[246,689],[242,597],[326,708],[286,716]]}
+  {anchor:[119,633],opening:[[69,677],[118,523],[166,677],[117,631]]},
+  {anchor:[279,663],opening:[[244,635],[242,611],[334,687],[256,751]]}
  ],
  'shoes-forest':[
-  {anchor:[621,642],opening:[[570,661],[623,530],[674,661],[621,624]]},
-  {anchor:[788,664],opening:[[750,686],[747,588],[841,706],[795,721]]}
+  {anchor:[621,642],opening:[[572,681],[623,530],[673,681],[622,632]]},
+  {anchor:[788,664],opening:[[760,646],[747,588],[827,685],[760,739]]}
  ],
  'shoes-cafe':[
-  {anchor:[112,1137],opening:[[60,1183],[112,1020],[164,1183],[112,1120]]},
-  {anchor:[284,1163],opening:[[241,1171],[255,1100],[332,1201],[284,1220]]}
+  {anchor:[112,1137],opening:[[62,1194],[112,1020],[162,1194],[112,1134]]},
+  {anchor:[284,1163],opening:[[255,1162],[255,1100],[322,1195],[272,1217]]}
  ]
 };
 // Old cached atlas registrations did not include footFit. Use the same published
@@ -44,18 +44,28 @@ export function fittedShoePoint(layer,index,point,fit=layer.footFit){const[x,y]=
 export function shoeOpening(layer,index,fit=layer.footFit){
  const [l,b,r,f]=fit[index].opening.map(p=>fittedShoePoint(layer,index,p,fit));return`M${l}Q${b} ${r}Q${f} ${l}Z`;
 }
-export const shoeOpenings=(layer,fit=layer.footFit)=>fit.map((_,i)=>shoeOpening(layer,i,fit)).join('');
+// Let the lower leg occlude the back wall all the way to the top of the
+// collar. A closed oval leaves a painted loop running across the ankle.
+export function shoeInsertion(layer, i, fit = layer.footFit) {
+  const frame = fit[i];
+  const [left, , right, tongue] = frame.opening.map(p => fittedShoePoint(layer, i, p, fit));
+  const top = Math.min(left[1], right[1]) - 46;
+  // The ankle leans toward the back of the side-facing right shoe.
+  const lean = i === 1 ? -10 : 0;
+  return `M${left} L${left[0] + lean - 4} ${top} H${right[0] + lean + 4} L${right} Q${tongue} ${left}Z`;
+}
+export const shoeOpenings = (layer, fit) => fit.map((_, i) => shoeInsertion(layer, i, fit)).join('');
 export function shoeOpeningBounds(layer,index,fit=layer.footFit){
  const [l,b,r,f]=fit[index].opening.map(p=>fittedShoePoint(layer,index,p,fit)),points=[];
  for(const[a,c,z]of [[l,b,r],[r,f,l]])for(let i=0;i<=24;i++){const t=i/24;points.push([0,1].map(k=>(1-t)**2*a[k]+2*(1-t)*t*c[k]+t*t*z[k]));}
  return {points,minY:Math.min(...points.map(p=>p[1])),maxY:Math.max(...points.map(p=>p[1]))};
 }
-export const shoeShadowAt=(bounds,y)=>{const t=Math.max(0,Math.min(1,(y-bounds.minY)/(bounds.maxY-bounds.minY)));return t<=.55?.2+(.04-.2)*t/.55:.04*(1-t)/.45;};
+export const shoeShadowAt=(bounds,y)=>{const t=Math.max(0,Math.min(1,(y-bounds.minY)/(bounds.maxY-bounds.minY)));return t<=.55?.04*t/.55:.04+.13*(t-.55)/.45;};
 
 // Diagnostic SVG only. Production uses the same paths with bounded Canvas 2D.
 export function shoeDepthSvg(layer,fit,uid,wearer,ankleBoundary){
- const mouth=shoeOpenings(layer,fit),paths=fit.map((_,i)=>shoeOpening(layer,i,fit));
- const shadows=paths.map((path,i)=>{const b=shoeOpeningBounds(layer,i,fit);return`<clipPath id="${uid}-shoe-mouth-${i}"><path d="${path}"/></clipPath><linearGradient id="${uid}-shoe-shadow-${i}" gradientUnits="userSpaceOnUse" x1="0" x2="0" y1="${b.minY}" y2="${b.maxY}"><stop stop-color="rgb(34,23,29)" stop-opacity=".2"/><stop offset=".55" stop-color="rgb(34,23,29)" stop-opacity=".04"/><stop offset="1" stop-color="rgb(34,23,29)" stop-opacity="0"/></linearGradient>`;}).join('');
+ const mouth=shoeOpenings(layer,fit),paths=fit.map((_,i)=>shoeInsertion(layer,i,fit));
+ const shadows=paths.map((path,i)=>{const b=shoeOpeningBounds(layer,i,fit);return`<clipPath id="${uid}-shoe-mouth-${i}"><path d="${path}"/></clipPath><linearGradient id="${uid}-shoe-shadow-${i}" gradientUnits="userSpaceOnUse" x1="0" x2="0" y1="${b.minY}" y2="${b.maxY}"><stop stop-color="rgb(34,23,29)" stop-opacity="0"/><stop offset=".55" stop-color="rgb(34,23,29)" stop-opacity=".04"/><stop offset="1" stop-color="rgb(34,23,29)" stop-opacity=".17"/></linearGradient>`;}).join('');
  // One nonzero outline keeps the ankle/foot union intact when a filtered wearer
  // is cloned through SVG <use>. Overlapping clip children lost the foot tint in
  // Chromium's rasterized reference; arms never intersect these heel openings.
