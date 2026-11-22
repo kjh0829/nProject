@@ -23,12 +23,12 @@ const base=process.env.AVATAR_BASE_URL||'http://127.0.0.1:8000/';
    for(const item of avatarItems.filter(i=>i.slot===slot)){
     await page.locator(`[data-avatar-item="${item.id}"]`).click();
     await page.waitForSelector(`#avatar-stage [data-item="${item.id}"]`,{state:'attached'});
-    const stats=await page.evaluate(async()=>{const {avatarCanvasStats}=await import('./avatar-canvas.mjs?renderer=20261122');const {avatarPreviewStats}=await import('./avatar-runtime.mjs?canvas=20261122');return{...avatarCanvasStats(),...avatarPreviewStats(),svg:document.querySelectorAll('#avatar-stage svg,#avatar-items svg').length};});
+    const stats=await page.evaluate(async()=>{const {avatarCanvasStats}=await import('./avatar-canvas.mjs?renderer=20261122-shoes1');const {avatarPreviewStats}=await import('./avatar-runtime.mjs?canvas=20261122-shoes1');return{...avatarCanvasStats(),...avatarPreviewStats(),svg:document.querySelectorAll('#avatar-stage svg,#avatar-items svg').length};});
     assert.equal(stats.svg,0);assert(stats.texturePixels<=stats.limits.texturePixels);assert(stats.canvasPixels<4_000_000,'Visible preview buffers exceeded 16 MB');
    }
   }
   for(const skin of ['peach','honey','cocoa','rose'])for(const face of ['smile','sparkle','calm']){
-   await page.evaluate(async({skin,face})=>{const {renderAvatarCanvas}=await import('./avatar-canvas.mjs?renderer=20261122');const c=await renderAvatarCanvas({skin,face},{width:400,height:900});const ctx=c.getContext('2d'),data=ctx.getImageData(0,0,c.width,c.height).data;let opaque=0;for(let i=3;i<data.length;i+=4)if(data[i]>180)opaque++;c.width=c.height=0;if(opaque<5000)throw Error('Empty native Canvas artwork');},{skin,face});
+   await page.evaluate(async({skin,face})=>{const {renderAvatarCanvas}=await import('./avatar-canvas.mjs?renderer=20261122-shoes1');const c=await renderAvatarCanvas({skin,face},{width:400,height:900});const ctx=c.getContext('2d'),data=ctx.getImageData(0,0,c.width,c.height).data;let opaque=0;for(let i=3;i<data.length;i+=4)if(data[i]>180)opaque++;c.width=c.height=0;if(opaque<5000)throw Error('Empty native Canvas artwork');},{skin,face});
   }
   for(let n=0;n<12;n++){
    await nav('avatar');await page.waitForSelector('#avatar-stage canvas');
@@ -37,10 +37,10 @@ const base=process.env.AVATAR_BASE_URL||'http://127.0.0.1:8000/';
    assert.equal(await page.locator('canvas.avatar-raster').count(),0);
   }
   await nav('avatar');await page.waitForSelector('#avatar-stage canvas');
-  await page.waitForFunction(async()=>!(await import('./avatar-canvas.mjs?renderer=20261122')).avatarCanvasStats().queued);
+  await page.waitForFunction(async()=>!(await import('./avatar-canvas.mjs?renderer=20261122-shoes1')).avatarCanvasStats().queued);
   await page.evaluate(()=>window.dispatchEvent(new Event('pagehide')));
   assert.equal(await page.locator('canvas.avatar-raster').count(),0);
-  assert.equal(await page.evaluate(async()=> (await import('./avatar-canvas.mjs?renderer=20261122')).avatarCanvasStats().texturePixels),0);
+  assert.equal(await page.evaluate(async()=> (await import('./avatar-canvas.mjs?renderer=20261122-shoes1')).avatarCanvasStats().texturePixels),0);
   await page.evaluate(()=>window.dispatchEvent(new PageTransitionEvent('pageshow',{persisted:true})));
   await page.waitForSelector('#avatar-stage canvas');
   await page.locator('#outfit-export-button').click();await page.waitForSelector('#outfit-export-preview img');

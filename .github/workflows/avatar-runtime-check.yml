@@ -8,6 +8,7 @@ on:
       - 'docs/outfit-export.mjs'
       - 'docs/index.html'
       - 'tests/avatar-runtime-browser.cjs'
+      - 'tests/avatar-footwear-browser.cjs'
       - 'scripts/wait-avatar-pages.mjs'
       - '.github/workflows/avatar-runtime-check.yml'
   workflow_dispatch:
@@ -36,6 +37,7 @@ jobs:
         run: |
           python3 -m http.server 8000 --directory docs > "$RUNNER_TEMP/avatar-native-http.log" 2>&1 &
           NODE_PATH="$RUNNER_TEMP/avatar-native/node_modules" node tests/avatar-runtime-browser.cjs
+          NODE_PATH="$RUNNER_TEMP/avatar-native/node_modules" node tests/avatar-footwear-browser.cjs
       - name: Wait for the exact public deployment
         if: github.ref == 'refs/heads/master'
         run: node scripts/wait-avatar-pages.mjs https://kjh0829.github.io/nProject/
@@ -43,8 +45,10 @@ jobs:
         if: github.ref == 'refs/heads/master'
         env:
           AVATAR_BROWSER: ${{ matrix.engine }}
-          AVATAR_BASE_URL: 'https://kjh0829.github.io/nProject/?v=canvas-20261122'
-        run: NODE_PATH="$RUNNER_TEMP/avatar-native/node_modules" node tests/avatar-runtime-browser.cjs
+          AVATAR_BASE_URL: 'https://kjh0829.github.io/nProject/?v=shoes-20261122'
+        run: |
+          NODE_PATH="$RUNNER_TEMP/avatar-native/node_modules" node tests/avatar-runtime-browser.cjs
+          NODE_PATH="$RUNNER_TEMP/avatar-native/node_modules" node tests/avatar-footwear-browser.cjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:

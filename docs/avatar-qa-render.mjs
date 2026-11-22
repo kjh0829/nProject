@@ -1,22 +1,46 @@
-import {renderAvatarCanvas} from './avatar-canvas.mjs?renderer=20261122';
+import {renderAvatarCanvas} from './avatar-canvas.mjs?renderer=20261122-shoes1';
 import {avatarWaistRig} from './avatar-waist.mjs';
 import {avatarItems} from './avatar-data.mjs';
 import {avatarArt} from './avatar-art.mjs';
 import {avatarLayers,avatarAssetsRoot} from './avatar-layers.mjs';
 import {avatarProfiles} from './avatar-profiles.mjs';
+import {shoeFitFor,shoeOpening,shoeOpeningBounds,shoeShadowAt,fittedShoePoint} from './avatar-shoe-fit.mjs';
 const cache=new Map(),rawAtlases=new Map();
 async function textureUrl(href){if(!href.startsWith(avatarAssetsRoot)||!/^[-a-z0-9]+\.png$/.test(href.slice(avatarAssetsRoot.length)))throw Error('Unexpected QA texture URL');if(!cache.has(href))cache.set(href,(async()=>{const response=await fetch(href);if(!response.ok)throw Error(`Texture failed ${response.status}: ${href}`);const blob=await response.blob();return new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(r.result);r.onerror=reject;r.readAsDataURL(blob);});})().catch(e=>{cache.delete(href);throw e;}));return cache.get(href);}
 // Raw atlas alpha keeps a copied numeric registration from passing on empty space.
-async function waistFabricAlpha(layer){
- const key=layer.atlas;
+async function rawAtlas(key){
  if(!rawAtlases.has(key))rawAtlases.set(key,(async()=>{
   const image=new Image();image.src=await textureUrl(avatarAssetsRoot+key+'.png');await image.decode();
   const canvas=document.createElement('canvas');canvas.width=image.naturalWidth;canvas.height=image.naturalHeight;
   const ctx=canvas.getContext('2d',{willReadFrequently:true});ctx.drawImage(image,0,0);
   return{width:canvas.width,data:ctx.getImageData(0,0,canvas.width,canvas.height).data};
  })());
- const {width,data}=await rawAtlases.get(key),[sx,sy,sw,sh]=layer.source,[x,y,w,h]=layer.target;
+ return rawAtlases.get(key);
+}
+async function waistFabricAlpha(layer){
+ const {width,data}=await rawAtlas(layer.atlas),[sx,sy,sw,sh]=layer.source,[x,y,w,h]=layer.target;
  return layer.waist.points.map(([px,py])=>data[(Math.round(sy+(py-y)*sh/h)*width+Math.round(sx+(px-x)*sw/w))*4+3]);
+}
+export async function inspectShoeFit(test,picture,isolated){
+ const layer=avatarLayers[test.outfit.shoes],frames=shoeFitFor(test.outfit.shoes,layer);if(!frames)return[];
+ const failures=[],expect=(ok,rule,point)=>{if(!ok)failures.push({rule,point});},base=await rawAtlas('base'),atlas=await rawAtlas(layer.atlas),pathContext=document.createElement('canvas').getContext('2d');
+ const tone={peach:[1,1,1],honey:[.87,.73,.62],cocoa:[.64,.49,.43],rose:[1,.99,1.04]}[test.look.skin||'peach'],long=avatarProfiles[avatarLayers[test.outfit.bottom].profile].longLegs;
+ for(let i=0;i<2;i++){
+  const frame=frames[i],path=new Path2D(shoeOpening(layer,i,frames)),bounds=shoeOpeningBounds(layer,i,frames),[ax,ay]=frame.anchor;
+  expect(atlas.data[(Math.round(ay)*atlas.width+Math.round(ax))*4+3]>180,'shoe-heel-on-original-art',frame.anchor);
+  let samples=0;const xs=bounds.points.map(p=>p[0]);
+  for(let y=Math.ceil(Math.max(1356,bounds.minY+2));y<bounds.maxY-2;y+=2)for(let x=Math.ceil(Math.min(...xs)+2);x<Math.max(...xs)-2;x+=2){
+   if(![[0,0],[-1.5,0],[1.5,0],[0,-1.5],[0,1.5]].every(([dx,dy])=>pathContext.isPointInPath(path,x+.5+dx,y+.5+dy)))continue;
+   const raw=[...base.data.slice((y*base.width+x)*4,(y*base.width+x)*4+4)];if(raw[3]<250)continue;samples++;
+   expect(isolated.pixel(x,y)[3]<25,'shoe-interior-opens-around-foot',[x,y]);expect(picture.pixel(x,y)[3]>220,'shoe-foot-filled-behind-rim',[x,y]);
+   if(!long){const t=tone,shade=shoeShadowAt(bounds,y+.5),expected=raw.slice(0,3).map((v,k)=>Math.min(255,Math.round(v*t[k]))*(1-shade)+[34,23,29][k]*shade),actual=picture.pixel(x,y);expect(expected.every((v,k)=>Math.abs(v-actual[k])<9),'shoe-wearer-skin-and-contact-shadow',[x,y]);}
+  }
+  expect(samples>=3,'shoe-heel-cup-meets-foot',frame.anchor);
+  const [l,,r,f]=frame.opening,source=[0,1].map(k=>(l[k]+r[k])/4+f[k]/2);
+  const [x,y]=fittedShoePoint(layer,i,source,frames);
+  expect(isolated.pixel(Math.round(x),Math.round(y+8))[3]>160,'shoe-front-collar-preserved',[x,y+8]);
+ }
+ return failures;
 }
 export async function avatarQaPixels(test,isolate=false,options={}){
  const doc=new DOMParser().parseFromString(avatarArt(test.look,{outfit:test.outfit}).replace('160 -100 700 1640','0 0 1024 1536'),'image/svg+xml'),svg=doc.documentElement;svg.setAttribute('width','1024');svg.setAttribute('height','1536');
@@ -43,7 +67,7 @@ export async function avatarQaPixels(test,isolate=false,options={}){
  try{const img=new Image();img.src=url;await img.decode();const canvas=document.createElement('canvas');canvas.width=1024;canvas.height=1536;const ctx=canvas.getContext('2d',{willReadFrequently:true});ctx.drawImage(img,0,0);const data=ctx.getImageData(0,0,1024,1536).data;return {svg,pixel:(x,y)=>{const i=(Math.round(y)*1024+Math.round(x))*4;return [...data.slice(i,i+4)];},data};}finally{URL.revokeObjectURL(url);}
 }
 export async function inspectAvatarCase(test,renderer='svg'){
- const pixels=(value,isolate=false,options={})=>avatarQaPixels(value,isolate,{...options,renderer});
+ const memo=new Map(),pixels=(value,isolate=false,options={})=>{const key=JSON.stringify([value.outfit,value.look,value.isolate,isolate,options]);if(!memo.has(key))memo.set(key,avatarQaPixels(value,isolate,{...options,renderer}));return memo.get(key);};
  const failures=[],expect=(ok,rule,point)=>{if(!ok)failures.push({rule,point});};const {pixel,svg}=await pixels(test);
  const entries=Object.entries(test.outfit).filter(([,id])=>id),fit=slot=>avatarProfiles[avatarLayers[test.outfit[slot]]?.profile];
  for(const [slot,id]of entries)expect(svg.querySelectorAll(`[data-item="${id}"]`).length===1,`registered-layer:${slot}`);
@@ -87,6 +111,7 @@ export async function inspectAvatarCase(test,renderer='svg'){
  }
  if(fit('accessory')?.shoulderClip){const item=svg.querySelector(`[data-item="${test.outfit.accessory}"]`),root=n=>{while(n.parentElement!==svg)n=n.parentElement;return n;},children=[...svg.children];expect(children.indexOf(root(item))<children.indexOf(svg.querySelector('[data-layer="hair"]')),'bag-strap-behind-hair');expect(!!item.closest('[mask]'),'bag-shoulder-clipping');}
  if(fit('shoes').boot){const reference=await pixels({...test,outfit:{...test.outfit,shoes:avatarItems.find(i=>i.slot==='shoes'&&!avatarProfiles[avatarLayers[i.id].profile].boot).id},isolate:null});for(const [x,y]of avatarLayers[test.outfit.shoes].openings){const expected=reference.pixel(x,y),actual=pixel(x,y);expect(expected[3]>200&&actual.every((v,i)=>Math.abs(v-expected[i])<5),'boot-leg-insertion',[x,y]);}}
+ if(shoeFitFor(test.outfit.shoes,avatarLayers[test.outfit.shoes])&&(test.groups.includes('bottom-shoes')||test.groups.includes('shoe-skin')||test.isolate===test.outfit.shoes))failures.push(...await inspectShoeFit(test,{pixel},await pixels({...test,isolate:test.outfit.shoes},true)));
  if(test.isolate){const isolated=await pixels(test,true),profile=avatarProfiles[avatarLayers[test.isolate].profile];let samples=0;for(let y=0;y<1536;y+=8)for(let x=0;x<1024;x+=8)if(isolated.data[(y*1024+x)*4+3]>100)samples++;expect(samples>=5,'nonempty-isolated-art');for(const [x,y]of profile.probes)expect(isolated.pixel(x,y)[3]>120,'item-registration-landmark',[x,y]);}
  if(test.isolate){
   const a=avatarLayers[test.isolate],p=avatarProfiles[a.profile];

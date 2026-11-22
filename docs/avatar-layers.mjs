@@ -1,3 +1,4 @@
+import {avatarShoeFits} from './avatar-shoe-fit.mjs';
 // Registered original textures and fitting data; preserve original PNGs.
 export const avatarAtlasSize=1254;
 export const avatarAssetsRoot="./assets/avatar-art/wardrobe-v1/";
@@ -1858,3 +1859,4 @@ export const avatarLayers={
   }
 };
 export const avatarFaceSources={"smile":[124,22,376,578],"sparkle":[751,22,376,578],"calm":[124,649,373,578]};
+for(const[id,frames]of Object.entries(avatarShoeFits))avatarLayers[id].footFit=frames.map(f=>({anchor:[...f.anchor],opening:f.opening.map(p=>[...p])}));

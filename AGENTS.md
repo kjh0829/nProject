@@ -86,7 +86,7 @@
 
 - 카라에는 neckline.tilt, 긴 소매에는 좌우 독립 cuffs.frames(pivot/angle/turn/width/shift)를 등록한다. avatarWristRig의 실제 손목 중심/각도와 맞추며, 소매 앞 원단을 유지하고 그 아래로 손이 나오게 한다. 손목 축의 연결과 위쪽 원단 지점을 검사하고, 가이드를 끈 확대 화면에서 피부 구멍/V자 절개가 없는지 확인한다.
 
-- 전신 피팅은 [검토 기록](team/briefs/AVATAR-FULL-FIT.md)을 따른다. 긴 하의 legFit, 부츠 openings, 안경 lensAnchors를 필수 등록한다. 가방 끈은 어깨 표면/머리 뒤에 두고 새 소품 perchPoints의 모든 상의 접촉을 확인하며 피부색으로 스타킹·안감이 바뀌지 않게 한다. 원본 PNG와 지갑을 유지하고 전신/부분/피부색별 육안 검토 및 776개 동적 검사·누락 집계를 확인한다.
+- 전신 피팅은 [검토 기록](team/briefs/AVATAR-FULL-FIT.md)을 따른다. 긴 하의 legFit, 부츠 openings, 안경 lensAnchors를 필수 등록한다. 가방 끈은 어깨 표면/머리 뒤에 두고 새 소품 perchPoints의 모든 상의 접촉을 확인하며 피부색으로 스타킹·안감이 바뀌지 않게 한다. 원본 PNG와 지갑을 유지하고 전신/부분/피부색별 육안 검토 및 현재 962개 동적 검사·누락 집계를 확인한다.
 
 - 메뉴 간소화: `menu-focus.mjs/css`는 검증된 여행·지갑을 읽어 홈/게임 이어하기와 기록 요약만 표시한다. 저장 키를 초기화·이관하지 않는다. 게임의 날짜별/연습 판은 `#game-more-modes`, 생활 도구는 `#life-tools`, 원화 참고는 `#avatar-reference-menu`를 먼저 펼친다. 기존 주소/DOM ID/저장 구조는 보존한다. [메뉴 정리](team/briefs/MENU-FOCUS.md).
 
@@ -100,8 +100,10 @@
 
 - 홈/게임 상단의 두 진입은 동일한 `스테이지`와 `랜덤 한 판` 이름과 동등한 카드로 표시한다. 랜덤의 20번 교환은 규칙 설명으로 둔다. `menu-focus.mjs`가 검증된 점수 저장을 읽어 시작/이어하기/완료 후 새 판 링크를 표시하며 `round=new`는 완료판에만 새 판을 만들고 즉시 URL에서 소비한다. 진행 중인 저장은 같은 링크로 초기화하지 않는다. `play-modes.css`와 기존 score/site-review/home-motion 브라우저 검사로 확인한다.
 
-- 상·하의 허리는 `avatar-waist.mjs`의 공통 L/F/R 자세로 맞춘다. 모든 top/bottom의 필수 `waist.points/rise`는 보정 전 target 좌표에 등록하며 42px 늘리기 방식은 폐기했다. 목·손목·무릎/발목은 유지한다. `avatar-mesh.mjs`의 작은 화면 겹침과 원단 전용 알파 보정을 유지하고, `avatar-qa-render.mjs`의 실제 원화 표식 검사/잘못된 변환 fixture와 176px 분할선 회귀를 실행한다. 신규 의상은 [허리 피팅 규격](team/briefs/AVATAR-WAIST-FIT.md)을 따른다. 전체 776건/13분할 집계를 확인하고 육안 품질과 자동 결과를 구분한다.
+- 상·하의 허리는 `avatar-waist.mjs`의 공통 L/F/R 자세로 맞춘다. 모든 top/bottom의 필수 `waist.points/rise`는 보정 전 target 좌표에 등록하며 42px 늘리기 방식은 폐기했다. 목·손목·무릎/발목은 유지한다. `avatar-mesh.mjs`의 작은 화면 겹침과 원단 전용 알파 보정을 유지하고, `avatar-qa-render.mjs`의 실제 원화 표식 검사/잘못된 변환 fixture와 176px 분할선 회귀를 실행한다. 신규 의상은 [허리 피팅 규격](team/briefs/AVATAR-WAIST-FIT.md)을 따른다. 현재 전체 962건/16분할 집계를 확인하고 육안 품질과 자동 결과를 구분한다.
 
 - 제품의 아바타 렌더링은 `avatar-runtime.mjs`의 선택적 비동기 경계를 사용한다. 렌더러 실패가 메뉴·게임·보상 저장을 막지 않게 하고 숨겨진 옷장의 SVG를 미리 그리지 않는다. 캐시된 이전 등록의 누락 필드는 런타임에서 호환하되 신규 의상 QA의 필수 필드는 완화하지 않는다. `tests/avatar-recovery-browser.cjs`로 실패/지연 로드·기록 보존·실제 보상을 검사한다. [진입 복구 기준](team/briefs/AVATAR-RECOVERY.md).
 
-- iOS 반복 종료 대응 이후 제품 아바타는 `avatar-canvas.mjs`의 Canvas 2D만 사용한다. 재귀 SVG 메시/필터를 제품 DOM이나 PNG 내보내기에 되돌리지 않는다. 원본 PNG와 공유 피팅 수학은 유지하며 캐시/표면 픽셀 예산, 직렬 작업, 숨은 화면/pagehide 시 버퍼 해제를 지킨다. Chromium만으로 iPhone 복구를 완료했다고 보고하지 않는다. `avatar-runtime-check.yml`의 WebKit/Chromium 결과와 776개 양쪽 렌더러 검사·전체 집계를 확인한다. [iOS 렌더링 기준](team/briefs/AVATAR-IOS-CANVAS.md).
+- iOS 반복 종료 대응 이후 제품 아바타는 `avatar-canvas.mjs`의 Canvas 2D만 사용한다. 재귀 SVG 메시/필터를 제품 DOM이나 PNG 내보내기에 되돌리지 않는다. 원본 PNG와 공유 피팅 수학은 유지하며 캐시/표면 픽셀 예산, 직렬 작업, 숨은 화면/pagehide 시 버퍼 해제를 지킨다. Chromium만으로 iPhone 복구를 완료했다고 보고하지 않는다. `avatar-runtime-check.yml`의 WebKit/Chromium 결과와 현재 962개 양쪽 렌더러 검사·전체 집계를 확인한다. [iOS 렌더링 기준](team/briefs/AVATAR-IOS-CANVAS.md).
+
+- 낮은 신발은 `avatar-shoe-fit.mjs`와 registry의 필수 `footFit`으로 좌우 뒤축과 입구를 맞춘다. 실제 발/바짓단은 입구 안에만 복원하고 앞쪽 혀와 테두리, 접촉 그림자를 유지한다. 원본 PNG를 편집하지 않는다. 부츠/발목 회귀와 252개 운동화·하의·피부 조합을 WebKit/Chromium에서 검사하며, 전체 QA는 v3/962개/16분할이다. [신발 피팅 기준](team/briefs/AVATAR-SHOE-FIT.md).

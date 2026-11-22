@@ -4,6 +4,10 @@ import {avatarItems,avatarSlots,faces,skins} from '../docs/avatar-data.mjs';
 import {avatarLayers,avatarAtlases} from '../docs/avatar-layers.mjs';
 import {validateAvatarCatalog,buildAvatarQaPlan,avatarQaShards} from '../docs/avatar-qa.mjs';
 const copy=v=>structuredClone(v),plan=buildAvatarQaPlan();assert.deepEqual(validateAvatarCatalog(),[]);
+const lowShoes=avatarItems.filter(item=>item.slot==='shoes'&&!avatarProfiles[avatarLayers[item.id].profile].boot);
+for(const item of lowShoes){for(const bottom of avatarItems.filter(i=>i.slot==='bottom'))for(const skin of skins)assert(plan.cases.some(c=>!c.isolate&&c.outfit.shoes===item.id&&c.outfit.bottom===bottom.id&&c.look.skin===skin.id),'Missing shoe/bottom/skin '+item.id+'/'+bottom.id+'/'+skin.id);}
+for(const mutate of [a=>delete a.footFit,a=>a.footFit.pop(),a=>a.footFit[0].anchor=[0,0],a=>a.footFit[0].opening=[],a=>a.footFit[1].opening[0]=[NaN,0],a=>a.footFit.reverse(),a=>a.footFit[0].opening=a.footFit[0].opening.map(([x,y])=>[x,y+150])]){const layers=copy(avatarLayers);mutate(layers['shoes-canvas']);assert(validateAvatarCatalog(avatarItems,layers).some(e=>/shoe/.test(e)),'Invalid heel/opening registration accepted');}
+console.log('Low shoes require both heel anchors and bounded heel-cup openings; all bottom/skin combinations included PASS');
 for(const item of avatarItems)assert(plan.cases.some(c=>c.isolate===item.id),'Missing isolated check '+item.id);
 for(const [a,b]of [['top','bottom'],['bottom','shoes'],['hair','hat'],['hair','accessory'],['top','accessory']])for(const first of avatarItems.filter(i=>i.slot===a))for(const second of avatarItems.filter(i=>i.slot===b))assert(plan.cases.some(c=>!c.isolate&&c.outfit[a]===first.id&&c.outfit[b]===second.id),`${first.id}/${second.id} missing`);
 const next={...avatarItems.find(i=>i.slot==='top'),id:'qa-new-top'},nextItems=[...avatarItems,next],nextLayers=copy(avatarLayers);nextLayers[next.id]=copy(avatarLayers[avatarItems.find(i=>i.slot==='top').id]);

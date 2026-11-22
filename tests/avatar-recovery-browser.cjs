@@ -2,7 +2,7 @@ const {chromium}=require('playwright');
 const assert=require('node:assert/strict');
 const fs=require('node:fs');
 const base='http://127.0.0.1:8000/';
-const renderer='**/avatar-canvas.mjs?renderer=20261122';
+const renderer='**/avatar-canvas.mjs?renderer=20261122-shoes1';
 
 (async()=>{
  const {emptyAvatar,dressAvatar}=await import('../docs/avatar-core.mjs');
@@ -22,7 +22,7 @@ const renderer='**/avatar-canvas.mjs?renderer=20261122';
  try{
   for(const width of [360,390])for(const fault of ['legacy-registry','blocked-renderer','throwing-renderer']){
    const {context,page,errors}=await open(width);
-   if(fault==='legacy-registry')await page.route('**/avatar-layers.mjs',route=>route.fulfill({contentType:'text/javascript',body:fs.readFileSync('docs/avatar-layers.mjs','utf8')+'\nfor(const layer of Object.values(avatarLayers))delete layer.waist;'}));
+   if(fault==='legacy-registry')await page.route('**/avatar-layers.mjs',route=>route.fulfill({contentType:'text/javascript',body:fs.readFileSync('docs/avatar-layers.mjs','utf8')+'\nfor(const layer of Object.values(avatarLayers)){delete layer.waist;delete layer.footFit;}'}));
    if(fault==='blocked-renderer')await page.route(renderer,route=>route.fulfill({status:503,contentType:'text/javascript',body:'Unavailable'}));
    if(fault==='throwing-renderer')await page.route(renderer,route=>route.fulfill({contentType:'text/javascript',body:'export function renderAvatarCanvas(){throw Error("broken optional artwork");}'}));
    await page.goto(base+'#home');
@@ -73,7 +73,7 @@ const renderer='**/avatar-canvas.mjs?renderer=20261122';
    assert.equal(await page.locator('.avatar-item:enabled').count(),0);
    await nav(page,'arcade');assert.deepEqual(await records(page),saved);
    assert.equal(await page.locator('#avatar-stage canvas,#avatar-items canvas').count(),0);
-   release();await page.waitForFunction(async()=> (await import('./avatar-runtime.mjs?canvas=20261122')).isAvatarArtReady());
+   release();await page.waitForFunction(async()=> (await import('./avatar-runtime.mjs?canvas=20261122-shoes1')).isAvatarArtReady());
    assert.equal(await page.locator('#avatar-stage canvas,#avatar-items canvas').count(),0,'Late loading must not recreate hidden wardrobe');
    await nav(page,'avatar');await page.waitForSelector('.avatar-item:enabled');
    await page.locator('[data-avatar-item="top-mint"]').click();

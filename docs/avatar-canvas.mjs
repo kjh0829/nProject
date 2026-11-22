@@ -8,6 +8,7 @@ import {avatarTopTriangles,avatarNeckOpening,avatarNeckSkin} from './avatar-neck
 import {avatarBottomTriangles,avatarWaistRig} from './avatar-waist.mjs?canvas=20261122';
 import {avatarMeshGeometry} from './avatar-mesh.mjs?canvas=20261122';
 import {ankleSkinBoundary} from './avatar-dressing.mjs';
+import {shoeFitFor,shoeFrame,shoeOpenings,shoeOpening,shoeOpeningBounds} from './avatar-shoe-fit.mjs';
 
 export const avatarCanvasLimits={texturePixels:16_000_000,surfacePixels:1_600_000,dimension:1600};
 const textures=new Map(),pins=new Set();let texturePixels=0,queue=Promise.resolve(),working=0,queued=0,dropRequested=false;
@@ -73,7 +74,7 @@ async function paint(value,options){
    if(a.legFit){const[sx,sy,sw,sh]=a.source,[x,y,w,h]=a.target,{start,end,shifts}=a.legFit,sourceY=v=>sy+(v-y)*sh/h;
     drawTexture(c,a.atlas,[sx,sy,sw,sourceY(start+3)-sy],[x,y,w,start+3-y],kind);
     const top=start-3;for(const[i,left,right]of [[0,x,480],[1,480,x+w]]){const k=shifts[i]/(end-start);c.save();c.transform(1,0,k,1,-k*start,0);drawTexture(c,a.atlas,[sx+(left-x)*sw/w,sourceY(top),(right-left)*sw/w,sourceY(y+h)-sourceY(top)],[left,top,right-left,y+h-top],kind);c.restore();}
-   }else if(p.kind==='segments')for(const s of a.segments)drawTexture(c,a.atlas,s.source,s.target,kind);else drawTexture(c,a.atlas,a.source,a.target,kind);
+   }else if(p.kind==='segments')for(const[i,s]of a.segments.entries()){c.save();if(p.slot==='shoes')c.transform(...shoeFrame(a,i,shoeFitFor(id,a)));drawTexture(c,a.atlas,s.source,s.target,kind);c.restore();}else drawTexture(c,a.atlas,a.source,a.target,kind);
    if(options.waistMarkers===p.slot)for(const[i,[x,y]]of a.waist.points.entries()){c.fillStyle=['#ff00ff','#00ffff','#ffff00'][i];c.fillRect(x-3,y-3,6,6);}
   };
   const triangles=(c,list,draw)=>{for(const{src,dst}of list){const{points,matrix}=avatarMeshGeometry(src,dst),path=new Path2D();points.forEach(([x,y],i)=>i?path.lineTo(x,y):path.moveTo(x,y));path.closePath();clipped(c,path,()=>{c.transform(...matrix);draw();});}};
@@ -106,6 +107,14 @@ async function paint(value,options){
   if(overalls&&include(outfit.bottom)){bottom(true);blit();order.push(outfit.bottom);}
   if(include(outfit.shoes)){
    clear(lc,layer);drawItem(lc,outfit.shoes);
+   const lowFit=shoeFitFor(outfit.shoes,avatarLayers[outfit.shoes]);
+   if(lowFit){
+    const a=avatarLayers[outfit.shoes],mouths=shoeOpenings(a,lowFit);clear(ac,aux);ac.drawImage(base,0,0);clipped(ac,skinClip+rect(0,1355,1024,181),()=>ac.drawImage(skinBase,0,0));
+    clear(lc,layer);drawItem(lc,outfit.bottom);ac.save();ac.setTransform(1,0,0,1,0,0);ac.drawImage(layer,0,0);ac.restore();
+    ac.globalCompositeOperation='source-atop';for(let i=0;i<2;i++){const bounds=shoeOpeningBounds(a,i,lowFit),gradient=ac.createLinearGradient(0,bounds.minY,0,bounds.maxY);gradient.addColorStop(0,'rgba(34,23,29,.2)');gradient.addColorStop(.55,'rgba(34,23,29,.04)');gradient.addColorStop(1,'rgba(34,23,29,0)');ac.fillStyle=gradient;clipped(ac,shoeOpening(a,i,lowFit),()=>ac.fillRect(160,1250,700,286));}ac.globalCompositeOperation='source-over';
+    if(!options.isolate)clipped(ctx,mouths,()=>{ctx.save();ctx.setTransform(1,0,0,1,0,0);ctx.drawImage(aux,0,0);ctx.restore();});
+    clear(lc,layer);drawItem(lc,outfit.shoes);lc.globalCompositeOperation='destination-out';clipped(lc,mouths,()=>{lc.setTransform(1,0,0,1,0,0);lc.drawImage(aux,0,0);});lc.globalCompositeOperation='source-over';
+   }
    if(shoeFit.boot){clear(ac,aux);clipped(ac,body,()=>ac.drawImage(base,0,0));bottom(false);ac.setTransform(1,0,0,1,0,0);ac.drawImage(layer,0,0);clear(lc,layer);drawItem(lc,outfit.shoes);lc.globalCompositeOperation='destination-out';const mouths=new Path2D();for(const[cx,cy,rx,ry,angle]of avatarLayers[outfit.shoes].openings||[]){const a=angle*Math.PI/180;mouths.moveTo(cx+rx*Math.cos(a),cy+rx*Math.sin(a));mouths.ellipse(cx,cy,rx,ry,a,0,Math.PI*2);mouths.closePath();}clipped(lc,mouths,()=>{lc.setTransform(1,0,0,1,0,0);lc.drawImage(aux,0,0);});lc.globalCompositeOperation='source-over';}
    blit();order.push(outfit.shoes);
   }

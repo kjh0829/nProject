@@ -1,4 +1,4 @@
-import {syncAvatarReward} from './avatar-rewards.mjs?canvas=20261122';
+import {syncAvatarReward} from './avatar-rewards.mjs?canvas=20261122-shoes1';
 import {createLabPuzzle,applyLabMove,applyLabSkill,labHint,LAB_PORTALS,LAB_BELT} from './puzzle-lab.mjs';
 import {readLab,saveLab} from './lab-saves.mjs';
 import {pieceArt} from './soft-graphics.mjs';

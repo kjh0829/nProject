@@ -4,7 +4,8 @@ import {avatarWristRig} from './avatar-neckline.mjs';
 import {avatarItems,avatarSlots,starterOutfit,skins,faces} from './avatar-data.mjs';
 import {avatarLayers,avatarAtlases,avatarFaceSources} from './avatar-layers.mjs';
 import {avatarProfiles} from './avatar-profiles.mjs';
-export const avatarQaVersion='wardrobe-qa-v2';
+import {avatarFootRig,fittedShoePoint,shoeOpeningBounds} from './avatar-shoe-fit.mjs';
+export const avatarQaVersion='wardrobe-qa-v3';
 const rect=(r,positive=false)=>Array.isArray(r)&&r.length===4&&r.every(Number.isFinite)&&r[2]>0&&r[3]>0&&(!positive||r[0]>=0&&r[1]>=0);
 export function validateAvatarCatalog(items=avatarItems,layers=avatarLayers,atlases=avatarAtlases,profiles=avatarProfiles){
  const errors=[],ids=new Set(),slots=new Set(avatarSlots.map(s=>s.id));
@@ -39,6 +40,21 @@ export function validateAvatarCatalog(items=avatarItems,layers=avatarLayers,atla
   if(a.openings&&!p.boot)errors.push(`${id}: boot openings on incompatible profile`);
   if(p.longLegs){const f=a.legFit;if(!f||Object.keys(f).some(k=>!['start','end','shifts'].includes(k))||!Number.isFinite(f.start)||f.start<1100||f.start>1250||!Number.isFinite(f.end)||!rect(a.target)||f.end<=f.start||f.start<=a.target[1]||a.target[0]>=480||a.target[0]+a.target[2]<=480||Math.abs(f.end-(a.target[1]+a.target[3]))>2||!Array.isArray(f.shifts)||f.shifts.length!==2||!f.shifts.every(v=>Number.isFinite(v)&&Math.abs(v)<=20))errors.push(`${id}: invalid/missing leg fitting`);}
   if(p.boot){if(!Array.isArray(a.openings)||a.openings.length!==2||!a.openings.every((o,i)=>Array.isArray(o)&&o.length===5&&o.every(Number.isFinite)&&o[0]>(i?560:300)&&o[0]<(i?620:350)&&o[1]>1280&&o[1]<1340&&o[2]>10&&o[2]<40&&o[3]>2&&o[3]<15&&Math.abs(o[4])<=30))errors.push(`${id}: invalid/missing boot openings`);}
+  if(item.slot==='shoes'&&!p.boot){
+   const point=v=>Array.isArray(v)&&v.length===2&&v.every(Number.isFinite);
+   const okay=Array.isArray(a.footFit)&&a.footFit.length===2&&a.footFit.every((f,i)=>f&&Object.keys(f).every(k=>['anchor','opening'].includes(k))&&point(f.anchor)&&Array.isArray(f.opening)&&f.opening.length===4&&f.opening.every(point)&&a.segments?.[i]&&rect(a.segments[i].source,true)&&rect(a.segments[i].target)&&f.anchor[0]>a.segments[i].source[0]&&f.anchor[0]<a.segments[i].source[0]+a.segments[i].source[2]&&f.anchor[1]>a.segments[i].source[1]&&f.anchor[1]<a.segments[i].source[1]+a.segments[i].source[3]);
+   if(!okay)errors.push(`${id}: invalid/missing shoe heel and opening registration`);
+   else for(let i=0;i<2;i++){
+    const b=shoeOpeningBounds(a,i),center=fittedShoePoint(a,i,a.footFit[i].anchor),[sx,sy,sw,sh]=a.segments[i].source;
+    const area=Math.abs(b.points.reduce((sum,p,j)=>{const q=b.points[(j+1)%b.points.length];return sum+p[0]*q[1]-p[1]*q[0];},0))/2;
+    if(b.minY<1340||b.maxY>1420||b.maxY-b.minY<6||area<100||Math.hypot(center[0]-avatarFootRig[i].center[0],center[1]-avatarFootRig[i].center[1])>.1)errors.push(`${id}: shoe opening misses the standing foot`);
+    for(const [x,y]of a.footFit[i].opening)if(x<0||x>atlas.width||y<0||y>atlas.height)errors.push(`${id}: shoe opening outside atlas`);
+    const corners=[[sx,sy],[sx+sw,sy],[sx+sw,sy+sh],[sx,sy+sh]].map(p=>fittedShoePoint(a,i,p));
+    const ground=Math.max(...corners.map(p=>p[1]));if(ground<1480||ground>1535||corners.some(p=>p[0]<160||p[0]>860||p[1]<1280))errors.push(`${id}: shoe sole misses the standing foot`);
+    const[l,back,r,front]=a.footFit[i].opening;
+    for(const[p,q,z]of [[l,back,r],[r,front,l]])for(let j=0;j<=24;j++){const t=j/24,[x,y]=[0,1].map(k=>(1-t)**2*p[k]+2*(1-t)*t*q[k]+t*t*z[k]);if(x<sx-.5||x>sx+sw+.5||y<sy-.5||y>sy+sh+.5)errors.push(`${id}: shoe opening leaves its original segment`);}
+   }
+  }else if(a.footFit!==undefined)errors.push(`${id}: shoe heel fitting on incompatible slot`);
   if(p.eyeFit){const anchors=a.lensAnchors;if(!Array.isArray(anchors)||anchors.length!==2||!anchors.every((point,i)=>{if(!Array.isArray(point)||point.length!==2||!point.every(Number.isFinite))return false;const box=(Array.isArray(a.segments)?a.segments:[]).find(b=>rect(b.source)&&point[0]>=b.source[0]&&point[0]<=b.source[0]+b.source[2]&&point[1]>=b.source[1]&&point[1]<=b.source[1]+b.source[3]);if(!box||!rect(box.target))return false;const x=box.target[0]+(point[0]-box.source[0])*box.target[2]/box.source[2],y=box.target[1]+(point[1]-box.source[1])*box.target[3]/box.source[3];return Math.hypot(x-avatarEyeRig[i][0],y-avatarEyeRig[i][1])<4;}))errors.push(`${id}: missing/misaligned eye anchors`);}
   if(p.eyeFit&&(!Array.isArray(a.segments)||a.segments.some((b,i,all)=>i>0&&(!rect(b.target)||!rect(all[i-1].target)||Math.abs(b.target[0]-all[i-1].target[0]-all[i-1].target[2])>.5||Math.abs(b.target[1]-all[0].target[1])>.5||Math.abs(b.target[3]-all[0].target[3])>.5))))errors.push(`${id}: disconnected lens segments`);
   if(p.perch&&(!Array.isArray(a.perchPoints)||a.perchPoints.length!==2||!a.perchPoints.every(v=>Array.isArray(v)&&v.length===2&&v.every(Number.isFinite)&&rect(a.target)&&v[0]>=a.target[0]&&v[0]<=a.target[0]+a.target[2]&&v[1]>=a.target[1]&&v[1]<=a.target[1]+a.target[3])))errors.push(`${id}: invalid/missing perch points`);
@@ -51,7 +67,7 @@ export function validateAvatarCatalog(items=avatarItems,layers=avatarLayers,atla
  return errors;
 }
 const hash=s=>{let n=2166136261;for(const c of s)n=Math.imul(n^c.charCodeAt(0),16777619);return(n>>>0).toString(16);};
-export const avatarQaGroups={item:'각 아이템', 'top-bottom':'상의 × 하의','bottom-shoes':'하의 × 신발','hair-hat':'머리 × 모자 × 표정','hair-accessory':'머리 × 소품','top-accessory':'상의 × 소품','top-look':'상의 × 피부 × 표정',look:'피부 × 표정','hair-skin':'머리 × 피부','face-accessory':'안경 × 머리 × 표정','boot-skin':'부츠 × 하의 × 피부'};
+export const avatarQaGroups={item:'각 아이템', 'top-bottom':'상의 × 하의','bottom-shoes':'하의 × 신발','hair-hat':'머리 × 모자 × 표정','hair-accessory':'머리 × 소품','top-accessory':'상의 × 소품','top-look':'상의 × 피부 × 표정',look:'피부 × 표정','hair-skin':'머리 × 피부','face-accessory':'안경 × 머리 × 표정','boot-skin':'부츠 × 하의 × 피부','shoe-skin':'운동화 × 하의 × 피부'};
 export function buildAvatarQaPlan(items=avatarItems,layers=avatarLayers){
  const errors=validateAvatarCatalog(items,layers);if(errors.length)throw Error(errors.join('\n'));
  const by=slot=>items.filter(i=>i.slot===slot),cases=new Map(),collision=new Map(),pairCounts={};
@@ -65,6 +81,7 @@ export function buildAvatarQaPlan(items=avatarItems,layers=avatarLayers){
  for(const top of by('top'))for(const skin of skins)for(const face of faces)add('top-look',{top:top.id},{skin:skin.id,face:face.id});
  for(const accessory of by('accessory').filter(i=>avatarProfiles[layers[i.id].profile].faceClip))for(const hair of by('hair'))for(const face of faces)add('face-accessory',{accessory:accessory.id,hair:hair.id},{face:face.id});
  for(const shoes of by('shoes').filter(i=>avatarProfiles[layers[i.id].profile].boot))for(const bottom of by('bottom'))for(const skin of skins)add('boot-skin',{shoes:shoes.id,bottom:bottom.id},{skin:skin.id});
+ for(const shoes of by('shoes').filter(i=>!avatarProfiles[layers[i.id].profile].boot))for(const bottom of by('bottom'))for(const skin of skins)add('shoe-skin',{shoes:shoes.id,bottom:bottom.id},{skin:skin.id});
  for(const skin of skins)for(const face of faces)add('look',{}, {skin:skin.id,face:face.id});
  for(const hair of by('hair'))for(const skin of skins)add('hair-skin',{hair:hair.id},{skin:skin.id});
  return {version:avatarQaVersion,itemCount:items.length,pairCounts,cases:[...cases.values()]};

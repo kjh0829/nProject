@@ -3,7 +3,7 @@ import {itemById} from './avatar-data.mjs';
 import {avatarBalance} from './avatar-core.mjs';
 import {readAvatar,setAvatarWish} from './avatar-store.mjs';
 import {readJourney} from './journey-saves.mjs';
-import {renderAvatar,releaseAvatar} from './avatar-runtime.mjs?canvas=20261122';
+import {renderAvatar,releaseAvatar} from './avatar-runtime.mjs?canvas=20261122-shoes1';
 import {collectionOf,regionPrizes,unlockedPrizes} from './collection-core.mjs';
 
 function element(tag,className,text) {
