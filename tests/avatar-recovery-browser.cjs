@@ -2,7 +2,7 @@ const {chromium}=require('playwright');
 const assert=require('node:assert/strict');
 const fs=require('node:fs');
 const base='http://127.0.0.1:8000/';
-const renderer='**/avatar-art.mjs?recovery=20261121';
+const renderer='**/avatar-canvas.mjs?renderer=20261122';
 
 (async()=>{
  const {emptyAvatar,dressAvatar}=await import('../docs/avatar-core.mjs');
@@ -24,15 +24,15 @@ const renderer='**/avatar-art.mjs?recovery=20261121';
    const {context,page,errors}=await open(width);
    if(fault==='legacy-registry')await page.route('**/avatar-layers.mjs',route=>route.fulfill({contentType:'text/javascript',body:fs.readFileSync('docs/avatar-layers.mjs','utf8')+'\nfor(const layer of Object.values(avatarLayers))delete layer.waist;'}));
    if(fault==='blocked-renderer')await page.route(renderer,route=>route.fulfill({status:503,contentType:'text/javascript',body:'Unavailable'}));
-   if(fault==='throwing-renderer')await page.route(renderer,route=>route.fulfill({contentType:'text/javascript',body:'export function avatarArt(){throw Error("broken optional artwork");}'}));
+   if(fault==='throwing-renderer')await page.route(renderer,route=>route.fulfill({contentType:'text/javascript',body:'export function renderAvatarCanvas(){throw Error("broken optional artwork");}'}));
    await page.goto(base+'#home');
-   if(fault==='legacy-registry')await page.waitForSelector('[data-home-avatar] > svg');
+   if(fault==='legacy-registry')await page.waitForSelector('[data-home-avatar] > canvas');
    else await page.waitForSelector('#avatar-render-notice');
-   assert.equal(await page.locator('#avatar-stage svg,#avatar-items svg,[data-avatar-mini] svg').count(),0,'Hidden wardrobe and journey must not render on home');
+   assert.equal(await page.locator('#avatar-stage canvas,#avatar-items canvas,[data-avatar-mini] canvas').count(),0,'Hidden wardrobe and journey must not render on home');
    assert.deepEqual(await records(page),saved,'Loading artwork must preserve every saved record');
    await nav(page,'avatar');
    if(fault==='legacy-registry'){
-    await page.waitForSelector('#avatar-stage > svg');
+    await page.waitForSelector('#avatar-stage > canvas');
     assert.equal(await page.locator('#avatar-stage [data-item="hat-beret"]').count(),1);
     await page.waitForSelector('.avatar-item:enabled');
    }else{
@@ -45,7 +45,7 @@ const renderer='**/avatar-art.mjs?recovery=20261121';
    }
    await nav(page,'read');assert.equal(await page.locator('#read').isVisible(),true);
    await nav(page,'arcade');
-   assert.equal(await page.locator('#avatar-stage svg,#avatar-items svg,[data-home-avatar] svg').count(),0,'Release hidden artwork after navigation');
+   assert.equal(await page.locator('#avatar-stage canvas,#avatar-items canvas,[data-home-avatar] canvas').count(),0,'Release hidden artwork after navigation');
    assert.deepEqual(await records(page),saved);
    await page.evaluate(async()=>{(await import('./navigation.mjs')).navigateTo('#challenge?journey=1');});
    await page.waitForSelector('.puzzle-tile');
@@ -72,12 +72,12 @@ const renderer='**/avatar-art.mjs?recovery=20261121';
    assert.equal(await page.locator('#avatar-item-action').isDisabled(),true);
    assert.equal(await page.locator('.avatar-item:enabled').count(),0);
    await nav(page,'arcade');assert.deepEqual(await records(page),saved);
-   assert.equal(await page.locator('#avatar-stage svg,#avatar-items svg').count(),0);
-   release();await page.waitForFunction(async()=> (await import('./avatar-runtime.mjs')).isAvatarArtReady());
-   assert.equal(await page.locator('#avatar-stage svg,#avatar-items svg').count(),0,'Late loading must not recreate hidden wardrobe');
+   assert.equal(await page.locator('#avatar-stage canvas,#avatar-items canvas').count(),0);
+   release();await page.waitForFunction(async()=> (await import('./avatar-runtime.mjs?canvas=20261122')).isAvatarArtReady());
+   assert.equal(await page.locator('#avatar-stage canvas,#avatar-items canvas').count(),0,'Late loading must not recreate hidden wardrobe');
    await nav(page,'avatar');await page.waitForSelector('.avatar-item:enabled');
    await page.locator('[data-avatar-item="top-mint"]').click();
-   await page.waitForSelector('#avatar-stage [data-item="top-mint"]');
+   await page.waitForSelector('#avatar-stage [data-item="top-mint"]',{state:'attached'});
    assert.deepEqual(await records(page),saved,'Preview is not a purchase');
    assert.deepEqual(errors,[]);
    console.log('Delayed artwork: immediate navigation, blocked blind purchase, late hidden render avoided and preview recovery PASS');

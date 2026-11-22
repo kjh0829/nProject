@@ -24,14 +24,20 @@ export function avatarWaistMeshAxes(layer,bounds,slot='top'){
 export function fittedAvatarBottom(layer,uid,source){
  if(!layer.waist)return{defs:'',art:source};
  const sourceId=uid+'-waist-source',r=region(layer,'bottom'),[x,y,w,h]=layer.target;
- const axes=avatarWaistMeshAxes(layer,[x,Math.min(y,r.start),w,y+h-Math.min(y,r.start)],'bottom');
- const xs=[...new Set([x,...axes.xs,x+w])].sort((a,b)=>a-b),ys=[...new Set([r.start,...axes.ys,r.end])].sort((a,b)=>a-b);
  let defs=`<g id="${sourceId}">${source}</g>`,art='';
- for(let j=0;j<ys.length-1;j++)for(let i=0;i<xs.length-1;i++){
-  const a=[xs[i],ys[j]],b=[xs[i+1],ys[j]],c=[xs[i+1],ys[j+1]],d=[xs[i],ys[j+1]];
-  for(const[k,src]of [[0,[a,b,c]],[1,[a,c,d]]]){const t=avatarMeshTriangle(src,src.map(p=>fitAvatarWaist(p,layer,'bottom')),`${uid}-waist-${j}-${i}-${k}`,sourceId);defs+=t.defs;art+=t.art;}
- }
+ for(const {src,dst,j,i,k}of avatarBottomTriangles(layer)){const t=avatarMeshTriangle(src,dst,`${uid}-waist-${j}-${i}-${k}`,sourceId);defs+=t.defs;art+=t.art;}
  const clip=uid+'-waist-fixed';defs+=`<clipPath id="${clip}"><rect width="1024" height="${r.start+.2}"/><rect y="${r.end-.2}" width="1024" height="1536"/></clipPath>`;
  art+=`<use href="#${sourceId}" clip-path="url(#${clip})"/>`;
  return{defs,art};
+}
+export function avatarBottomTriangles(layer){
+ if(!layer.waist)return[];
+ const r=region(layer,'bottom'),[x,y,w,h]=layer.target,result=[];
+ const axes=avatarWaistMeshAxes(layer,[x,Math.min(y,r.start),w,y+h-Math.min(y,r.start)],'bottom');
+ const xs=[...new Set([x,...axes.xs,x+w])].sort((a,b)=>a-b),ys=[...new Set([r.start,...axes.ys,r.end])].sort((a,b)=>a-b);
+ for(let j=0;j<ys.length-1;j++)for(let i=0;i<xs.length-1;i++){
+  const a=[xs[i],ys[j]],b=[xs[i+1],ys[j]],c=[xs[i+1],ys[j+1]],d=[xs[i],ys[j+1]];
+  for(const[k,src]of [[0,[a,b,c]],[1,[a,c,d]]])result.push({src,dst:src.map(p=>fitAvatarWaist(p,layer,'bottom')),j,i,k});
+ }
+ return result;
 }

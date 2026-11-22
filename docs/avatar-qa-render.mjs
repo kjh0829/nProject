@@ -1,3 +1,4 @@
+import {renderAvatarCanvas} from './avatar-canvas.mjs?renderer=20261122';
 import {avatarWaistRig} from './avatar-waist.mjs';
 import {avatarItems} from './avatar-data.mjs';
 import {avatarArt} from './avatar-art.mjs';
@@ -30,18 +31,26 @@ export async function avatarQaPixels(test,isolate=false,options={}){
    source.append(rect);
   }
  }
+ if(options.renderer==='canvas'){
+  const c=await renderAvatarCanvas(test.look,{outfit:test.outfit,frame:[0,0,1024,1536],width:1024,height:1536,isolate:isolate?test.isolate:null,waistMarkers:options.waistMarkers});
+  const actual=[...c.children].map(n=>n.dataset.item),expected=[...svg.querySelectorAll('[data-item]')].map(n=>n.dataset.item);
+  if(JSON.stringify(actual)!==JSON.stringify(expected))throw Error('Canvas layer order differs from the registered composition');
+  const data=c.getContext('2d',{willReadFrequently:true}).getImageData(0,0,1024,1536).data;c.width=c.height=0;
+  return{svg,data,pixel:(x,y)=>{const i=(Math.round(y)*1024+Math.round(x))*4;return[...data.slice(i,i+4)];}};
+ }
  await Promise.all([...svg.querySelectorAll('image')].map(async node=>node.setAttribute('href',await textureUrl(node.getAttribute('href')))));
  const url=URL.createObjectURL(new Blob([new XMLSerializer().serializeToString(svg)],{type:'image/svg+xml'}));
  try{const img=new Image();img.src=url;await img.decode();const canvas=document.createElement('canvas');canvas.width=1024;canvas.height=1536;const ctx=canvas.getContext('2d',{willReadFrequently:true});ctx.drawImage(img,0,0);const data=ctx.getImageData(0,0,1024,1536).data;return {svg,pixel:(x,y)=>{const i=(Math.round(y)*1024+Math.round(x))*4;return [...data.slice(i,i+4)];},data};}finally{URL.revokeObjectURL(url);}
 }
-export async function inspectAvatarCase(test){
- const failures=[],expect=(ok,rule,point)=>{if(!ok)failures.push({rule,point});};const {pixel,svg}=await avatarQaPixels(test);
+export async function inspectAvatarCase(test,renderer='svg'){
+ const pixels=(value,isolate=false,options={})=>avatarQaPixels(value,isolate,{...options,renderer});
+ const failures=[],expect=(ok,rule,point)=>{if(!ok)failures.push({rule,point});};const {pixel,svg}=await pixels(test);
  const entries=Object.entries(test.outfit).filter(([,id])=>id),fit=slot=>avatarProfiles[avatarLayers[test.outfit[slot]]?.profile];
  for(const [slot,id]of entries)expect(svg.querySelectorAll(`[data-item="${id}"]`).length===1,`registered-layer:${slot}`);
  if(test.groups.includes('top-bottom')||test.isolate&&['top','bottom'].includes(avatarItems.find(i=>i.id===test.isolate)?.slot)){
   const slots=test.isolate?[avatarItems.find(i=>i.id===test.isolate).slot]:['top','bottom'];
   for(const slot of slots){
-   const id=test.outfit[slot],layer=avatarLayers[id],marked=await avatarQaPixels({...test,isolate:id},true,{waistMarkers:slot});
+   const id=test.outfit[slot],layer=avatarLayers[id],marked=await pixels({...test,isolate:id},true,{waistMarkers:slot});
    const contact=await waistFabricAlpha(layer);for(const [i,alpha]of contact.entries())if(!(slot==='top'&&fit('top').outer&&i===1))expect(alpha>180,'waist-fabric-landmark:'+slot+':'+['left','front','right'][i],layer.waist.points[i]);
    for(const [i,[cx,cy]]of avatarWaistRig.points.entries()){
     const y=cy+layer.waist.rise,color=[[255,0,255],[0,255,255],[255,255,0]][i],hits=[];
@@ -58,10 +67,10 @@ export async function inspectAvatarCase(test){
  for(const x of [330,595])for(let y=1320;y<=1380;y+=10)expect(pixel(x,y)[3]>150,'ankle-connection',[x,y]);
  if(fit('hair').faceClear){const [r,,b,a]=pixel(520,180);expect(a>200&&r>b+25,'hair-face-clearance',[520,180]);}
  if(fit('bottom').overTop&&!fit('top').outer){const ids=[...svg.children].map(n=>n.getAttribute('data-item'));expect(ids.indexOf(test.outfit.bottom)>ids.indexOf(test.outfit.top),'overall-above-shirt');}
- if(fit('accessory')?.perch){const top=await avatarQaPixels({...test,isolate:test.outfit.top},true);for(const[x,y]of avatarLayers[test.outfit.accessory].perchPoints)expect(top.pixel(x,y)[3]>180,'companion-shoulder-contact',[x,y]);}
+ if(fit('accessory')?.perch){const top=await pixels({...test,isolate:test.outfit.top},true);for(const[x,y]of avatarLayers[test.outfit.accessory].perchPoints)expect(top.pixel(x,y)[3]>180,'companion-shoulder-contact',[x,y]);}
  if(fit('shoes').boot){const ids=[...svg.children].map(n=>n.getAttribute('data-item'));expect(ids.indexOf(test.outfit.shoes)>ids.indexOf(test.outfit.bottom),'boot-above-trousers');}
  if(test.groups.includes('top-look')||test.isolate?.startsWith('top-')){
-  const neck=await avatarQaPixels({...test,isolate:test.outfit.top},true);
+  const neck=await pixels({...test,isolate:test.outfit.top},true);
   for(const [x,y]of [[485,250],[495,250],[505,250],[495,253]]){
    expect(neck.pixel(x,y)[3]<25,'neck-opening-clear',[x,y]);
    expect(pixel(x,y)[3]>220,'neck-skin-connected',[x,y]);
@@ -77,13 +86,13 @@ export async function inspectAvatarCase(test){
   if(!fit('top').outer)expect(neck.pixel(510,295)[3]>200,'front-collar-preserved',[510,295]);
  }
  if(fit('accessory')?.shoulderClip){const item=svg.querySelector(`[data-item="${test.outfit.accessory}"]`),root=n=>{while(n.parentElement!==svg)n=n.parentElement;return n;},children=[...svg.children];expect(children.indexOf(root(item))<children.indexOf(svg.querySelector('[data-layer="hair"]')),'bag-strap-behind-hair');expect(!!item.closest('[mask]'),'bag-shoulder-clipping');}
- if(fit('shoes').boot){const reference=await avatarQaPixels({...test,outfit:{...test.outfit,shoes:avatarItems.find(i=>i.slot==='shoes'&&!avatarProfiles[avatarLayers[i.id].profile].boot).id},isolate:null});for(const [x,y]of avatarLayers[test.outfit.shoes].openings){const expected=reference.pixel(x,y),actual=pixel(x,y);expect(expected[3]>200&&actual.every((v,i)=>Math.abs(v-expected[i])<5),'boot-leg-insertion',[x,y]);}}
- if(test.isolate){const isolated=await avatarQaPixels(test,true),profile=avatarProfiles[avatarLayers[test.isolate].profile];let samples=0;for(let y=0;y<1536;y+=8)for(let x=0;x<1024;x+=8)if(isolated.data[(y*1024+x)*4+3]>100)samples++;expect(samples>=5,'nonempty-isolated-art');for(const [x,y]of profile.probes)expect(isolated.pixel(x,y)[3]>120,'item-registration-landmark',[x,y]);}
+ if(fit('shoes').boot){const reference=await pixels({...test,outfit:{...test.outfit,shoes:avatarItems.find(i=>i.slot==='shoes'&&!avatarProfiles[avatarLayers[i.id].profile].boot).id},isolate:null});for(const [x,y]of avatarLayers[test.outfit.shoes].openings){const expected=reference.pixel(x,y),actual=pixel(x,y);expect(expected[3]>200&&actual.every((v,i)=>Math.abs(v-expected[i])<5),'boot-leg-insertion',[x,y]);}}
+ if(test.isolate){const isolated=await pixels(test,true),profile=avatarProfiles[avatarLayers[test.isolate].profile];let samples=0;for(let y=0;y<1536;y+=8)for(let x=0;x<1024;x+=8)if(isolated.data[(y*1024+x)*4+3]>100)samples++;expect(samples>=5,'nonempty-isolated-art');for(const [x,y]of profile.probes)expect(isolated.pixel(x,y)[3]>120,'item-registration-landmark',[x,y]);}
  if(test.isolate){
   const a=avatarLayers[test.isolate],p=avatarProfiles[a.profile];
-  if(a.legFit){const isolated=await avatarQaPixels(test,true);for(const [left,right,center]of [[270,420,324.5],[530,710,593]]){const xs=[];for(let x=left;x<right;x++)if(isolated.pixel(x,1350)[3]>180)xs.push(x);const mean=xs.reduce((a,b)=>a+b,0)/xs.length;expect(xs.length>20&&Math.abs(mean-center)<4,'hem-ankle-alignment',[center,1350]);}}
-  if(p.shoulderClip){const isolated=await avatarQaPixels(test,true);for(const[x,y]of [[600,277],[610,277],[615,285],[620,300]])expect(isolated.pixel(x,y)[3]<25,'strap-off-shoulder-trim',[x,y]);}
-  if(p.faceClip){const isolated=await avatarQaPixels(test,true);expect(isolated.pixel(535,124)[3]<25,'no-floating-glasses-arm',[535,124]);}
+  if(a.legFit){const isolated=await pixels(test,true);for(const [left,right,center]of [[270,420,324.5],[530,710,593]]){const xs=[];for(let x=left;x<right;x++)if(isolated.pixel(x,1350)[3]>180)xs.push(x);const mean=xs.reduce((a,b)=>a+b,0)/xs.length;expect(xs.length>20&&Math.abs(mean-center)<4,'hem-ankle-alignment',[center,1350]);}}
+  if(p.shoulderClip){const isolated=await pixels(test,true);for(const[x,y]of [[600,277],[610,277],[615,285],[620,300]])expect(isolated.pixel(x,y)[3]<25,'strap-off-shoulder-trim',[x,y]);}
+  if(p.faceClip){const isolated=await pixels(test,true);expect(isolated.pixel(535,124)[3]<25,'no-floating-glasses-arm',[535,124]);}
  }
  return {id:test.id,passed:failures.length===0,failures};
 }

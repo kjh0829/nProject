@@ -1,0 +1,43 @@
+name: Check avatar runtime on WebKit and Chromium
+on:
+  push:
+    branches: [master, 'fix/ios-avatar-*']
+    paths:
+      - 'docs/avatar*'
+      - 'docs/collection*'
+      - 'docs/outfit-export.mjs'
+      - 'docs/index.html'
+      - 'tests/avatar-runtime-browser.cjs'
+      - '.github/workflows/avatar-runtime-check.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  native-runtime:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        engine: [webkit, chromium]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install native engine
+        run: |
+          npm install --prefix "$RUNNER_TEMP/avatar-native" --no-package-lock playwright@1.56.1
+          "$RUNNER_TEMP/avatar-native/node_modules/.bin/playwright" install --with-deps ${{ matrix.engine }}
+      - name: Exercise real Canvas previews and route lifetimes
+        env:
+          AVATAR_BROWSER: ${{ matrix.engine }}
+        run: |
+          python3 -m http.server 8000 --directory docs > "$RUNNER_TEMP/avatar-native-http.log" 2>&1 &
+          NODE_PATH="$RUNNER_TEMP/avatar-native/node_modules" node tests/avatar-runtime-browser.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: avatar-native-${{ matrix.engine }}
+          path: test-results/avatar-canvas-*.png
+          if-no-files-found: ignore

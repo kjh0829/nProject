@@ -1,39 +1,10 @@
 import {readAvatar} from './avatar-store.mjs';
-import {avatarArt,ensureAvatarArt} from './avatar-runtime.mjs';
+import {createAvatarImage} from './avatar-runtime.mjs?canvas=20261122';
 import {collectionOf,unlockedPrizes} from './collection-core.mjs';
 import {readJourney} from './journey-saves.mjs';
 
-const textures=new Map();
-async function inlineTexture(url) {
- if(!textures.has(url))textures.set(url,(async()=>{
-  const response=await fetch(url);
-  if(!response.ok)throw Error('원화 이미지를 불러오지 못했어요.');
-  const blob=await response.blob();
-  return new Promise((resolve,reject)=>{
-   const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=()=>reject(Error('이미지를 읽지 못했어요.'));reader.readAsDataURL(blob);
-  });
- })().catch(error=>{textures.delete(url);throw error;}));
- return textures.get(url);
-}
-async function characterImage(value) {
- await ensureAvatarArt();
- const svg=new DOMParser().parseFromString(avatarArt(value,{decorative:true}),'image/svg+xml').documentElement;
- if(svg.localName!=='svg')throw Error('캐릭터 미리보기를 다시 불러온 뒤 시도해 주세요.');
- svg.setAttribute('width','600');svg.setAttribute('height','960');svg.setAttribute('overflow','hidden');
- await Promise.all([...svg.querySelectorAll('image')].map(async image=>{
-  const url=new URL(image.getAttribute('href'),document.baseURI);
-  if(url.origin!==location.origin)throw Error('원화 경로를 확인해 주세요.');
-  image.setAttribute('href',await inlineTexture(url.href));
- }));
- const url=URL.createObjectURL(new Blob([new XMLSerializer().serializeToString(svg)],{type:'image/svg+xml'}));
- try {
-  const image=new Image();
-  await new Promise((resolve,reject)=>{image.onload=resolve;image.onerror=()=>reject(Error('코디 이미지를 만들지 못했어요.'));image.src=url;});
-  return image;
- }finally{URL.revokeObjectURL(url);}
-}
 export async function createOutfitCard(value,name,prize) {
- const character=await characterImage(value);
+ const character=await createAvatarImage(value,{width:600,height:960});
  const canvas=document.createElement('canvas');canvas.width=900;canvas.height=1200;
  const context=canvas.getContext('2d');
  if(!context)throw Error('이미지 저장을 지원하지 않는 브라우저입니다.');
@@ -47,7 +18,7 @@ export async function createOutfitCard(value,name,prize) {
  context.font='bold 28px sans-serif';context.fillText('알찬끼',62,64);
  context.font='18px sans-serif';context.fillText('별빛 배달 여행 · 내 코디',62,100);
  context.fillStyle='#52465c30';context.beginPath();context.ellipse(450,1023,180,28,0,0,Math.PI*2);context.fill();
- context.drawImage(character,150,110,600,960);
+ context.drawImage(character,450-character.width/2,110);character.width=character.height=0;
  if(prize){
   context.fillStyle='#fff5cfbb';context.beginPath();context.roundRect(696,871,135,140,26);context.fill();
   context.fillStyle='#9f743b';context.font='70px sans-serif';context.textAlign='center';context.fillText(prize.symbol,764,970);
