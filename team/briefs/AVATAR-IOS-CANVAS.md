@@ -16,5 +16,6 @@
 ## 검사
 
 - `avatar-runtime-browser.cjs`: Chromium/WebKit 각각 360/390px·DPR3, 52개 의상, 12개 피부/표정, 반복 탭 이동, pagehide/pageshow, 버퍼 해제, PNG, 기존 저장 보존을 검사한다. `.github/workflows/avatar-runtime-check.yml`에서 두 엔진을 필수 실행한다. Linux WebKit은 실제 iPhone 기기 검증과 구분한다.
+- master 배포에서는 HTML/렌더러 파일의 해시가 해당 커밋과 일치할 때까지 기다리고, 두 엔진으로 공개 Pages 주소의 동일한 동작을 다시 검사한다.
 - `avatar-catalog-browser.cjs`: 동일한 776개 사례를 SVG와 Canvas 모두 검사한다. 실제 원화에 추가한 허리 표식도 두 렌더러에서 추적하며, 전체 13개 분할과 누락 집계를 확인한다.
 - 구매/보상·코디 프리셋·게임·확대·원화 참고·내보내기 검사를 유지한다. `avatar-art.mjs`는 개발용 원화 검사에만 직접 사용한다.

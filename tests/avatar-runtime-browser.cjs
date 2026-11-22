@@ -2,6 +2,7 @@ const {chromium,webkit}=require('playwright');
 const assert=require('node:assert/strict');
 const fs=require('node:fs');
 const engine=process.env.AVATAR_BROWSER||'chromium';
+const base=process.env.AVATAR_BASE_URL||'http://127.0.0.1:8000/';
 (async()=>{
  const {avatarItems}=await import('../docs/avatar-data.mjs');
  const browser=await({chromium,webkit}[engine]).launch({headless:true});
@@ -10,7 +11,7 @@ const engine=process.env.AVATAR_BROWSER||'chromium';
   const context=await browser.newContext({viewport:{width,height:844},deviceScaleFactor:3,isMobile:true,hasTouch:true,reducedMotion:'reduce'}),page=await context.newPage(),errors=[],crashes=[],requests=[];
   page.on('pageerror',e=>errors.push(e.message));page.on('crash',()=>crashes.push('renderer crashed'));page.on('request',r=>requests.push(r.url()));
   await page.addInitScript(()=>{localStorage.setItem('teum-fire-quick-v1','{"test":"preserve"}');});
-  await page.goto('http://127.0.0.1:8000/#read');
+  await page.goto(base+'#read');
   await page.waitForFunction(()=>localStorage.getItem('teum-avatar-v1'));
   assert.equal(await page.locator('canvas.avatar-raster').count(),0);
   assert.equal(requests.some(url=>url.includes('/avatar-canvas.mjs')||url.includes('/wardrobe-v1/')),false,'Direct records entry must not load avatar textures or renderer');
