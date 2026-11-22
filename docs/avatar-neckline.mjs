@@ -1,4 +1,4 @@
-import {avatarMeshTriangle as triangle} from './avatar-mesh.mjs';
+import {avatarMeshTriangle as triangle} from './avatar-mesh.mjs?detail=3';
 import {fitAvatarWaist,avatarWaistMeshAxes} from './avatar-waist.mjs?recovery=20261121';
 // Wrist sections measured on the unchanged body atlas (rows 660–680).
 export const avatarWristRig=[{center:[275,672],angle:23},{center:[744,674],angle:-27}];
@@ -28,6 +28,12 @@ export function avatarTopTriangles(layer){
 }
 export function fittedAvatarTop(layer,uid,texture){
  const sourceId=uid+'-top-source';let defs=`<g id="${sourceId}">${texture(layer.atlas,layer.source,layer.target)}</g>`,art='';
- for(const {src,dst,name,j,i,k}of avatarTopTriangles(layer)){const t=triangle(src,dst,`${uid}-${name}-${j}-${i}-${k}`,sourceId);defs+=t.defs;art+=t.art;}
- return{defs,art};
+ const shoulder=[];
+ for(const {src,dst,name,j,i,k} of avatarTopTriangles(layer)){
+  const part=triangle(src,dst,`${uid}-${name}-${j}-${i}-${k}`,sourceId);
+  defs+=part.defs;
+  art+=part.art;
+  if(name==='collar') shoulder.push(part.art);
+ }
+ return {defs,art,shoulderArt:shoulder.join('')};
 }

@@ -9,11 +9,11 @@ const engine=process.env.AVATAR_BROWSER||'chromium',base=process.env.AVATAR_BASE
   await page.goto(base+'#read');await page.waitForFunction(()=>localStorage.getItem('teum-avatar-v1'));
   const before=await page.evaluate(()=>localStorage.getItem('teum-avatar-v1'));
   const result=await page.evaluate(async()=>{
-   const {renderAvatarCanvas,avatarCanvasStats}=await import('./avatar-canvas.mjs?renderer=20261122-shoes1');
+   const {renderAvatarCanvas,avatarCanvasStats}=await import('./avatar-canvas.mjs?renderer=20261122-detail1');
    const {avatarItems,starterOutfit,skins}=await import('./avatar-data.mjs');
    const {avatarLayers}=await import('./avatar-layers.mjs');
    const {shoeFitFor}=await import('./avatar-shoe-fit.mjs');
-   const {inspectShoeFit}=await import('./avatar-qa-render.mjs?shoes=20261122');
+   const {inspectShoeFit}=await import('./avatar-qa-render.mjs?detail=3');
    const options={frame:[240,1280,510,256],width:510,height:256};
    function picture(c){const data=c.getContext('2d').getImageData(0,0,c.width,c.height).data;return{data,pixel:(x,y)=>{const index=((Math.round(y)-1280)*510+Math.round(x)-240)*4;return[...data.slice(index,index+4)];}};}
    const gallery=document.createElement('main');gallery.style='display:grid;grid-template-columns:repeat(3,340px);gap:10px;padding:16px;background:#ecf1ed';
@@ -34,7 +34,21 @@ const engine=process.env.AVATAR_BROWSER||'chromium',base=process.env.AVATAR_BASE
    return{checked,failures,legacy,rejected,stats:avatarCanvasStats()};
   });
   assert.equal(result.checked,252);if(result.failures.length)console.error(JSON.stringify(result.failures.slice(0,4),null,2));assert.equal(result.failures.length,0,'Footwear pixel cases failed');assert.equal(result.legacy,true);assert.equal(result.rejected,true);
-  assert(result.stats.texturePixels<=result.stats.limits.texturePixels);assert.deepEqual(errors,[]);
+  assert(result.stats.texturePixels<=result.stats.limits.texturePixels);
+  const detailCount=await page.evaluate(async()=>{
+   const {buildAvatarQaPlan}=await import('./avatar-qa.mjs');
+   const {inspectAvatarCase}=await import('./avatar-qa-render.mjs?detail=3');
+   const ids=new Set(['bottom-overall','acc-cafe','hair-lilac','top-starlit','shoes-red','shoes-star','shoes-forest','shoes-coast']);
+   const cases=buildAvatarQaPlan().cases.filter(test=>ids.has(test.isolate)||
+    (test.groups.includes('top-bottom')&&test.outfit.top==='top-night'&&test.outfit.bottom==='bottom-overall'));
+   for(const test of cases){
+    const result=await inspectAvatarCase(test,'canvas');
+    if(!result.passed)throw Error(test.id+' '+JSON.stringify(result.failures.slice(0,5)));
+   }
+   return cases.length;
+  });
+  assert.equal(detailCount,9);assert.deepEqual(errors,[]);
+  console.log(engine+': visible straps, coat opening, cheek, cuffs, boot rims and shoe edges PASS');
   assert.equal(await page.evaluate(()=>localStorage.getItem('teum-avatar-v1')),before);
   await page.screenshot({path:`test-results/avatar-footwear-${engine}.png`,fullPage:true});
   console.log(`${engine}: 7 low shoes × 9 bottoms × 4 skin tones; filled heel cups, clear isolated openings, preserved front collars, contact shadows, legacy registry, rejected missing masks and wallet unchanged PASS`);

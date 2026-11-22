@@ -1,15 +1,15 @@
-import {fittedHatTarget, hatLining, seatedHairParts} from './avatar-head-fit.mjs';
+import {fittedHatTarget, hatLining, seatedHairParts, lilacRearWaves} from './avatar-head-fit.mjs?detail=3';
 // Bounded Canvas 2D painting. The production page never mounts the SVG mesh,
 // recursive <use> trees, or SVG filters; the original fitting math is shared.
 import {starterOutfit,itemById,skins,faces} from './avatar-data.mjs';
 import {avatarLayers,avatarFaceSources,avatarAssetsRoot} from './avatar-layers.mjs';
 import {avatarProfiles} from './avatar-profiles.mjs';
 import {avatarFraming} from './avatar-rig.mjs';
-import {avatarTopTriangles,avatarNeckOpening,avatarNeckSkin} from './avatar-neckline.mjs?canvas=20261122';
-import {avatarBottomTriangles,avatarWaistRig} from './avatar-waist.mjs?canvas=20261122';
-import {avatarMeshGeometry} from './avatar-mesh.mjs?canvas=20261122';
-import {ankleSkinBoundary} from './avatar-dressing.mjs';
-import {shoeFitFor,shoeFrame,shoeOpenings,shoeInsertion,shoeOpeningBounds} from './avatar-shoe-fit.mjs?fit=20261122b';
+import {avatarTopTriangles,avatarNeckOpening,avatarNeckSkin} from './avatar-neckline.mjs?detail=3';
+import {avatarBottomTriangles,avatarWaistRig} from './avatar-waist.mjs?detail=3';
+import {avatarMeshGeometry} from './avatar-mesh.mjs?detail=3';
+import {ankleSkinBoundary, garmentPieces, bibEdges, coatOpening, bibInsideCoat} from './avatar-dressing.mjs?detail=3';
+import {shoeFitFor,shoeFrame,shoeOpenings,shoeInsertion,shoeOpeningBounds,bootInsertion,shoeSegmentOutline} from './avatar-shoe-fit.mjs?fit=20261122c';
 
 export const avatarCanvasLimits={texturePixels:16_000_000,surfacePixels:1_600_000,dimension:1600};
 const textures=new Map(),pins=new Set();let texturePixels=0,queue=Promise.resolve(),working=0,queued=0,dropRequested=false;
@@ -18,7 +18,6 @@ const rect=(x,y,w,h)=>`M${x} ${y}h${w}v${h}h${-w}Z`;
 const bareArms='M335 350H432L415 450 350 570 297 710 295 820H205V700L280 500ZM610 360H680L815 700V820H725L690 620 620 470Z';
 const hands=rect(190,650,140,180)+rect(710,650,120,180);
 const ankles='M298 1320H358L353 1354 348 1374 340 1390H310L304 1375 300 1355 298 1340Z M563 1320H623L621 1350 618 1376 608 1390H565V1366L566 1350Z';
-const lining='M450 280H540L588 300 650 410 647 500 647 740H518L500 620 515 500 520 400 450 280Z';
 const tuck='M430 530H740L705 600 690 620 660 660 650 850H450L435 650 420 600Z'+rect(0,0,1024,540)+'M0 530H415L400 560 385 580 370 600 355 620 345 640 335 660 330 680 310 700 305 750V850H0ZM685 530H1024V850H745V720L737 700 715 680 708 660 692 640 685 620Z';
 const bootTuck=rect(0,0,1024,1240)+'M270 1235H415L365 1294 358 1350V1410H302V1320L300 1294ZM530 1235H720L624 1302V1410H566V1302Z';
 const alphaTable=[0,.05,.1,.15,.2,.25,.3,.35,.4,.45,.5,.65,.85,1,1,1,1,1,1,1,1];
@@ -71,18 +70,56 @@ async function paint(value,options){
   for(const id of Object.values(outfit).filter(Boolean)){const a=avatarLayers[id];await get(a.atlas,['top','bottom'].includes(itemById(id).slot)?'fabric':'raw');}
   if(options.isCurrent&&!options.isCurrent())throw new DOMException('Preview cancelled','AbortError');
   const drawTexture=(c,atlas,source,target,kind='raw')=>c.drawImage(images.get(atlas+':'+kind),...source,...target);
+  const pieces = new Map();
+  for(const id of [outfit.bottom,outfit.accessory].filter(Boolean)){
+   const layer = avatarLayers[id];
+   if(layer.legFit || layer.profile==='bag') pieces.set(id,garmentPieces(id,layer));
+  }
   const drawItem=(c,id)=>{if(!id)return;const a=avatarLayers[id],p=avatarProfiles[a.profile],kind=['top','bottom'].includes(p.slot)?'fabric':'raw';
-   if(a.legFit){const[sx,sy,sw,sh]=a.source,[x,y,w,h]=a.target,{start,end,shifts}=a.legFit,sourceY=v=>sy+(v-y)*sh/h;
-    drawTexture(c,a.atlas,[sx,sy,sw,sourceY(start+3)-sy],[x,y,w,start+3-y],kind);
-    const top=start-3;for(const[i,left,right]of [[0,x,480],[1,480,x+w]]){const k=shifts[i]/(end-start);c.save();c.transform(1,0,k,1,-k*start,0);drawTexture(c,a.atlas,[sx+(left-x)*sw/w,sourceY(top),(right-left)*sw/w,sourceY(y+h)-sourceY(top)],[left,top,right-left,y+h-top],kind);c.restore();}
-   }else if(p.kind==='segments')for(const[i,s]of a.segments.entries()){c.save();if(p.slot==='shoes')c.transform(...shoeFrame(a,i,shoeFitFor(id,a)));drawTexture(c,a.atlas,s.source,s.target,kind);c.restore();}else if(p.slot==='hair'){
+   if (pieces.has(id)) {
+    for(const piece of pieces.get(id)){
+     c.save();
+     if(piece.matrix) c.transform(...piece.matrix);
+     if(piece.edge) c.clip(new Path2D(bibEdges[piece.edge]));
+     drawTexture(c,a.atlas,piece.source,piece.target,kind);
+     c.restore();
+    }
+   } else if(p.kind==='segments') {
+    for(const [i,segment] of a.segments.entries()){
+     c.save();
+     if(p.slot==='shoes'){
+      c.transform(...shoeFrame(a,i,shoeFitFor(id,a)));
+      const outline=shoeSegmentOutline(id,a,i);
+      if(outline) c.clip(new Path2D(outline));
+     }
+     drawTexture(c,a.atlas,segment.source,segment.target,kind);
+     c.restore();
+    }
+   } else if(p.slot==='hair'){
     for(const [source,target] of seatedHairParts(id,outfit.hat,a))drawTexture(c,a.atlas,source,target,kind);
    }else drawTexture(c,a.atlas,a.source,p.slot==='hat'?fittedHatTarget(id,a):a.target,kind);
    if(options.waistMarkers===p.slot)for(const[i,[x,y]]of a.waist.points.entries()){c.fillStyle=['#ff00ff','#00ffff','#ffff00'][i];c.fillRect(x-3,y-3,6,6);}
   };
   const triangles=(c,list,draw)=>{for(const{src,dst}of list){const{points,matrix}=avatarMeshGeometry(src,dst),path=new Path2D();points.forEach(([x,y],i)=>i?path.lineTo(x,y):path.moveTo(x,y));path.closePath();clipped(c,path,()=>{c.transform(...matrix);draw();});}};
   const composite=()=>{const data=lc.getImageData(0,0,width,height);for(let i=3;i<data.data.length;i+=4)data.data[i]=alphaLut[data.data[i]];lc.putImageData(data,0,0);};
-  const blit=()=>{ctx.save();ctx.setTransform(1,0,0,1,0,0);ctx.drawImage(layer,0,0);ctx.restore();};
+  function copySurface(c, surface) {
+   c.save();
+   c.setTransform(1,0,0,1,0,0);
+   c.drawImage(surface,0,0);
+   c.restore();
+  }
+  const blit = () => copySurface(ctx,layer);
+  const topMesh = avatarTopTriangles(avatarLayers[outfit.top]);
+  // Use the silhouette of the equipped shirt for both types of shoulder strap.
+  // The existing scratch surface is free here; only collar triangles are needed.
+  function seatStraps() {
+   clear(ac,aux);
+   triangles(ac,topMesh.filter(t => t.name==='collar'),()=>drawItem(ac,outfit.top));
+   clipped(lc,rect(0,0,1024,383),()=>{
+    lc.globalCompositeOperation='destination-in';
+    copySurface(lc,aux);
+   });
+  }
   const fit=slot=>avatarProfiles[avatarLayers[outfit[slot]]?.profile],topFit=fit('top'),bottomFit=fit('bottom'),shoeFit=fit('shoes'),accessoryFit=fit('accessory');
   const arms=topFit.bareArms?bareArms:hands,clothes=(!bottomFit.longLegs?rect(0,bottomFit.legStart,1024,1341-bottomFit.legStart):'')+ankles,skinClip=arms+ankleSkinBoundary,body=arms+clothes;
   const overalls=!!bottomFit.overTop&&!topFit.outer,bootClip=bottomFit.longLegs&&shoeFit.boot;
@@ -95,14 +132,20 @@ async function paint(value,options){
    ac.globalCompositeOperation='destination-in';const gradient=ac.createLinearGradient(0,242,0,252);gradient.addColorStop(0,'rgba(255,255,255,0)');gradient.addColorStop(1,'white');ac.fillStyle=gradient;ac.fillRect(430,240,170,75);ac.globalCompositeOperation='source-over';
    c.save();c.setTransform(1,0,0,1,0,0);c.drawImage(aux,0,0);c.restore();
   }
-  if(!options.isolate){clipped(ctx,avatarNeckSkin,()=>neck(ctx));if(topFit.lining)clipped(ctx,lining,()=>ctx.drawImage(base,0,0));}
+  if(!options.isolate){clipped(ctx,avatarNeckSkin,()=>neck(ctx));if(topFit.lining)clipped(ctx,coatOpening,()=>ctx.drawImage(base,0,0));}
   const bottom=correctAlpha=>{clear(lc,layer);const a=avatarLayers[outfit.bottom],r=a.waist?.rise<0?avatarWaistRig.overall:avatarWaistRig.bottom;
    const draw=()=>{if(a.waist){triangles(lc,avatarBottomTriangles(a),()=>drawItem(lc,outfit.bottom));clipped(lc,rect(0,0,1024,r.start+.2)+rect(0,r.end-.2,1024,1536),()=>drawItem(lc,outfit.bottom));}else drawItem(lc,outfit.bottom);};
-   if(bootClip)clipped(lc,bootTuck,draw);else draw();if(correctAlpha)composite();
+   const drawLegs=()=>bootClip ? clipped(lc,bootTuck,draw) : draw();
+   if(outfit.bottom==='bottom-overall' && topFit.outer && options.waistMarkers!=='bottom') clipped(lc,bibInsideCoat,drawLegs);
+   else drawLegs();
+   if(correctAlpha){
+    if(outfit.bottom==='bottom-overall' && !topFit.outer) seatStraps();
+    composite();
+   }
   };
   if(!overalls&&include(outfit.bottom)){bottom(true);blit();order.push(outfit.bottom);}
   if(include(outfit.top)){
-   clear(lc,layer);const draw=()=>triangles(lc,avatarTopTriangles(avatarLayers[outfit.top]),()=>drawItem(lc,outfit.top));if(overalls&&options.waistMarkers!=='top')clipped(lc,tuck,draw);else draw();
+   clear(lc,layer);const draw=()=>triangles(lc,topMesh,()=>drawItem(lc,outfit.top));if(overalls&&options.waistMarkers!=='top')clipped(lc,tuck,draw);else draw();
    lc.globalCompositeOperation='destination-out';clipped(lc,avatarNeckSkin,()=>clipped(lc,avatarNeckOpening(avatarLayers[outfit.top].neckline),()=>neck(lc,images.get('faces:'+ (skin==='peach'?'raw':skin)))));
    for(const[cx,cy,rx,ry,angle]of avatarLayers[outfit.top].cuffs?.openings||[]){lc.save();lc.translate(cx,cy);lc.rotate(angle*Math.PI/180);const p=new Path2D(`M${-rx} 0Q0 ${2*ry} ${rx} 0V36H${-rx}Z`);lc.clip(p);lc.rotate(-angle*Math.PI/180);lc.translate(-cx,-cy);lc.drawImage(base,0,0);lc.restore();}
    lc.globalCompositeOperation='source-over';composite();blit();order.push(outfit.top);
@@ -118,21 +161,37 @@ async function paint(value,options){
     if(!options.isolate)clipped(ctx,mouths,()=>{ctx.save();ctx.setTransform(1,0,0,1,0,0);ctx.drawImage(aux,0,0);ctx.restore();});
     clear(lc,layer);drawItem(lc,outfit.shoes);lc.globalCompositeOperation='destination-out';clipped(lc,mouths,()=>{lc.setTransform(1,0,0,1,0,0);lc.drawImage(aux,0,0);});lc.globalCompositeOperation='source-over';
    }
-   if(shoeFit.boot){clear(ac,aux);clipped(ac,body,()=>ac.drawImage(base,0,0));bottom(false);ac.setTransform(1,0,0,1,0,0);ac.drawImage(layer,0,0);clear(lc,layer);drawItem(lc,outfit.shoes);lc.globalCompositeOperation='destination-out';const mouths=new Path2D();for(const[cx,cy,rx,ry,angle]of avatarLayers[outfit.shoes].openings||[]){const a=angle*Math.PI/180;mouths.moveTo(cx+rx*Math.cos(a),cy+rx*Math.sin(a));mouths.ellipse(cx,cy,rx,ry,a,0,Math.PI*2);mouths.closePath();}clipped(lc,mouths,()=>{lc.setTransform(1,0,0,1,0,0);lc.drawImage(aux,0,0);});lc.globalCompositeOperation='source-over';}
+   if(shoeFit.boot){clear(ac,aux);clipped(ac,body,()=>ac.drawImage(base,0,0));bottom(false);ac.setTransform(1,0,0,1,0,0);ac.drawImage(layer,0,0);clear(lc,layer);drawItem(lc,outfit.shoes);lc.globalCompositeOperation='destination-out';const mouths=bootInsertion(outfit.shoes,avatarLayers[outfit.shoes].openings);clipped(lc,mouths,()=>{lc.setTransform(1,0,0,1,0,0);lc.drawImage(aux,0,0);});lc.globalCompositeOperation='source-over';}
    blit();order.push(outfit.shoes);
   }
-  const accessory=()=>{if(!outfit.accessory||!include(outfit.accessory))return;clear(lc,layer);lc.save();if(accessoryFit.mirror){lc.translate(1024,0);lc.scale(-1,1);}if(accessoryFit.faceClip){const p=new Path2D();p.ellipse(501,146.5,25.5,21,57*Math.PI/180,0,Math.PI*2);p.ellipse(563,155,26,24,70*Math.PI/180,0,Math.PI*2);p.rect(521,137,30,40);p.rect(469,126,20,29);p.rect(578,137,18,30);lc.clip(p);}drawItem(lc,outfit.accessory);lc.restore();if(accessoryFit.shoulderClip){lc.globalCompositeOperation='destination-in';clipped(lc,rect(0,0,1024,400),()=>lc.drawImage(base,0,0));lc.globalCompositeOperation='source-over';}blit();order.push(outfit.accessory);};
+  const accessory=()=>{if(!outfit.accessory||!include(outfit.accessory))return;clear(lc,layer);lc.save();if(accessoryFit.mirror){lc.translate(1024,0);lc.scale(-1,1);}if(accessoryFit.faceClip){const p=new Path2D();p.ellipse(501,146.5,25.5,21,57*Math.PI/180,0,Math.PI*2);p.ellipse(563,155,26,24,70*Math.PI/180,0,Math.PI*2);p.rect(521,137,30,40);p.rect(469,126,20,29);p.rect(578,137,18,30);lc.clip(p);}drawItem(lc,outfit.accessory);lc.restore();if(accessoryFit.shoulderClip)seatStraps();blit();order.push(outfit.accessory);};
   if(accessoryFit?.behindHair)accessory();
-  if(include(outfit.hair)){drawItem(ctx,outfit.hair);order.push(outfit.hair);}
-  if(outfit.hat && include(outfit.hat)){
+  const visibleHat = outfit.hat && include(outfit.hat);
+  const innerBrim = visibleHat && hatLining(outfit.hat,avatarLayers[outfit.hat]);
+  if(include(outfit.hair) && outfit.hair!=='hair-lilac' && !innerBrim) {
+   drawItem(ctx,outfit.hair);
+   order.push(outfit.hair);
+  } else if(include(outfit.hair) || innerBrim) {
+   clear(ac,aux);
+   drawItem(ac,outfit.hair);
+   if(outfit.hair==='hair-lilac'){
+    clipped(ac,lilacRearWaves,()=>{
+     ac.globalCompositeOperation='destination-out';
+     ac.drawImage(faceAtlas,...avatarFaceSources[face],432,39,159,244);
+    });
+   }
+   if(include(outfit.hair)){
+    copySurface(ctx,aux);
+    order.push(outfit.hair);
+   }
+  }
+  if(visibleHat){
    clear(lc,layer);
    drawItem(lc,outfit.hat);
-   const liningPath = hatLining(outfit.hat,avatarLayers[outfit.hat]);
-   if(liningPath){
+   if(innerBrim) clipped(lc,innerBrim,()=>{
     lc.globalCompositeOperation='destination-out';
-    clipped(lc,liningPath,()=>drawItem(lc,outfit.hair));
-    lc.globalCompositeOperation='source-over';
-   }
+    copySurface(lc,aux);
+   });
    blit();
    order.push(outfit.hat);
   }

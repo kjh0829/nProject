@@ -1,5 +1,5 @@
 import {readAvatar} from './avatar-store.mjs';
-import {createAvatarImage} from './avatar-runtime.mjs?canvas=20261122-shoes1';
+import {createAvatarImage} from './avatar-runtime.mjs?canvas=20261122-detail1';
 import {collectionOf,unlockedPrizes} from './collection-core.mjs';
 import {readJourney} from './journey-saves.mjs';
 

@@ -73,3 +73,30 @@ export function shoeDepthSvg(layer,fit,uid,wearer,ankleBoundary){
  const underlay=`<g data-layer="shoe-wearer" clip-path="url(#${uid}-shoe-mouth)"><use href="#${uid}-shoe-wearer"/><g mask="url(#${uid}-shoe-alpha)">${paths.map((_,i)=>`<g clip-path="url(#${uid}-shoe-mouth-${i})"><rect x="160" y="1250" width="700" height="286" fill="url(#${uid}-shoe-shadow-${i})"/></g>`).join('')}</g></g>`;
  return{defs,underlay,attribute:`mask="url(#${uid}-shoe-depth)"`};
 }
+
+// Trace the upper edge of the facing leather. The pointed gold tongue and
+// the red binding stay in front of the leg; the high back of the boot does not.
+const bootFronts = {
+ 'shoes-red': 'M290 1250H357V1303Q351 1315 330 1321Q309 1319 292 1306Z M562 1250H630V1318Q617 1326 588 1317L564 1309Z',
+ 'shoes-star': 'M287 1250H375V1313Q355 1325 346 1338L338 1324L326 1336Q309 1317 288 1308Z M554 1250H639V1323Q630 1326 622 1341Q603 1328 591 1330Q579 1317 555 1309Z'
+};
+export function bootInsertion(id, openings) {
+ if (bootFronts[id]) return bootFronts[id];
+ return openings.map(([x,y,rx,ry,turn]) => {
+  const a=turn*Math.PI/180, dx=rx*Math.cos(a), dy=rx*Math.sin(a);
+  return `M${x-dx} ${y-dy}a${rx} ${ry} ${turn} 1 0 ${2*dx} ${2*dy}a${rx} ${ry} ${turn} 1 0 ${-2*dx} ${-2*dy}Z`;
+ }).join('');
+}
+
+// In the two closely packed atlas cells the neighbour touches one side of the
+// crop halfway down. Notch only those rows: the toe uses the full crop width.
+export function shoeSegmentOutline(id, layer, index) {
+ if(index !== 0) return null;
+ const notch = id === 'shoes-forest' ? [170,173,219] : id === 'shoes-coast' ? [165,158,187] : null;
+ if(!notch) return null;
+ const [sx,sy] = layer.segments[index].source;
+ const [x,y,w,h] = layer.segments[index].target;
+ const [cut,top] = shoePoint(layer,index,[sx+notch[0],sy+notch[1]]);
+ const [,end] = shoePoint(layer,index,[sx+notch[0],sy+notch[2]]);
+ return `M${x} ${y}h${w}V${top}H${cut}V${end}H${x+w}V${y+h}H${x}Z`;
+}

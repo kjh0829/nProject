@@ -45,7 +45,7 @@ jobs:
         if: github.ref == 'refs/heads/master'
         env:
           AVATAR_BROWSER: ${{ matrix.engine }}
-          AVATAR_BASE_URL: 'https://kjh0829.github.io/nProject/?v=shoes-20261122'
+          AVATAR_BASE_URL: 'https://kjh0829.github.io/nProject/?v=detail-20261122'
         run: |
           NODE_PATH="$RUNNER_TEMP/avatar-native/node_modules" node tests/avatar-runtime-browser.cjs
           NODE_PATH="$RUNNER_TEMP/avatar-native/node_modules" node tests/avatar-footwear-browser.cjs

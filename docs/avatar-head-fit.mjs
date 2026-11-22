@@ -46,3 +46,7 @@ export function seatedHairParts(id, hat, layer) {
     [[sx, sy + sourceUpper, sw, sh - sourceUpper], [x, join, w, h - upper]]
   ];
 }
+
+// Follow the inside edge of the two lit foreground curls. Within this window
+// the face atlas covers the rear waves, including its antialiased jaw contour.
+export const lilacRearWaves = 'M468 154 Q470 164 482 167 L489 168 Q485 154 492 149 L585 145 L589 176 Q574 190 568 208 Q560 228 575 250 L577 260 H487 Q517 230 507 214 Q504 207 489 196 Q465 181 466 162Z';

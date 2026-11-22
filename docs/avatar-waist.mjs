@@ -1,4 +1,4 @@
-import {avatarMeshTriangle} from './avatar-mesh.mjs';
+import {avatarMeshTriangle} from './avatar-mesh.mjs?detail=3';
 
 // Registered on the posed body, not the horizontal bounds of an atlas crop.
 // Left side, front centre, right side. Knees/feet, neck and hands stay fixed.
@@ -28,7 +28,7 @@ export function fittedAvatarBottom(layer,uid,source){
  for(const {src,dst,j,i,k}of avatarBottomTriangles(layer)){const t=avatarMeshTriangle(src,dst,`${uid}-waist-${j}-${i}-${k}`,sourceId);defs+=t.defs;art+=t.art;}
  const clip=uid+'-waist-fixed';defs+=`<clipPath id="${clip}"><rect width="1024" height="${r.start+.2}"/><rect y="${r.end-.2}" width="1024" height="1536"/></clipPath>`;
  art+=`<use href="#${sourceId}" clip-path="url(#${clip})"/>`;
- return{defs,art};
+ return{defs,art,sourceId};
 }
 export function avatarBottomTriangles(layer){
  if(!layer.waist)return[];

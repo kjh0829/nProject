@@ -1,14 +1,61 @@
-// Keep the waist registration while fitting trouser hems to the fixed legs.
-export function legArtwork(a,p,texture){
- const[sx,sy,sw,sh]=a.source,[x,y,w,h]=a.target,{start,end,shifts}=a.legFit,sourceY=v=>sy+(v-y)*sh/h;
- let art='';
- art+=texture(a.atlas,[sx,sy,sw,sourceY(start+3)-sy],[x,y,w,start+3-y]);
- const top=start-3;
- for(const [i,left,right]of [[0,x,480],[1,480,x+w]]){
-  const k=shifts[i]/(end-start),source=[sx+(left-x)*sw/w,sourceY(top),(right-left)*sw/w,sourceY(y+h)-sourceY(top)];
-  art+=`<g transform="matrix(1 0 ${k} 1 ${-k*start} 0)">${texture(a.atlas,source,[left,top,right-left,y+h-top])}</g>`;
+// Regions of the original bib that face the viewer. The dark return runs
+// behind the shoulders. Keep the buckles, buttons and pocket in the front.
+export const bibEdges = {
+ left: 'M456 311H505L531 356.5H476Q468 325 456 311Z',
+ right: 'M567 311H612L632 356.5H591Q580 323 567 311Z',
+ body: 'M475 355.5H529V390L496 406Q493 393 486 381Z M590 355.5H640V397H599Q597 384 591 376Z M492 388Q565 386 641 387L700 445V1536H200V506H466Q499 487 493 434Z'
+};
+
+// Below the lapels the coat encloses the hips until its hem begins to flare.
+export const coatOpening = 'M450 280H540L588 300 650 410 647 500 647 740H518L500 620 515 500 520 400 450 280Z';
+export const bibInsideCoat = coatOpening + ' M0 690H1024V1536H0Z';
+
+// Map a rectangle on the unfitted body back to the original atlas.
+function patch(layer, left, top, right, bottom, matrix, edge) {
+ const [sx,sy,sw,sh] = layer.source, [x,y,w,h] = layer.target;
+ return {
+  source: [sx+(left-x)*sw/w, sy+(top-y)*sh/h, (right-left)*sw/w, (bottom-top)*sh/h],
+  target: [left, top, right-left, bottom-top], matrix, edge
+ };
+}
+
+// Stretch only the short run above the hardware. Its lower edge meets the
+// unwarped buckle pixel for pixel; the garment silhouette trims the far end.
+function strapFrame(top, join, shoulderY, shoulderShift) {
+ const scale = (join-shoulderY)/(join-top), shear = shoulderShift/(top-join);
+ return [1, 0, shear, scale, -shear*join, (1-scale)*join];
+}
+
+export function garmentPieces(id, layer) {
+ const [x,y,w,h] = layer.target, right=x+w, bottom=y+h;
+ if (layer.profile === 'bag') {
+  // Bag art is mirrored on the wearer. Use the straight leather below the
+  // folded-back end, and leave the pouch, clasp and hanging charms untouched.
+  const top=y+h*.085, join=y+h*.19;
+  return [
+   patch(layer,x,top,right,join+.25,strapFrame(top,join,y-h*.08,w*.12)),
+   patch(layer,x,join-.25,right,bottom)
+  ];
  }
- return art;
+ const {start,end,shifts}=layer.legFit;
+ const pieces = id === 'bottom-overall' ? [
+  patch(layer,440,311,532,356.5,strapFrame(311,356,222,-40),'left'),
+  patch(layer,540,311,641,356.5,strapFrame(311,356,231,-27),'right'),
+  patch(layer,x,355.5,right,start+3,null,'body')
+ ] : [patch(layer,x,y,right,start+3)];
+ for (const [i,left,edge] of [[0,x,480],[1,480,right]]) {
+  const shear = shifts[i]/(end-start);
+  pieces.push(patch(layer,left,start-3,edge,bottom,[1,0,shear,1,-shear*start,0]));
+ }
+ return pieces;
+}
+
+// Kept for cached clients using the earlier leg renderer.
+export function legArtwork(layer, profile, texture) {
+ return garmentPieces(null,layer).map(({source,target,matrix}) => {
+  const art = texture(layer.atlas,source,target);
+  return matrix ? `<g transform="matrix(${matrix.join(' ')})">${art}</g>` : art;
+ }).join('');
 }
 
 // Skin starts below the original stocking hems; the source PNG is unchanged.

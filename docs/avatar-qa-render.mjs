@@ -1,10 +1,10 @@
-import {renderAvatarCanvas} from './avatar-canvas.mjs?renderer=20261122-shoes1';
+import {renderAvatarCanvas} from './avatar-canvas.mjs?renderer=20261122-detail1';
 import {avatarWaistRig} from './avatar-waist.mjs';
 import {avatarItems} from './avatar-data.mjs';
 import {avatarArt} from './avatar-art.mjs';
 import {avatarLayers,avatarAssetsRoot} from './avatar-layers.mjs';
 import {avatarProfiles} from './avatar-profiles.mjs';
-import {shoeFitFor,shoeInsertion,shoeOpeningBounds,shoeShadowAt,fittedShoePoint} from './avatar-shoe-fit.mjs?fit=20261122b';
+import {shoeFitFor,shoeInsertion,shoeOpeningBounds,shoeShadowAt,fittedShoePoint} from './avatar-shoe-fit.mjs?fit=20261122c';
 const cache=new Map(),rawAtlases=new Map();
 async function textureUrl(href){if(!href.startsWith(avatarAssetsRoot)||!/^[-a-z0-9]+\.png$/.test(href.slice(avatarAssetsRoot.length)))throw Error('Unexpected QA texture URL');if(!cache.has(href))cache.set(href,(async()=>{const response=await fetch(href);if(!response.ok)throw Error(`Texture failed ${response.status}: ${href}`);const blob=await response.blob();return new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(r.result);r.onerror=reject;r.readAsDataURL(blob);});})().catch(e=>{cache.delete(href);throw e;}));return cache.get(href);}
 // Raw atlas alpha keeps a copied numeric registration from passing on empty space.
@@ -49,6 +49,9 @@ export async function avatarQaPixels(test,isolate=false,options={}){
   const slot=options.waistMarkers,layer=avatarLayers[test.outfit[slot]],source=svg.querySelector(`g[id$="-${slot==='top'?'top':'waist'}-source"]`);
   if(!source)throw Error('Missing registered waist source');
   if(slot==='top')svg.querySelector(`[data-item="${test.outfit.top}"]`).removeAttribute('clip-path');
+  // Measure registration before an outer coat hides the hip landmarks. The
+  // unmarked outfit is sampled separately for the visible underarm and hip.
+  if(slot==='bottom')svg.querySelector('g[clip-path$="-inside-coat)"]')?.removeAttribute('clip-path');
   for(const [i,[x,y]]of layer.waist.points.entries()){
    const rect=doc.createElementNS('http://www.w3.org/2000/svg','rect');
    for(const[k,v]of Object.entries({x:x-3,y:y-3,width:6,height:6,fill:['#ff00ff','#00ffff','#ffff00'][i]}))rect.setAttribute(k,v);
@@ -110,13 +113,46 @@ export async function inspectAvatarCase(test,renderer='svg'){
   if(!fit('top').outer)expect(neck.pixel(510,295)[3]>200,'front-collar-preserved',[510,295]);
  }
  if(fit('accessory')?.shoulderClip){const item=svg.querySelector(`[data-item="${test.outfit.accessory}"]`),root=n=>{while(n.parentElement!==svg)n=n.parentElement;return n;},children=[...svg.children];expect(children.indexOf(root(item))<children.indexOf(svg.querySelector('[data-layer="hair"]')),'bag-strap-behind-hair');expect(!!item.closest('[mask]'),'bag-shoulder-clipping');}
- if(fit('shoes').boot){const reference=await pixels({...test,outfit:{...test.outfit,shoes:avatarItems.find(i=>i.slot==='shoes'&&!avatarProfiles[avatarLayers[i.id].profile].boot).id},isolate:null});for(const [x,y]of avatarLayers[test.outfit.shoes].openings){const expected=reference.pixel(x,y),actual=pixel(x,y);expect(expected[3]>200&&actual.every((v,i)=>Math.abs(v-expected[i])<5),'boot-leg-insertion',[x,y]);}}
+ if(fit('shoes').boot){
+  const shoes=test.outfit.shoes,low=avatarItems.find(i=>i.slot==='shoes'&&!avatarProfiles[avatarLayers[i.id].profile].boot);
+  const reference=await pixels({...test,outfit:{...test.outfit,shoes:low.id},isolate:null});
+  const backRim={'shoes-red':[[327,1314],[602,1307]],'shoes-star':[[328,1303],[586,1312]]};
+  for(const [x,y] of [...avatarLayers[shoes].openings,...(backRim[shoes]||[])]){
+   const expected=reference.pixel(x,y),actual=pixel(x,y);
+   expect(expected[3]>200&&actual.every((v,i)=>Math.abs(v-expected[i])<5),'boot-leg-insertion',[x,y]);
+  }
+ }
+ if(test.outfit.bottom==='bottom-overall'&&fit('top').outer&&test.groups.includes('top-bottom')){
+  for(const [x,y] of [[485,500],[411,625]]) expect(pixel(x,y)[3]<25,'bib-inside-coat-opening',[x,y]);
+ }
  if(shoeFitFor(test.outfit.shoes,avatarLayers[test.outfit.shoes])&&(test.groups.includes('bottom-shoes')||test.groups.includes('shoe-skin')||test.isolate===test.outfit.shoes))failures.push(...await inspectShoeFit(test,{pixel},await pixels({...test,isolate:test.outfit.shoes},true)));
  if(test.isolate){const isolated=await pixels(test,true),profile=avatarProfiles[avatarLayers[test.isolate].profile];let samples=0;for(let y=0;y<1536;y+=8)for(let x=0;x<1024;x+=8)if(isolated.data[(y*1024+x)*4+3]>100)samples++;expect(samples>=5,'nonempty-isolated-art');for(const [x,y]of profile.probes)expect(isolated.pixel(x,y)[3]>120,'item-registration-landmark',[x,y]);}
  if(test.isolate){
   const a=avatarLayers[test.isolate],p=avatarProfiles[a.profile];
   if(a.legFit){const isolated=await pixels(test,true);for(const [left,right,center]of [[270,420,324.5],[530,710,593]]){const xs=[];for(let x=left;x<right;x++)if(isolated.pixel(x,1350)[3]>180)xs.push(x);const mean=xs.reduce((a,b)=>a+b,0)/xs.length;expect(xs.length>20&&Math.abs(mean-center)<4,'hem-ankle-alignment',[center,1350]);}}
-  if(p.shoulderClip){const isolated=await pixels(test,true);for(const[x,y]of [[600,277],[610,277],[615,285],[620,300]])expect(isolated.pixel(x,y)[3]<25,'strap-off-shoulder-trim',[x,y]);}
+  const isolated=await pixels(test,true),alpha=(x,y)=>isolated.pixel(x,y)[3];
+  if(p.shoulderClip){
+   for(const [x,y] of [[600,277],[610,277],[615,285],[620,300]]) expect(alpha(x,y)<25,'strap-off-shoulder-trim',[x,y]);
+   const shirt=await pixels({...test,isolate:test.outfit.top},true);
+   let contact=0;
+   for(let x=548;x<=628;x+=2){
+    const crest=picture=>{for(let y=231;y<350;y++)if(picture.pixel(x,y)[3]>175)return y;return null;};
+    const strapY=crest(isolated),shirtY=crest(shirt);
+    if(strapY!==null&&shirtY!==null&&Math.abs(strapY-shirtY)<=3)contact++;
+   }
+   expect(contact>=3,'strap-meets-equipped-shoulder');
+  }
+  if(test.isolate==='bottom-overall'){
+   for(const [x,y] of [[463,272],[578,291],[510,398],[621,398]]) expect(alpha(x,y)>200,'bib-shoulders-and-buckles',[x,y]);
+   for(const [x,y] of [[460,337],[550,372]]) expect(alpha(x,y)<25,'bib-rear-straps-hidden',[x,y]);
+  }
+  if(test.isolate==='hair-lilac'){
+   for(const [x,y] of [[499,191],[550,206]]) expect(alpha(x,y)<25,'rear-curl-behind-cheek',[x,y]);
+   expect(alpha(478,201)>200,'front-curl-retained',[478,201]);
+  }
+  if(test.isolate==='top-starlit') expect(alpha(710,775)<25,'no-thread-below-cuff',[710,775]);
+  const neighbouringShoe={'shoes-forest':[389,1428],'shoes-coast':[391,1424]}[test.isolate];
+  if(neighbouringShoe) expect(alpha(...neighbouringShoe)<25,'no-neighbouring-shoe-pixels',neighbouringShoe);
   if(p.faceClip){const isolated=await pixels(test,true);expect(isolated.pixel(535,124)[3]<25,'no-floating-glasses-arm',[535,124]);}
  }
  return {id:test.id,passed:failures.length===0,failures};

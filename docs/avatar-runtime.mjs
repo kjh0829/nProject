@@ -19,7 +19,7 @@ export const isAvatarArtReady=()=>!!renderer&&!failed;
 export const hasAvatarPreview=target=>records.get(target)?.canvas?.width>0;
 export function ensureAvatarArt(){
  if(failed)return Promise.reject(Error('캐릭터 미리보기를 다시 불러온 뒤 시도해 주세요.'));
- if(!pending)pending=import('./avatar-canvas.mjs?renderer=20261122-shoes1').then(module=>{if(typeof module.renderAvatarCanvas!=='function')throw Error('Missing avatar renderer');renderer=module;queueMicrotask(()=>signal(null));return module;}).catch(error=>{failed=true;notice();signal(null);throw Error('캐릭터 미리보기를 다시 불러온 뒤 시도해 주세요.',{cause:error});});
+ if(!pending)pending=import('./avatar-canvas.mjs?renderer=20261122-detail1').then(module=>{if(typeof module.renderAvatarCanvas!=='function')throw Error('Missing avatar renderer');renderer=module;queueMicrotask(()=>signal(null));return module;}).catch(error=>{failed=true;notice();signal(null);throw Error('캐릭터 미리보기를 다시 불러온 뒤 시도해 주세요.',{cause:error});});
  return pending;
 }
 export async function createAvatarImage(value,options={}){try{const module=await ensureAvatarArt();return await module.renderAvatarCanvas(value,options);}catch(error){throw Error('캐릭터 미리보기를 다시 불러온 뒤 시도해 주세요.',{cause:error});}}
