@@ -8,15 +8,24 @@ const engine = process.env.AVATAR_BROWSER || 'chromium';
 (async () => {
   const browser = await {chromium, webkit}[engine].launch({headless: true});
   try {
-    const page = await browser.newPage({viewport: {width: 390, height: 850}});
+    const context = await browser.newContext({viewport: {width: 390, height: 850}});
+    const wardrobe = await context.newPage();
+    await wardrobe.goto(site + '#avatar');
+    await wardrobe.waitForSelector('#avatar-stage canvas');
+    await wardrobe.locator('#avatar-reference-menu summary').click();
+    await wardrobe.getByRole('link', {name: '3D 제작 시안'}).click();
+    await wardrobe.waitForURL('**/avatar-3d.html');
+    const previewUrl = wardrobe.url();
+    await wardrobe.close();
+
+    // Use a separate page so WebKit's cancellation of the departing
+    // wardrobe's thumbnail downloads is outside the preview assertions.
+    const page = await context.newPage();
     const errors = [];
     page.on('pageerror', error => errors.push(error.message));
     const requests = [];
     page.on('request', request => requests.push(request.url()));
-    await page.goto(site + '#avatar');
-    await page.locator('#avatar-reference-menu summary').click();
-    await page.getByRole('link', {name: '3D 제작 시안'}).click();
-    await page.waitForURL('**/avatar-3d.html');
+    await page.goto(previewUrl);
     const stored = await page.evaluate(() => JSON.stringify(localStorage));
 
     const ready = () => page.waitForSelector('.comparison[aria-busy="false"]');
