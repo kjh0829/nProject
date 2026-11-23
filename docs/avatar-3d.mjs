@@ -8,7 +8,7 @@ const status = document.querySelector('.status');
 const assets = new Map();
 const regions = {
   full: {study: [0, 0, 680, 1060], current: frame(510, 750, 1700, 680/1060)},
-  head: {study: [159, 24, 360, 332], current: frame(513, 104, 396, 360/332)},
+  head: {study: [155, 32, 380, 394], current: frame(511, 132, 462, 380/394)},
   top: {study: [120, 245, 454, 326], current: frame(514, 506, 620, 454/326)},
   feet: {study: [206, 797, 285, 249], current: frame(480, 1355, 435, 285/249)},
 };
@@ -27,7 +27,7 @@ function draw(target, source, bounds, width, height) {
 function texture(name) {
   if (!assets.has(name)) {
     const image = new Image();
-    image.src = new URL(`./assets/avatar-studio/${name}.webp`, import.meta.url);
+    image.src = new URL(`./assets/avatar-studio/${name}.webp?v=2`, import.meta.url);
     assets.set(name, image.decode().then(() => image).catch(error => {
       assets.delete(name);
       throw error;

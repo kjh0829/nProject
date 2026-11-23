@@ -1,12 +1,11 @@
 """Build the pose and render the Alchankki wardrobe study with Blender 4.3."""
 import argparse
-from math import cos, exp, pi, sin, sqrt
+from math import asin, cos, exp, pi, sin
 from pathlib import Path
 import sys
 
 import bpy
 from mathutils import Vector
-from mathutils.geometry import interpolate_bezier
 
 
 def command_line():
@@ -36,7 +35,15 @@ def material(name, color, roughness=.58, *, metal=0, cloth=False):
         shader.inputs["Sheen Weight"].default_value = .21
         noise = nodes.new("ShaderNodeTexNoise")
         noise.inputs["Scale"].default_value = 150
-        noise.inputs["Detail"].default_value = 1
+        noise.inputs["Detail"].default_value = 2
+        grain = nodes.new("ShaderNodeTexNoise")
+        grain.inputs["Scale"].default_value = 29
+        grain.inputs["Detail"].default_value = 2.6
+        tint = nodes.new("ShaderNodeValToRGB")
+        tint.color_ramp.elements[0].color = tuple(c*.78 for c in result.diffuse_color[:3]) + (1,)
+        tint.color_ramp.elements[1].color = tuple(min(1,c*1.135+.003) for c in result.diffuse_color[:3]) + (1,)
+        links.new(grain.outputs["Fac"], tint.inputs[0])
+        links.new(tint.outputs[0], shader.inputs["Base Color"])
         bump = nodes.new("ShaderNodeBump")
         bump.inputs["Strength"].default_value = .19
         bump.inputs["Distance"].default_value = .008
@@ -74,14 +81,15 @@ def sphere(name, pos, scale, mat):
     return put(obj, mat)
 
 
-def rings(name, rows, mat, *, start=0, stop=2*pi, count=40, cap=True, smooth=2):
+def rings(name, rows, mat, *, start=0, stop=2*pi, count=40, cap=True, smooth=2, sculpt=None):
     """Elliptical cross sections in x/y. Angle zero is the front."""
     closed = stop - start >= 2*pi - 1e-5
     vertices = []
     for x, y, z, width, depth in rows:
         for i in range(count):
             a = start + (stop - start)*i/(count if closed else count-1)
-            vertices.append((x + width*sin(a), y - depth*cos(a), z))
+            point = (x + width*sin(a), y - depth*cos(a), z)
+            vertices.append(sculpt(point, a) if sculpt else point)
     faces = []
     for j in range(len(rows)-1):
         for i in range(count if closed else count-1):
@@ -111,7 +119,7 @@ def strand(name, points, radius, mat, *, radii=None, bevel=4):
     return put(obj, mat)
 
 
-def tube(name, rows, mat, smooth=2):
+def tube(name, rows, mat, smooth=2, pleats=False):
     """Cross sections perpendicular to the arm or hair flow."""
     vertices = []
     count = 24
@@ -122,7 +130,14 @@ def tube(name, rows, mat, smooth=2):
         depth = across.cross(tangent).normalized()
         for i in range(count):
             a = i*2*pi/count
-            vertices.append(center + across*(row[3]*cos(a)) + depth*(row[4]*sin(a)))
+            fold = 0
+            if pleats:
+                front = max(0, -sin(a))**1.35
+                for z, angle, width, strength in ((3.39,.26,.023,.022),(3.52,-.18,.035,.027),
+                                                   (3.79,.28,.035,.029),(3.90,-.11,.049,.015)):
+                    delta = (row[2]-z + angle*cos(a)*row[3]) / width
+                    fold += strength * (exp(-delta*delta) - .65*exp(-(delta-1.2)**2))*front
+            vertices.append(center + across*((row[3]+fold)*cos(a)) + depth*((row[4]+fold)*sin(a)))
     faces = [tuple(reversed(range(count)))]
     for j in range(len(rows)-1):
         for i in range(count):
@@ -148,7 +163,7 @@ def prepare_scene(draft):
     bpy.ops.wm.read_factory_settings(use_empty=True)
     scene = bpy.context.scene
     scene.render.engine = "CYCLES"
-    scene.cycles.samples = 18 if draft else 108
+    scene.cycles.samples = 18 if draft else 128
     scene.cycles.use_denoising = False
     scene.cycles.adaptive_threshold = .019
     scene.cycles.max_bounces = 5
@@ -162,12 +177,13 @@ def prepare_scene(draft):
     scene.render.resolution_percentage = 55 if draft else 100
     scene.view_settings.view_transform = "AgX"
     scene.view_settings.look = "AgX - Medium High Contrast"
+    scene.view_settings.exposure = -.13
     scene.world = bpy.data.worlds.new("Warm studio")
     scene.world.use_nodes = True
     scene.world.node_tree.nodes.get("Background").inputs[0].default_value = (.34, .29, .44, 1)
     scene.world.node_tree.nodes.get("Background").inputs[1].default_value = .47
     focus = Vector((0, -.02, 2.97))
-    bpy.ops.object.camera_add(location=(6.85, -19, 5.30))
+    bpy.ops.object.camera_add(location=(-10.1, -19, 5.16))
     scene.camera = bpy.context.object
     scene.camera.name = "Shared orthographic outfit camera"
     scene.camera.rotation_euler = (focus - scene.camera.location).to_track_quat("-Z", "Y").to_euler()
@@ -175,9 +191,9 @@ def prepare_scene(draft):
     scene.camera.data.ortho_scale = 6.37
 
     for name, where, power, size, color in [
-        ("Apricot key", (-3, -6, 8), 590, 5, (1, .84, .73)),
-        ("Lavender fill", (4, -4, 4.2), 280, 5, (.82, .86, 1)),
-        ("Hair and shoulder rim", (1, 3, 7), 530, 3.1, (.97, .78, 1)),
+        ("Apricot key", (-4, -6, 8), 655, 3.7, (1, .84, .73)),
+        ("Lavender fill", (4, -5, 4.2), 235, 4, (.82, .86, 1)),
+        ("Hair and shoulder rim", (1, 3, 7), 600, 3.4, (.97, .78, 1)),
     ]:
         bpy.ops.object.light_add(type="AREA", location=where)
         obj = bpy.context.object
@@ -185,13 +201,6 @@ def prepare_scene(draft):
         obj.data.energy, obj.data.size, obj.data.color = power, size, color
         obj.rotation_euler = (Vector((0, 0, 3.7)) - obj.location).to_track_quat("-Z", "Y").to_euler()
     return scene
-
-
-FACE = [
-    (4.67, .038, .045), (4.715, .17, .205), (4.77, .29, .28),
-    (4.90, .403, .358), (5.045, .458, .387), (5.19, .462, .382),
-    (5.35, .43, .355), (5.49, .343, .299), (5.57, .203, .197), (5.61, .03, .045)
-]
 
 
 def interpolate(rows, z):
@@ -202,152 +211,207 @@ def interpolate(rows, z):
     return (rows[0] if z < rows[0][0] else rows[-1])[1:]
 
 
-def front(x, z, relief=0):
-    w, d = interpolate(FACE, z)
-    nose = .064*exp(-((x/.085)**2 + ((z-4.975)/.073)**2))
-    return -.039 - d*sqrt(max(.01, 1-(x/w)**2)) - nose - relief
+# Widths follow the original three-quarter face. Depth is independent of
+# the projected outline, with geometry for the brow, cheek, nose and chin.
+FACE_SECTIONS = [
+    (4, 156, 206, .045), (22, 103, 270, .170), (51, 64, 308, .234),
+    (92, 37, 337, .293), (143, 20, 357, .338), (191, 20, 367, .359),
+    (226, 46, 368, .359), (251, 63, 365, .365), (279, 70, 355, .369),
+    (307, 76, 350, .373), (331, 82, 345, .373), (355, 92, 338, .379),
+    (378, 103, 325, .369), (400, 123, 303, .357), (419, 147, 277, .315),
+    (436, 173, 251, .256), (448, 202, 236, .191), (452, 220, 230, .088),
+]
+PORTRAIT_YAW = .485
+PORTRAIT_RIGHT = Vector((cos(PORTRAIT_YAW), -sin(PORTRAIT_YAW), 0))
+PORTRAIT_FRONT = Vector((-sin(PORTRAIT_YAW), -cos(PORTRAIT_YAW), 0))
+
+
+def portrait_point(horizontal, depth, height):
+    return PORTRAIT_RIGHT*horizontal + PORTRAIT_FRONT*depth + Vector((0, -.019, height))
+
+
+def color_attributes(obj, name, colors):
+    attribute = obj.data.color_attributes.new(name=name, type="FLOAT_COLOR", domain="POINT")
+    for entry, color in zip(attribute.data, colors):
+        entry.color = (*color, 1)
+
+
+def painted_face_material(skin):
+    paint = skin.copy()
+    paint.name = "Wardrobe artwork on sculpted face"
+    nodes, links = paint.node_tree.nodes, paint.node_tree.links
+    shader = nodes.get("Principled BSDF")
+    shader.inputs["Specular IOR Level"].default_value = .23
+    mask = nodes.new("ShaderNodeVertexColor")
+    mask.layer_name = "Paint coverage"
+    image = nodes.new("ShaderNodeTexImage")
+    image.interpolation = "Linear"
+    art = Path(__file__).resolve().parents[2] / "docs/assets/avatar-art/wardrobe-v1/faces.png"
+    image.image = bpy.data.images.load(str(art), check_existing=True)
+    image.image.pack()
+    mix = nodes.new("ShaderNodeMixRGB")
+    mix.inputs[1].default_value = skin.diffuse_color
+    links.new(mask.outputs["Color"], mix.inputs[0])
+    links.new(image.outputs["Color"], mix.inputs[2])
+    links.new(mix.outputs[0], shader.inputs["Base Color"])
+    links.new(mix.outputs[0], shader.inputs["Emission Color"])
+    shader.inputs["Emission Strength"].default_value = .42
+    return paint, image.image.size[:]
 
 
 def face(skin, gold):
-    head_rows = []
-    for i in range(69):
-        z = 4.67 + (5.61-4.67)*i/68
-        rx, ry = interpolate(FACE, z)
-        head_rows.append((0, -.039, z, rx, ry))
-    head = rings("Face and jaw", head_rows, skin, count=112, smooth=1)
-    for v in head.data.vertices:
-        x, y, z = v.co
-        if y < -.04:
-            v.co.y -= .064*exp(-((x/.085)**2 + ((z-4.975)/.073)**2))
-    blush = head.data.color_attributes.new(name="Face tones", type="FLOAT_COLOR", domain="POINT")
-    for v, attribute in zip(head.data.vertices, blush.data):
-        x, y, z = v.co
-        pink = exp(-((abs(x)-.284)/.112)**2 - ((z-4.96)/.066)**2)*.36 if y < -.23 else 0
-        attribute.color = (*[a + (b-a)*pink for a, b in zip(linear("edaa8f"), linear("db766e"))], 1)
-    face_mat = skin.copy()
-    face_mat.name = "Warm complexion with cheek tint"
-    nodes = face_mat.node_tree.nodes
-    color = nodes.new("ShaderNodeVertexColor")
-    color.layer_name = blush.name
-    face_mat.node_tree.links.new(color.outputs["Color"], nodes.get("Principled BSDF").inputs["Base Color"])
-    head.data.materials[0] = face_mat
+    paint, (width, height) = painted_face_material(skin)
+    count, levels = 112, 84
+    vertices, uvs, coverage = [], [], []
+    for j in range(levels):
+        v = 4 + (452-4)*j/(levels-1)
+        left, right, thick = interpolate(FACE_SECTIONS, v)
+        for k in range(count):
+            a = k*2*pi/count
+            u = (right+left)/2 + sin(a)*(right-left)/2
+            frontal = max(0, cos(a))
+            nose = .084*exp(-((u-269)/27)**2 - ((v-316)/33)**2)
+            cheek = .032*exp(-((u-141)/50)**2 - ((v-295)/50)**2)
+            orbital = -.026*exp(-((u-165)/58)**2 - ((v-248)/33)**2)
+            d = thick*cos(a) + (nose+cheek+orbital)*frontal
+            if v>398:
+                d += .097*(v-398)/54
+            vertices.append(portrait_point((u-181)*.00228, d, 5.663-v*.00222))
+            # UVs align each level with the source rows. The three-quarter
+            # painted features wrap into the skin colour at the temples.
+            uvs.append(((124 + min(right-1.5, max(left+1.5, u)))/width, 1-(22+v)/height))
+            f = max(0, min(1, (cos(a)+.24)/.47))
+            coverage.append((f,f,f))
+    faces = [tuple(range(count))]
+    for j in range(levels-1):
+        for k in range(count):
+            n = (k+1)%count
+            faces.append((j*count+k,(j+1)*count+k,(j+1)*count+n,j*count+n))
+    faces.append(tuple(reversed(range(len(vertices)-count,len(vertices)))))
+    head = mesh("Sculpted brow, nose, cheek and tapered jaw", vertices, faces, paint, 1)
+    uv = head.data.uv_layers.new(name="Original wardrobe face")
+    for loop in head.data.loops:
+        uv.data[loop.index].uv = uvs[loop.vertex_index]
+    color_attributes(head, "Paint coverage", coverage)
 
-    lash = material("Plum lash", "291b36")
-    brow = material("Soft violet brow", "615070")
-    white = material("Warm eye white", "fff1ec", .34)
-    iris_edge = material("Iris edge", "5c284d")
-    iris = material("Honey rose iris", "ab5356", .36)
-    iris_low = material("Amber iris reflection", "efad72", .42)
-    gleam = material("Catchlights", "fff6db", .22)
-    lip = material("Rose lip", "bd6d69")
-    shadow = material("Mouth crease", "77474d")
-    nose_shade = material("Subtle nose shadow", "bd7e75")
+    ear = sphere("Visible ear", portrait_point(-.318,.113,5.042), (.104,.062,.125), skin)
+    ear.rotation_euler.z = -PORTRAIT_YAW
+    inset = material("Ear warm shade", "bb7565", .72)
+    ear_shape = sphere("Ear concha", portrait_point(-.347,.164,5.033), (.044,.017,.067), inset)
+    ear_shape.rotation_euler.z = -PORTRAIT_YAW
+    sphere("Small gold earring", portrait_point(-.315,.173,4.959), (.025,.021,.025), gold)
 
-    def contour(name, pts, radius, mat, relief, radii=None):
-        return strand(name, [(x, front(x, z, relief), z) for x, z in pts], radius, mat, radii=radii)
 
-    def eye_patch(name, polygon, center, mat, relief):
-        # A convex patch subdivided toward the centre follows the curved cheek.
-        vertices = [(center[0], front(*center, relief), center[1])]
-        faces = []
-        n = len(polygon)
-        for level in range(1, 5):
-            f = level / 4
-            for px, pz in polygon:
-                x, z = center[0]+(px-center[0])*f, center[1]+(pz-center[1])*f
-                vertices.append((x, front(x, z, relief), z))
-            k = 1 + (level-1)*n
-            for j in range(n):
-                s = (j+1)%n
-                faces.append((0, k+j, k+s) if level==1 else (k+j-n, k+j, k+s, k+s-n))
-        return mesh(name, vertices, faces, mat)
-
-    def oval(name, x, z, rx, rz, mat, lift):
-        poly = [(x+rx*cos(i*pi/18), z+rz*sin(i*pi/18)) for i in range(36)]
-        eye_patch(name, poly, (x, z), mat, lift)
-
-    for side in (-1, 1):
-        ear_x = .436*side
-        sphere("Ear", (ear_x, -.013, 4.998), (.102, .082, .146), skin)
-        sphere("Ear inset", (ear_x+.017*side, -.079, 4.986), (.048, .018, .075), nose_shade)
-        sphere("Tiny gold stud", (ear_x+.026*side, -.094, 4.924), (.026, .018, .027), gold)
-        a, b = Vector((.065, 5.105, 0)), Vector((.383, 5.126, 0))
-        top = interpolate_bezier(a, Vector((.142, 5.221, 0)), Vector((.284, 5.245, 0)), b, 24)
-        bottom = interpolate_bezier(b, Vector((.322, 5.021, 0)), Vector((.157, 5.018, 0)), a, 24)
-        eye_patch("Almond eye", [(side*p.x,p.y) for p in (*top[:-1],*bottom[:-1])], (.218*side,5.115), white, .018)
-        x = .217*side+.004
-        oval("Iris rim", x, 5.123, .073, .078, iris_edge, .026)
-        oval("Warm iris", x, 5.119, .058, .062, iris, .030)
-        oval("Iris lower gradient", x+.009, 5.091, .040, .027, iris_low, .033)
-        oval("Pupil", x, 5.128, .027, .047, lash, .035)
-        oval("Window reflection", x-.025, 5.151, .022, .022, gleam, .039)
-        oval("Reflected fill", x+.026, 5.103, .009, .009, gleam, .037)
-        contour("Upper lash", [(side*p.x, p.y) for p in top[::3]], .017, lash, .025,
-                [.28, .71, .88, 1, 1, 1.09, 1.15, .70])
-        contour("Outer lash tips", [(side*.308,5.174), (side*.375,5.143), (side*.409,5.166)], .018, lash, .019, [.56,1,.02])
-        contour("Lower lash", [(side*p.x, p.y) for p in bottom[::4]], .006, brow, .022)
-        contour("Soft eyebrow", [(side*.090,5.278), (side*.177,5.309), (side*.265,5.307), (side*.356,5.268)], .022, brow, .015, [.55,1,.72,.07])
-    contour("Small nose shadow", [(-.038,4.943), (.001,4.938), (.032,4.948)], .009, nose_shade, .005, [.08, .80, .04])
-    contour("Soft lower lip", [(-.100,4.858), (-.028,4.839), (.035,4.841), (.098,4.870)], .020, lip, .012, [.12,.92,.73,.13])
-    contour("Quiet smile", [(-.103,4.865), (-.045,4.860), (.030,4.858), (.101,4.878)], .009, shadow, .021, [.15, .6, 1, .1])
+def hair_lock(name, rows, mat, shade, tone, shine):
+    count = 34
+    path = [portrait_point(x,depth,z) for x,depth,z,_,_ in rows]
+    vertices, colors = [], []
+    for j, (center,row) in enumerate(zip(path,rows)):
+        t = j/(len(rows)-1)
+        tangent = (path[min(j+1,len(path)-1)]-path[max(0,j-1)]).normalized()
+        across = tangent.cross(PORTRAIT_FRONT).normalized()
+        normal = across.cross(tangent).normalized()
+        for k in range(count):
+            a = k*2*pi/count
+            mid = sin(a)
+            facing = cos(a)
+            fine = (sin(23*mid+7*t)+sin(40*mid-4*t))*.0024
+            depth = facing*(row[4]+fine) + .009*exp(-((mid+.26)/.25)**2)*max(0,facing)
+            vertices.append(center + across*(row[3]*mid) + normal*depth)
+            light = .13 + .76*max(0,facing)**.56
+            sheen = (.27*exp(-((mid+.26)/.28)**2) +
+                     .17*exp(-((mid-.38)/.15)**2)) * max(0,facing)
+            sheen *= .58+.42*cos(15*t+mid)**2
+            shade_variation = .068*cos(31*mid-8*t)*max(0,facing)
+            colors.append(tuple(d+(b-d)*light+(s-b)*sheen+shade_variation*(b-d)
+                                for d,b,s in zip(shade,tone,shine)))
+    faces = [tuple(reversed(range(count)))]
+    for j in range(len(rows)-1):
+        for k in range(count):
+            n = (k+1)%count
+            faces.append(tuple(j*count+i for i in (k,n,n+count,k+count)))
+    faces.append(tuple(range(len(vertices)-count,len(vertices))))
+    obj = mesh(name, vertices, faces, mat, 2)
+    color_attributes(obj, "Lilac pigments", colors)
+    return obj
 
 
 def hair(materials, hatted=False):
-    deep, violet, lilac, light = materials
+    base, lock, fine = materials
+    deep, violet, orchid, silver = [linear(c) for c in ("392644","714582","9569ac","e6cafa")]
+    def sculpt(label, rows, pale=False):
+        hair_lock(label, rows, lock, deep, orchid if pale else violet, silver)
 
-    def seat(z):
-        return 5.28 + (z-5.28)*.70 if hatted and z>5.28 else z
-
-    # The front part is shorter than the back. Its scalp shell closes the
-    # silhouette at the temples and continues behind the sculpted locks.
-    vertices = []
-    n = 72
-    for j in range(26):
-        for i in range(n):
-            a = i*2*pi/n
-            limit = .99 + 1.27*((1-cos(a))/2)**.52 + .065*sin(2*a)
-            t = .015 + (limit-.015)*j/25
-            vertices.append((.513*sin(t)*sin(a), .008-.447*sin(t)*cos(a), seat(5.15+.535*cos(t))))
-    faces = [tuple(reversed(range(n)))]
+    vertices, faces = [], []
+    count = 72
     for j in range(25):
-        for i in range(n):
-            k = (i+1) % n
-            faces.append(tuple(j*n + p for p in (i,k,k+n,i+n)))
-    mesh("Scalp and rear silhouette", vertices, faces, deep, 1)
+        for k in range(count):
+            a = k*2*pi/count
+            reach = 1.02 + 1.30*((1-cos(a))/2)**.62
+            t = .012 + (reach-.012)*j/24
+            top = 5.205 + .49*cos(t)
+            if hatted:
+                top = min(top, 5.58+.18*(top-5.58))
+            vertices.append(portrait_point(.483*sin(t)*sin(a),
+                    .453*sin(t)*cos(a)-.058, top))
+    faces.append(tuple(range(count)))
+    for j in range(24):
+        for k in range(count):
+            n = (k+1)%count
+            faces.append(tuple(j*count+i for i in (k,k+count,n+count,n)))
+    mesh("Dark lilac scalp and back volume", vertices, faces, base, 1)
 
-    for side in (-1, 1):
-        for i in range(5):
-            x = .39 + i*.051
-            z = 5.27-i*.045
-            y = .23-i*.087
-            rows = [(side*.278, y+.08, seat(z+.25), .069, .056),
-                    (side*x, y+.032, seat(z), .138-i*.004, .093),
-                    (side*(x-.027+i*.007), y-.023, 4.84, .132-i*.004, .091),
-                    (side*(x+.053), y-.020, 4.60-i*.033, .120-i*.007, .080),
-                    (side*(x+.005-i*.016), y-.125, 4.43-i*.016, .095-i*.004, .073),
-                    (side*(x-.18+i*.014), y-.141, 4.24-i*.024, .083-i*.005, .058),
-                    (side*(x-.08+i*.023), y-.198, 4.23-i*.009, .002, .002)]
-            tube("Sculpted lilac wave", rows, (deep, violet, lilac, violet, lilac)[i])
-            if i > 1:
-                strand("Fine line along the wave", [(x,y-d*.91,z) for x,y,z,w,d in rows[1:]],
-                       .013, light, radii=[.1,.9,.58,.36,.25,.02])
+    # Each lock moves over and under the adjacent curl at different heights.
+    # All roots overlap the rear shell, leaving the cheek and jaw in front.
+    profiles = [
+       [(.28,.03,5.52,.078,.047),(.48,.02,5.29,.119,.068),(.51,.05,5.00,.123,.065),
+        (.44,.10,4.82,.122,.064),(.48,.13,4.68,.112,.068),(.65,.16,4.53,.111,.059),
+        (.71,.13,4.37,.090,.051),(.60,.13,4.21,.049,.033),(.50,.18,4.20,.002,.003)],
+       [(.31,.16,5.45,.075,.044),(.46,.21,5.20,.114,.051),(.43,.23,4.97,.108,.046),
+        (.39,.25,4.82,.089,.039),(.51,.33,4.66,.077,.052),(.66,.37,4.51,.075,.043),
+        (.65,.41,4.37,.070,.044),(.49,.36,4.23,.049,.032),(.49,.32,4.09,.003,.003)],
+       [(.33,.04,5.46,.067,.039),(.53,.02,5.18,.090,.041),(.56,.09,4.98,.084,.043),
+        (.56,.14,4.79,.073,.039),(.66,.22,4.63,.070,.042),(.76,.12,4.49,.064,.039),
+        (.70,.04,4.37,.052,.029),(.60,.05,4.34,.032,.023),(.58,.12,4.40,.002,.002)],
+       [(.39,.22,5.32,.058,.031),(.44,.31,5.12,.080,.046),(.49,.30,4.96,.062,.040),
+        (.40,.26,4.80,.065,.045),(.34,.29,4.62,.071,.047),(.44,.41,4.47,.066,.042),
+        (.53,.40,4.33,.047,.032),(.40,.39,4.18,.041,.026),(.31,.30,4.18,.002,.002)],
+       [(.38,.02,5.30,.055,.028),(.50,.04,5.09,.067,.032),(.46,.12,4.91,.055,.028),
+        (.50,.22,4.75,.051,.038),(.59,.27,4.65,.051,.034),(.63,.27,4.52,.038,.027),
+        (.54,.27,4.45,.026,.016),(.50,.31,4.50,.002,.002)],
+    ]
+    for side in (-1,1):
+        for i, profile in enumerate(profiles):
+            rows = [(side*x + (.113*exp(-((z-5.152)/.253)**2)-.014 if side==1 else 0),
+                     d+(.012 if side==1 else 0),
+                     z + ((.035 if i%2 else .09) if side==1 and j>2 else 0),
+                     w,dz) for j,(x,d,z,w,dz) in enumerate(profile)]
+            sculpt("Layered S-wave", rows, i in (1,3))
+        # A thin loop catches light outside the largest wave.
+        strand("Fine escaping hair", [portrait_point(side*x,d,z) for x,d,z in
+               [(.49,.12,5.06),(.57,.09,4.88),(.73,.15,4.71),(.77,.20,4.56),
+                (.70,.24,4.49),(.59,.27,4.56)]], .011, fine,
+               radii=[.04,1,.83,.66,.50,.03])
 
     bangs = [
-        [( .129,-.18,5.627,.083,.058), (-.048,-.30,5.589,.151,.067), (-.224,-.399,5.446,.155,.060), (-.358,-.372,5.285,.113,.057), (-.483,-.272,5.087,.066,.034), (-.488,-.201,4.982,.002,.002)],
-        [( .093,-.243,5.590,.064,.062), (-.051,-.372,5.52,.147,.059), (-.181,-.463,5.384,.147,.052), (-.314,-.405,5.264,.101,.052), (-.43,-.327,5.144,.065,.039), (-.442,-.310,4.994,.002,.003)],
-        [( .121,-.25,5.548,.061,.050), (.20,-.393,5.491,.112,.062), (.298,-.428,5.368,.128,.053), (.389,-.351,5.267,.094,.048), (.465,-.258,5.122,.061,.040), (.429,-.275,4.951,.002,.002)],
-        [( .15,-.16,5.651,.041,.031), (.282,-.261,5.56,.122,.067), (.395,-.317,5.457,.131,.059), (.481,-.282,5.296,.087,.045), (.546,-.164,5.145,.037,.033), (.516,-.222,5.064,.002,.002)],
+       [(.094,.19,5.69,.065,.044),(-.039,.286,5.634,.115,.046),(-.208,.357,5.511,.108,.045),
+        (-.344,.317,5.360,.098,.041),(-.443,.230,5.210,.070,.036),(-.434,.214,5.090,.034,.023),
+        (-.363,.246,5.085,.002,.003)],
+       [(.111,.206,5.665,.048,.041),(.015,.365,5.574,.087,.042),(-.139,.422,5.452,.093,.040),
+        (-.257,.407,5.301,.074,.034),(-.33,.366,5.196,.044,.025),(-.385,.292,5.175,.002,.002)],
+       [(.103,.234,5.665,.035,.032),(.214,.337,5.575,.095,.043),(.311,.363,5.454,.110,.043),
+        (.389,.342,5.316,.092,.044),(.434,.288,5.18,.049,.027),(.413,.267,5.071,.002,.002)],
+       [(.116,.189,5.687,.025,.022),(.247,.255,5.624,.093,.056),(.381,.251,5.492,.112,.056),
+        (.476,.197,5.348,.074,.041),(.492,.177,5.234,.041,.023),(.453,.189,5.149,.002,.002)],
     ]
     for i, raw in enumerate(bangs):
-        # The upper tips slip under the wool band. Keep the free ends and
-        # temple volume, but draw the hair toward the scalp just at the band.
-        rows = [(x, y + (.145*max(0,min(1,(z-5.25)/.25)) if hatted else 0),
-                 seat(z)-(.088 if hatted and j<3 else 0),
-                 w*(.62 if hatted and j<3 else 1), d*(.68 if hatted and j<3 else 1))
-                for j,(x,y,z,w,d) in enumerate(raw)]
-        tube("Side-part fringe", rows, lilac if i in (1, 2) else violet)
-        strand("Painted fringe sheen", [(x,y-d*.93,z+.015) for x,y,z,w,d in rows],
-               .018, light, radii=[.02,.43,.73,.41,.12,.02])
+        if i>=2:
+            raw = [(x+.066*max(0,min(1,(5.49-z)/.20)),d,z,w*(.87 if j>2 else 1),depth)
+                   for j,(x,d,z,w,depth) in enumerate(raw)]
+        if hatted:
+            raw = [(x,d-.128 if j<3 else d,z-(.137 if j<3 else .012),
+                    w*(.84 if j<2 else 1),depth) for j,(x,d,z,w,depth) in enumerate(raw)]
+        sculpt("Tapered side-swept fringe", raw, i in (0,2))
 
 
 def flower(name, x, y, z, r, petals, middle):
@@ -365,17 +429,39 @@ def beret(cream, edge, gold):
         (-.105,.053,5.665,.579,.453), (-.152,.064,5.756,.454,.361),
         (-.177,.062,5.794,.265,.233), (-.172,.055,5.808,.031,.034)
     ]
-    crown = rings("Sculpted cream beret", rows, cream)
-    rim = rings("Wool hatband", [(*row[:3],row[3]+.008,row[4]+.009) for row in rows[:3]], edge, cap=False)
-    for obj in (crown, rim):
-        for v in obj.data.vertices:
-            v.co.z -= v.co.x*.115
-    nub = sphere("Beret wool tab", (-.215, .038, 5.843), (.040,.036,.071), edge)
-    nub.rotation_euler.y = -.44
-    points = [(-.006+.522*sin(t), .038-.438*cos(t), 5.413-.06*sin(t)) for t in [i*2*pi/48 for i in range(49)]]
-    strand("Rolled brim piping", points, .015, cream)
-    flower("Brass pin", -.299, -.377, 5.519, .070, gold, edge)
-    strand("Pin embroidered stem", [(-.30,-.394,5.48),(-.357,-.358,5.456),(-.397,-.313,5.461)], .009, gold)
+
+    def woven_crown(point, angle):
+        x,y,z = point
+        f = max(0, 1-((z-5.59)/.23)**2)
+        bend = (.033*sin(6*angle+3*z) + .014*sin(11*angle-9*z))*f
+        return x+bend*sin(angle), y-bend*cos(angle), z-x*.115+bend*.27
+
+    rings("Soft paneled wool beret", stitched_rows(rows,.027), cream, sculpt=woven_crown, smooth=1)
+    rim = rings("Fitted wool hatband", [(*row[:3],row[3]+.010,row[4]+.010) for row in rows[:3]], edge, cap=False)
+    for v in rim.data.vertices:
+        v.co.z -= v.co.x*.115
+    for z, radius, tint in ((5.416,.0085,gold),(5.382,.010,cream)):
+        pts = [(-.006+.522*sin(t),.034-.438*cos(t),z-.060*sin(t))
+               for t in (i*2*pi/58 for i in range(59))]
+        strand("Banded hat edge",pts,radius,tint)
+    nub = sphere("Wool top tab", (-.215,.038,5.843), (.030,.030,.047), edge)
+    nub.rotation_euler.y = -.49
+
+    ribbon = material("Apricot champagne silk","d4ab86",.35,cloth=True)
+    flower_cream = material("Ecru enamel petals","fff0d0",.37)
+    x,y,z = -.452,-.291,5.536
+    for side in (-1,1):
+        loop = [(x,y,z),(x+side*.106,y+.014,z+.096),(x+side*.202,y+.060,z+.070),
+                (x+side*.17,y+.042,z-.010),(x+side*.080,y-.021,z-.028)]
+        inset_panel("Folded satin bow loop",loop,ribbon,.013)
+        strand("Folded ribbon edging",loop[1:],.0062,gold,radii=[.35,1,.87,.12])
+        tail = [(x,y,z-.030),(x+side*.072,y-.017,z-.054),
+                (x+side*.105,y-.013,z-.258),(x+side*.047,y-.025,z-.225),
+                (x+side*.017,y-.031,z-.282)]
+        inset_panel("Cut satin ribbon tail",tail,ribbon,.009)
+        strand("Gold thread on ribbon",tail[1:],.0052,gold)
+    flower("Enamel dogwood brooch",x,y-.066,z+.010,.072,flower_cream,gold)
+    flower("Tiny leaf pin",x-.080,y-.052,z+.073,.037,gold,flower_cream)
 
 
 DENIM = [
@@ -391,7 +477,13 @@ def low_position(side):
 
 
 def trousers(denim, bright, dark, stitches):
-    pieces = []
+    pieces, turned_hems = [], []
+
+    def knee_fold(point, a):
+        x,y,z = point
+        v = (z-1.63+.15*sin(a))/.063
+        d = .016*(exp(-v*v)-.67*exp(-(v-1.2)**2))*max(0,cos(a))
+        return x+d*sin(a), y-d*cos(a), z
     for side in (-1, 1):
         points = []
         basex, basey = low_position(side)
@@ -399,10 +491,12 @@ def trousers(denim, bright, dark, stitches):
             blend = max(0, min(1,(z-.85)/2.15))
             cx = basex*(1-blend)+side*.217*blend
             points.append((cx, cy+basey*(1-blend), z, rx, ry))
-        pieces.append(rings("Tapered denim leg", points, denim, count=42))
+        pieces.append(rings("Tapered denim with knee ease", stitched_rows(points,.057), denim,
+                            count=38, smooth=1, sculpt=knee_fold))
         for offset, tint, width in [(0,dark,.011),(-.028,stitches,.004)]:
             strand("Outseam", [(cx+(rx-.010)*side, cy+offset, z) for cx,cy,z,rx,ry in points[:-1]], width, tint)
-        rings("Folded hem", [(x,y,z+.015+k,rx+.009,ry+.006) for k,(x,y,z,rx,ry) in zip((0,.04),points[:2])], bright, cap=False)
+        cuff = [(x,y,z+.015+k,rx+.009,ry+.006) for k,(x,y,z,rx,ry) in zip((0,.04),points[:2])]
+        turned_hems.append(rings("Turned denim hem for low shoes", cuff, bright, cap=False))
     pieces.append(rings("Denim seat", [(0,.075,2.79,.407,.214),
         (0,.07,2.99,.440,.241),(0,.07,3.17,.418,.229),(0,.07,3.27,.409,.220)],denim))
     # Fuse the overlapping hip and leg pattern pieces into one fabric surface.
@@ -420,9 +514,32 @@ def trousers(denim, bright, dark, stitches):
     put(pants, denim)
     smooth = pants.modifiers.new("Smooth crotch seam", "SMOOTH")
     smooth.factor, smooth.iterations = .8, 11
+    washes = []
+    for v in pants.data.vertices:
+        x,y,z = v.co
+        width = .354 if z<1.75 else .287
+        facing = max(0,min(1,(-y+.04)/.22))
+        wear = facing * exp(-((abs(x)-width)/.14)**2)
+        wear *= .72*exp(-((z-2.39)/.49)**2) + .42*exp(-((z-1.51)/.178)**2)
+        washes.append((.81+.40*wear,.84+.49*wear,.92+.57*wear))
+    color_attributes(pants,"Faded indigo on raised fabric",washes)
+    nodes, links = denim.node_tree.nodes, denim.node_tree.links
+    diffuse = nodes.get("Principled BSDF").inputs["Base Color"]
+    pigment = nodes.new("ShaderNodeVertexColor")
+    pigment.layer_name = "Faded indigo on raised fabric"
+    multiply = nodes.new("ShaderNodeMixRGB")
+    multiply.blend_type = "MULTIPLY"
+    multiply.inputs[0].default_value = 1
+    links.new(diffuse.links[0].from_socket, multiply.inputs[1])
+    links.new(pigment.outputs["Color"], multiply.inputs[2])
+    links.new(multiply.outputs[0], diffuse)
+    for side in (-1,1):
+        strand("Denim pocket topstitch",[(side*x,y,z) for x,y,z in
+               ((.143,-.142,3.211),(.181,-.141,3.161),(.240,-.130,3.134),(.294,-.111,3.125))],
+               .0046,stitches,radii=[.25,1,.94,.37])
     strand("Denim fly topstitch", [(.020,-.163,3.26),(.026,-.180,3.127),
            (.038,-.185,2.993),(.078,-.184,2.907)], .005, stitches)
-
+    return turned_hems
 
 
 def hands(skin):
@@ -458,16 +575,14 @@ def sleeves(fabric, cuff, trim=None):
         x = (1.028 if side < 0 else .954)
         dy = -.072 if side < 0 else -.19
         dz = 3.04 if side < 0 else 3.09
-        rows = [(side*.399,.023,4.231,.191,.212),(side*.568,.029,4.139,.218,.201),
-                (side*.680,.032,3.918,.175,.168),(side*.76,.013,3.73,.163,.149),
-                (side*(x-.18),dy+.023,3.503,.127,.13),(side*(x-.10),dy+.010,dz+.36,.135,.128),
-                (side*(x-.053),dy,dz+.20,.117,.112),(side*(x-.035),dy,dz+.141,.103,.104)]
-        tube("Separately fitted sleeve", rows,fabric)
-        for bend in (5,6):
-            bx,by,bz,wr,dr = rows[bend]
-            strand("Soft sleeve fold",[(bx-wr*.63,by-dr*.68,bz+.023),
-                  (bx-wr*.17,by-dr*.96,bz+.017),(bx+wr*.28,by-dr*.94,bz+.032)],
-                   .009,fabric,radii=[.10,1,.05])
+        rows = [(side*.383,.024,4.238,.176,.196),(side*.502,.024,4.192,.182,.193),
+                (side*.568,.029,4.139,.172,.174),(side*.637,.036,4.010,.157,.161),
+                (side*.680,.032,3.918,.155,.149),(side*.724,.023,3.827,.143,.152),
+                (side*.76,.013,3.73,.147,.149),(side*(x-.211),dy+.030,3.608,.132,.137),
+                (side*(x-.18),dy+.023,3.503,.121,.126),(side*(x-.125),dy+.014,3.434,.128,.119),
+                (side*(x-.10),dy+.010,dz+.36,.130,.123),(side*(x-.053),dy,dz+.20,.108,.104),
+                (side*(x-.035),dy,dz+.141,.099,.096)]
+        tube("Fitted sleeve with diagonal elbow folds", rows, fabric, pleats=True)
         lx,ly,lz,lw,ld = rows[-1]
         tube("Finished wrist cuff", [(lx-side*.021,ly,lz+.080,lw*1.12,ld*1.13),
              (lx-side*.012,ly,lz+.058,lw*1.13,ld*1.14),
@@ -479,8 +594,28 @@ def sleeves(fabric, cuff, trim=None):
                 sphere("Working sleeve button", (side*(x+.011-i*.019),dy-.093,dz+.22+i*.068),(.023,.016,.024),trim)
 
 
+def tailored_fold(point, angle, strength=1):
+    x,y,z = point
+    pucker = 0
+    for center, bias, span, height in ((3.49,.22,.043,.023),(3.61,-.26,.038,.021),
+                                      (3.75,-.31,.038,.022),(4.08,.17,.055,.013)):
+        t = (z-center + bias*x)/span
+        pucker += height*(exp(-t*t) - .66*exp(-(t-1.23)**2))
+    pucker *= max(0, cos(angle))**.8 * strength
+    return x+sin(angle)*pucker, y-cos(angle)*pucker, z
+
+
+def stitched_rows(rows, step=.035):
+    coords = [tuple((z,x,y,w,d)) for x,y,z,w,d in rows]
+    z0,z1 = rows[0][2],rows[-1][2]
+    return [(x,y,z,w,d) for z in (z0+(z1-z0)*i/round((z1-z0)/step)
+                                     for i in range(round((z1-z0)/step)+1))
+                         for x,y,w,d in [interpolate(coords,z)]]
+
+
 def hoodie(fabric, rib, seam, lining, gold):
-    rings("Mint fleece torso", TORSO, fabric, cap=False)
+    rings("Mint fleece with diagonal folds", stitched_rows(TORSO), fabric, cap=False,
+          sculpt=tailored_fold, smooth=1)
     sleeves(fabric, rib)
     rows = [(0,.042,3.253,.397,.243),(0,.043,3.273,.421,.264),(0,.040,3.403,.430,.268),(0,.041,3.441,.409,.248)]
     rings("Rib-knit waistband", rows, rib, cap=False)
@@ -503,15 +638,28 @@ def hoodie(fabric, rib, seam, lining, gold):
 
 
 def coat(fabric, lapel, inner, gold, thread):
-    rings("Cream high-neck underlayer", [(x,y,z,w*.93,d*.95) for x,y,z,w,d in TORSO] +
-          [(0,.004,4.445,.177,.161),(0,-.001,4.516,.175,.161)], inner, cap=False)
+    rows = [(x,y,z,w*.93,d*.95) for x,y,z,w,d in TORSO] + [
+        (0,-.002,4.433,.166,.157),(0,-.021,4.452,.163,.157)]
+    rings("Cream knit with pressed neckline", stitched_rows(rows), inner, cap=False,
+          sculpt=tailored_fold, smooth=1)
+    rings("Folded knit collar around neck", [(0,-.020,4.420,.169,.159),
+          (0,-.021,4.453,.170,.159),(0,-.023,4.482,.164,.157),
+          (0,-.023,4.487,.143,.143)], inner, cap=False, smooth=1)
     rows = [
         (0,.067,2.13,.672,.473),(0,.067,2.158,.674,.477),(0,.069,2.305,.659,.461),
         (0,.062,2.64,.609,.390),(0,.053,3.01,.528,.336),(0,.043,3.39,.464,.301),
-        (0,.053,3.65,.439,.283),(0,.051,3.926,.508,.319),(0,.029,4.174,.527,.275),
+        (0,.053,3.65,.424,.283),(0,.051,3.926,.508,.319),(0,.029,4.174,.527,.275),
         (0,.024,4.284,.510,.241),(0,.023,4.356,.417,.219),(0,.014,4.440,.214,.173)
     ]
-    obj = rings("Open night coat", rows, fabric, start=.42, stop=2*pi-.42, cap=False)
+    def coat_fold(point, angle):
+        x,y,z = tailored_fold(point, angle, .44)
+        flex = max(0,min(1,(3.5-z)/1.48))
+        wave = (.042*sin(5*angle+.55) + .018*sin(10*angle))*flex
+        sweep = (.071+.080*sin(angle-.46))*flex*flex
+        return x+sin(angle)*wave-sweep*.52, y-cos(angle)*wave+sweep, z
+
+    obj = rings("Tailored night coat with draped skirt", stitched_rows(rows), fabric,
+                start=.42, stop=2*pi-.42, cap=False, sculpt=coat_fold, smooth=1)
     thickness = obj.modifiers.new("Visible hem and lining", "SOLIDIFY")
     thickness.thickness = .021
     sleeves(fabric,lapel,gold)
@@ -524,7 +672,8 @@ def coat(fabric, lapel, inner, gold, thread):
                radii=[.33,.8,.83,.86,.68,.47,.1])
         def surface(x, z, relief=.0):
             y, w, d = interpolate([(z,y,w,d) for _,y,z,w,d in rows], z)
-            return y - d*sqrt(max(0, 1-(x/w)**2)) - relief
+            a = asin(max(-1,min(1,x/w)))
+            return coat_fold((x,y-d*cos(a),z),a)[1] - relief
 
         binding = []
         for x,z in [(.167,3.71),(.203,3.51),(.210,3.20),(.234,2.82),(.261,2.43),(.279,2.15)]:
@@ -547,8 +696,27 @@ def footwear(name, leather, outsole, trim, lace):
     for side in (-1,1):
         x, offset = low_position(side)
         offset+=.103
-        def shape(rows, label, mat, cap=True):
-            return rings(label, [(x,y+offset,z,w,d) for z,y,w,d in rows], mat, cap=cap)
+        def raised_arch(y,z):
+            if not boot:
+                return z
+            t = max(0,min(1,(y-offset+.415)/.53))
+            return z+.173*t*t*(3-2*t)*max(0,min(1,(.67-z)/.50))
+
+        def profile(point, angle):
+            px,y,z = point
+            width = .91 + .067*(1-cos(angle)) if boot else 1
+            collar_dip = max(0,cos(angle))**5 * max(0,(z-.80)/.19) * .105 if boot else 0
+            return x+(px-x)*width, y, raised_arch(y,z)-collar_dip
+
+        def shape(rows, label, mat, cap=True, carved=True):
+            return rings(label, [(x,y+offset,z,w,d) for z,y,w,d in rows], mat, cap=cap,
+                         sculpt=profile if carved else None)
+
+        if boot:
+            shape([(.079,.121,.081,.079),(.107,.123,.092,.082),(.154,.128,.093,.080),
+                   (.259,.112,.114,.086),(.300,.098,.116,.090)],"Champagne heel block",trim,carved=False)
+            shape([(.079,.123,.083,.084),(.105,.121,.091,.084),(.118,.121,.090,.083)],
+                  "Heel rubber cap",outsole,carved=False)
         shape([(.084,-.175,.196,.390),(.111,-.186,.205,.402),(.159,-.187,.209,.408),(.180,-.184,.200,.398)],"Carved heel and sole",outsole)
         rows = [
             (.151,-.178,.199,.401),(.174,-.172,.205,.405),(.249,-.172,.205,.391),
@@ -561,23 +729,43 @@ def footwear(name, leather, outsole, trim, lace):
             rows += [(.633,.007,.172,.162)]
         shape(rows, "Ivory leather boot" if boot else "Oat canvas sneaker", leather, cap=False)
         z,cy,rx,ry = rows[-1]
-        shape([(z-.061,cy-.002,rx+.009,ry+.008),(z-.047,cy,rx+.016,ry+.013),
-              (z-.005,cy,rx+.017,ry+.014),(z+.009,cy,rx+.009,ry+.006)],"Open padded shoe collar",trim,cap=False)
-        pts = [(x+.207*sin(a),offset-.183-.402*cos(a),.155) for a in [i*2*pi/48 for i in range(49)]]
-        strand("Welt stitch",pts,.008,trim)
+        band = .038 if boot else .052
+        shape([(z-band,cy-.002,rx+.007,ry+.006),(z-band+.012,cy,rx+.013,ry+.010),
+              (z-.004,cy,rx+.014,ry+.011),(z+.006,cy,rx+.006,ry+.005)],
+              "Open padded shoe collar",trim,cap=False)
+        pts = [profile((x+.207*sin(a),offset-.183-.402*cos(a),.155),a)
+               for a in (i*2*pi/48 for i in range(49))]
+        strand("Welt stitch",pts,.0075,trim)
         if boot:
-            # The front tongue, crossed straps and star are in front of the
-            # denim. The curved rear wall encloses the leg in the same mesh.
-            inset_panel("Pointed leather tongue",[(x-.131,offset-.157,.612),(x-.113,offset-.123,.880),
-                        (x,offset-.116,.962),(x+.113,offset-.123,.880),(x+.131,offset-.157,.612)],leather)
-            for t in (-1,1):
-                strand("Gilded crossed boot strap",[(x-.158,offset-.104,.716-t*.088),
-                      (x-.073,offset-.168,.716-t*.038),(x+.081,offset-.163,.716+t*.04),
-                      (x+.159,offset-.097,.716+t*.086)],.019,trim)
+            def upper(a,z,relief=.012):
+                y,w,d = interpolate(rows,z)
+                return profile((x+(w+relief)*sin(a),offset+y-(d+relief)*cos(a),z),a)
+
+            for half in (-1,1):
+                strand("Pointed toe embroidery", [upper(half*a,z,.011)
+                       for a,z in ((0,.205),(.18,.230),(.37,.290),(.57,.318),(.75,.330))],
+                       .007,trim,radii=[.23,.82,1,.70,.09])
+            # Build the leather facing on the boot last so the lower edge
+            # curves around the ankle and stays under the raised straps.
+            tongue = [upper(a,z,.008) for a,z in [
+                (-.72,.622),(-.71,.83),(-.46,.894),(0,1.006),(.46,.894),(.71,.83),(.72,.622),(0,.603)]]
+            inset_panel("Pointed leather tongue", tongue, leather, .009)
+            for direction in (-1,1):
+                strap = [upper(a,.735+direction*a*.103,.024)
+                         for a in (-1.09,-.66,-.26,.0,.27,.66,1.09)]
+                strand("Gilded crossed boot strap",strap,.017,trim,radii=[.5,.91,1,1,1,.91,.5])
             points = [(x+(.114 if i%2==0 else .039)*sin(i*pi/4),offset-.192,
                        .728+(.125 if i%2==0 else .043)*cos(i*pi/4)) for i in range(8)]
             inset_panel("Four-point engraved star", points, trim, .015)
-            sphere("Enamel on boot star",(x,offset-.214,.728),(.033,.016,.042),lace)
+            sphere("Enamel on boot star",(x,offset-.214,.728),(.031,.016,.039),lace)
+            strand("Pendant chain",[(x,offset-.198,.680),(x+.022,offset-.239,.617),
+                  (x+.014,offset-.256,.564)],.008,trim)
+            jewel = sphere("Lilac boot pendant",(x+.014,offset-.262,.550),(.024,.014,.042),lace)
+            jewel.rotation_euler.y = -.20
+            for side_offset in (-1,1):
+                for i in range(3):
+                    sphere("Embossed toe stitch",upper(side_offset*(.29+i*.18),.254+i*.030,.011),
+                           (.006,.006,.007),trim)
         else:
             for i in range(4):
                 z, y = .346+i*.053, offset-.394+i*.056
@@ -658,31 +846,38 @@ def make_variant(name, callback, *args):
 
 
 def build():
-    skin = material("Peach skin", "edaa8f", .50)
+    skin = material("Peach skin", "efac8e", .58)
     skin.node_tree.nodes.get("Principled BSDF").inputs["Subsurface Weight"].default_value = .07
-    gold = material("Champagne brass", "bf8849", .30, metal=.58)
+    gold = material("Champagne brass", "d7a363", .27, metal=.65)
     ivory = material("Oatmeal cloth", "edded0", cloth=True)
     sole = material("Soft cocoa rubber", "5c4756")
-    violet = tuple(material(name, color, .43) for name,color in [
-        ("Mulberry hair shadow","443053"),("Amethyst hair","6b4c83"),
-        ("Soft lilac lock","9673ac"),("Lilac strands","b99bca")
-    ])
+    lock = material("Satin highlights on lilac waves", "805391", .34)
+    pigment = lock.node_tree.nodes.new("ShaderNodeVertexColor")
+    pigment.layer_name = "Lilac pigments"
+    shader = lock.node_tree.nodes.get("Principled BSDF")
+    lock.node_tree.links.new(pigment.outputs["Color"], shader.inputs["Base Color"])
+    violet = (material("Deep lilac scalp","483050",.48),lock,material("Flyaway lilac","8f6a9e",.43))
     head = make_variant("Peach complexion and facial features",face,skin,gold)
     hands(skin)
-    trousers(material("Indigo denim", "456385", cloth=True),material("Faded denim cuff", "557696", cloth=True),
-             material("Deep indigo seam", "344960"),material("Canvas topstitch", "b2956f"))
+    hems = trousers(material("Indigo denim", "456385", cloth=True),
+                   material("Faded denim cuff", "557696", cloth=True),
+                   material("Deep indigo seam", "344960"),material("Canvas topstitch", "b2956f"))
     groups = {
         "hair":make_variant("Hair | airy lilac waves",hair,violet),
         "seat":make_variant("Hair | fitted to beret",hair,violet,True),
         "hat":make_variant("Cream beret",beret,ivory,material("Toasted wool edging","c9a991",cloth=True),gold),
-        "hoodie":make_variant("Mint hoodie",hoodie,material("Sea-glass fleece","83ada0", cloth=True),
-            material("Mint rib knit","6c9a8c",cloth=True),material("Mint embroidery","bdd8bb"),ivory,gold),
-        "coat":make_variant("Night coat",coat,material("Mulberry twill","543756",cloth=True),
-            material("Violet collar","734f6c",cloth=True),ivory,gold,material("Rose edge","a1748b")),
+        "hoodie":make_variant("Mint hoodie",hoodie,material("Sea-glass fleece","719e8d", cloth=True),
+            material("Mint rib knit","547f70",cloth=True),material("Mint embroidery","bdd8bb"),ivory,gold),
+        "coat":make_variant("Night coat",coat,material("Mulberry twill","4d2947",cloth=True),
+            material("Violet collar","673b58",cloth=True),ivory,gold,material("Rose edge","a1748b")),
         "sneakers":make_variant("Low canvas shoes",footwear,"sneakers",ivory,sole,gold,material("Laces","fff0d3")),
         "boots":make_variant("Stardust boots",footwear,"boots",material("Ivory satin leather","e3ccac",.41),
             sole,gold,material("Lilac enamel","76538b",.26))
     }
+    for hem in hems:
+        for collection in list(hem.users_collection):
+            collection.objects.unlink(hem)
+        groups["sneakers"].objects.link(hem)
     for collection in (head, groups["hair"], groups["seat"], groups["hat"]):
         for obj in collection.objects:
             obj.location.z -= .074
