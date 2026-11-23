@@ -259,19 +259,20 @@ def face(skin, gold):
     paint, (width, height) = painted_face_material(skin)
     count, levels = 112, 84
     vertices, uvs, coverage = [], [], []
+    cross_section = smooth_profile(FACE_SECTIONS)
     for j in range(levels):
         v = 4 + (452-4)*j/(levels-1)
-        left, right, thick = interpolate(FACE_SECTIONS, v)
+        left, right, thick = cross_section(v)
         for k in range(count):
             a = k*2*pi/count
             u = (right+left)/2 + sin(a)*(right-left)/2
             frontal = max(0, cos(a))
-            nose = .084*exp(-((u-269)/27)**2 - ((v-316)/33)**2)
-            cheek = .032*exp(-((u-141)/50)**2 - ((v-295)/50)**2)
-            orbital = -.026*exp(-((u-165)/58)**2 - ((v-248)/33)**2)
-            d = thick*cos(a) + (nose+cheek+orbital)*frontal
-            if v>398:
-                d += .097*(v-398)/54
+            tip = .056*exp(-((u-268)/27)**2 - ((v-315)/29)**2)
+            bridge = .026*exp(-((u-255)/32)**2 - ((v-279)/46)**2)
+            cheek = .024*exp(-((u-145)/53)**2 - ((v-293)/51)**2)
+            orbital = -.017*exp(-((u-165)/55)**2 - ((v-246)/35)**2)
+            chin = .066*smooth_range(v,381,452)
+            d = thick*cos(a) + (tip+bridge+cheek+orbital)*frontal + chin
             vertices.append(portrait_point((u-181)*.00228, d, 5.663-v*.00222))
             # UVs align each level with the source rows. The three-quarter
             # painted features wrap into the skin colour at the temples.
@@ -298,64 +299,89 @@ def face(skin, gold):
     sphere("Small gold earring", portrait_point(-.315,.173,4.959), (.025,.021,.025), gold)
 
 
-def hair_lock(name, rows, mat, shade, tone, shine):
-    count = 34
+def hair_lock(name, rows, material, palette, phase):
+    """A shallow, slightly twisted ribbon with lengthwise painted fibres."""
+    shade, tone, shine = palette
+    count = 48
     path = [portrait_point(x,depth,z) for x,depth,z,_,_ in rows]
     vertices, colors = [], []
     for j, (center,row) in enumerate(zip(path,rows)):
         t = j/(len(rows)-1)
         tangent = (path[min(j+1,len(path)-1)]-path[max(0,j-1)]).normalized()
         across = tangent.cross(PORTRAIT_FRONT).normalized()
-        normal = across.cross(tangent).normalized()
+        front = across.cross(tangent).normalized()
+        twist = .24*sin(7.6*t+phase)
         for k in range(count):
             a = k*2*pi/count
-            mid = sin(a)
-            facing = cos(a)
-            fine = (sin(23*mid+7*t)+sin(40*mid-4*t))*.0024
-            depth = facing*(row[4]+fine) + .009*exp(-((mid+.26)/.25)**2)*max(0,facing)
-            vertices.append(center + across*(row[3]*mid) + normal*depth)
-            light = .13 + .76*max(0,facing)**.56
-            sheen = (.27*exp(-((mid+.26)/.28)**2) +
-                     .17*exp(-((mid-.38)/.15)**2)) * max(0,facing)
-            sheen *= .58+.42*cos(15*t+mid)**2
-            shade_variation = .068*cos(31*mid-8*t)*max(0,facing)
-            colors.append(tuple(d+(b-d)*light+(s-b)*sheen+shade_variation*(b-d)
-                                for d,b,s in zip(shade,tone,shine)))
+            width, facing = sin(a), cos(a)
+            light_side = max(0,facing)
+            thickness = row[4]*facing*(.80+.20*exp(-((width+.23)/.52)**2))
+            depth = thickness + row[3]*width*twist
+            vertices.append(center+across*(row[3]*width)+front*depth)
+            grain = .073*cos(13.2*width+3.1*t+phase) + .033*cos(25*width-4.6*t+phase*1.9)
+            contour = .12+.78*light_side**.50
+            ridge = (.27*exp(-((width+.24)/.27)**2)+.125*exp(-((width-.41)/.13)**2))
+            ridge *= (.40+.60*sin(pi*(.13+t*.75))**1.6)*light_side
+            colors.append(tuple(d+(b-d)*(contour+grain*light_side)+(h-b)*ridge
+                                for d,b,h in zip(shade,tone,shine)))
     faces = [tuple(reversed(range(count)))]
     for j in range(len(rows)-1):
         for k in range(count):
             n = (k+1)%count
             faces.append(tuple(j*count+i for i in (k,n,n+count,k+count)))
     faces.append(tuple(range(len(vertices)-count,len(vertices))))
-    obj = mesh(name, vertices, faces, mat, 2)
-    color_attributes(obj, "Lilac pigments", colors)
-    return obj
+    obj = mesh(name,vertices,faces,material,2)
+    color_attributes(obj,"Lilac pigments",colors)
+
+
+def feather_lock(label, rows, material, palettes, phase):
+    """Offset the sibling ribbons in width, depth and the positions of their tips."""
+    for n, (edge, scale) in enumerate(((-.48,.50),(.47,.455))):
+        split = []
+        for j,(x,d,z,w,thickness) in enumerate(rows):
+            t = j/(len(rows)-1)
+            curl = sin(pi*t)*(sin(5.5*t+phase+n*.83)*.19+.12*edge)
+            taper = abs(edge)*t**1.7
+            split.append((x+w*(edge+curl)+edge*.063*t**1.55,
+                          d + (.016 if n==0 else -.006) + .010*sin(8*t+phase+n),
+                          z + taper*(.145 if n==0 else -.064),
+                          w*scale,
+                          thickness*(.67-.21*t)))
+        hair_lock(label,split,material,palettes[n],phase+n*.71)
 
 
 def hair(materials, hatted=False):
-    base, lock, fine = materials
-    deep, violet, orchid, silver = [linear(c) for c in ("392644","714582","9569ac","e6cafa")]
-    def sculpt(label, rows, pale=False):
-        hair_lock(label, rows, lock, deep, orchid if pale else violet, silver)
+    lock, fine = materials
+    deep, violet, orchid, blush, silver = [linear(c) for c in
+         ("3d294c","76538e","9674ac","a889b9","d9c2ea")]
+    def sculpt(label, rows, pale, phase):
+        main = (deep,orchid if pale else violet,silver)
+        accent = (deep,blush if pale else orchid,silver)
+        feather_lock(label,rows,lock,(main,accent),phase)
 
-    vertices, faces = [], []
-    count = 72
-    for j in range(25):
+    vertices, faces, scalp_colors = [], [], []
+    count = 96
+    for j in range(31):
         for k in range(count):
             a = k*2*pi/count
-            reach = 1.02 + 1.30*((1-cos(a))/2)**.62
-            t = .012 + (reach-.012)*j/24
+            reach = .805 + 1.53*((1-cos(a))/2)**.63
+            t = .012 + (reach-.012)*j/30
             top = 5.205 + .49*cos(t)
             if hatted:
                 top = min(top, 5.58+.18*(top-5.58))
             vertices.append(portrait_point(.483*sin(t)*sin(a),
-                    .453*sin(t)*cos(a)-.058, top))
+                    .453*sin(t)*cos(a)-.058,top))
+            root = .28 + .27*max(0,cos(a))**.6
+            stroke = (.085*cos(22*a+2.9*t)+.046*cos(39*a-4*t))*sin(1.3*t)
+            scalp_colors.append(tuple(shade+(pigment-shade)*(root+stroke)
+                                       for shade,pigment in zip(deep,orchid)))
     faces.append(tuple(range(count)))
-    for j in range(24):
+    for j in range(30):
         for k in range(count):
             n = (k+1)%count
             faces.append(tuple(j*count+i for i in (k,k+count,n+count,n)))
-    mesh("Dark lilac scalp and back volume", vertices, faces, base, 1)
+    scalp = mesh("Combed crown and back volume",vertices,faces,lock,1)
+    color_attributes(scalp,"Lilac pigments",scalp_colors)
 
     # Each lock moves over and under the adjacent curl at different heights.
     # All roots overlap the rear shell, leaving the cheek and jaw in front.
@@ -377,17 +403,27 @@ def hair(materials, hatted=False):
         (.54,.27,4.45,.026,.016),(.50,.31,4.50,.002,.002)],
     ]
     for side in (-1,1):
+        tip_height = (.024,-.048,.062,.036,.085) if side<0 else (.096,.109,.054,.142,.045)
+        tip_fan = (-.01,.035,.008,-.049,.018)
         for i, profile in enumerate(profiles):
-            rows = [(side*x + (.113*exp(-((z-5.152)/.253)**2)-.014 if side==1 else 0),
-                     d+(.012 if side==1 else 0),
-                     z + ((.035 if i%2 else .09) if side==1 and j>2 else 0),
-                     w,dz) for j,(x,d,z,w,dz) in enumerate(profile)]
-            sculpt("Layered S-wave", rows, i in (1,3))
-        # A thin loop catches light outside the largest wave.
-        strand("Fine escaping hair", [portrait_point(side*x,d,z) for x,d,z in
-               [(.49,.12,5.06),(.57,.09,4.88),(.73,.15,4.71),(.77,.20,4.56),
-                (.70,.24,4.49),(.59,.27,4.56)]], .011, fine,
-               radii=[.04,1,.83,.66,.50,.03])
+            rows = []
+            for x,depth,z,w,thickness in profile:
+                end = 1-smooth_range(z,4.13,4.76)
+                eye_room = .113*exp(-((z-5.152)/.253)**2)-.014 if side>0 else 0
+                rows.append((side*(x+end*tip_fan[i])+eye_room,
+                             depth+(.012 if side>0 else 0),
+                             z+end*tip_height[i],w,thickness))
+            sculpt("Overlapping tapered waves",rows,i in (1,3),i*.89+side*.26)
+        outlines = [
+            [(.49,.10,5.03),(.62,.10,4.87),(.75,.14,4.72),(.795,.18,4.59),
+             (.734,.24,4.49),(.628,.30,4.53)],
+            [(.45,.18,4.71),(.59,.22,4.57),(.757,.14,4.44),(.764,.16,4.34),
+             (.682,.26,4.27),(.610,.28,4.32)],
+        ]
+        for i,guide in enumerate(outlines):
+            strand("Tapered flyaway", [portrait_point(side*x,d,z+(.038 if side>0 else 0))
+                                     for x,d,z in guide],.006 if i==0 else .0048,fine,
+                   radii=[.08,.76,.94,.81,.51,.035])
 
     bangs = [
        [(.094,.19,5.69,.065,.044),(-.039,.286,5.634,.115,.046),(-.208,.357,5.511,.108,.045),
@@ -401,13 +437,23 @@ def hair(materials, hatted=False):
         (.476,.197,5.348,.074,.041),(.492,.177,5.234,.041,.023),(.453,.189,5.149,.002,.002)],
     ]
     for i, raw in enumerate(bangs):
+        raw = [(x+.048*(1-smooth_range(j,1,4)),d,z,w,thickness)
+               for j,(x,d,z,w,thickness) in enumerate(raw)]
         if i>=2:
             raw = [(x+.066*max(0,min(1,(5.49-z)/.20)),d,z,w*(.87 if j>2 else 1),depth)
                    for j,(x,d,z,w,depth) in enumerate(raw)]
         if hatted:
             raw = [(x,d-.128 if j<3 else d,z-(.137 if j<3 else .012),
                     w*(.84 if j<2 else 1),depth) for j,(x,d,z,w,depth) in enumerate(raw)]
-        sculpt("Tapered side-swept fringe", raw, i in (0,2))
+        sculpt("Fine side-swept fringe",raw,i in (0,2),.31+i*1.35)
+
+    loose_fringe = [( .136,.245,5.647,.028,.018),(.077,.363,5.591,.041,.023),
+        (-.083,.443,5.484,.052,.026),(-.217,.426,5.354,.043,.020),
+        (-.262,.401,5.241,.026,.014),(-.225,.395,5.210,.002,.002)]
+    if hatted:
+        loose_fringe = [(x,d-(.100 if j<2 else 0),z-(.13 if j<2 else 0),w,thickness)
+                       for j,(x,d,z,w,thickness) in enumerate(loose_fringe)]
+    hair_lock("Light strand over the temple",loose_fringe,lock,(deep,blush,silver),.72)
 
 
 def flower(name, x, y, z, r, petals, middle):
@@ -560,8 +606,22 @@ def hands(skin):
         tube("Curved thumb",[(x-side*.045,y-.02,z+.062,.039,.041),(x-side*.075,y-.059,z-.004,.032,.031),
              (x-side*.067,y-.10,z-.083,.024,.021),(x-side*.051,y-.104,z-.109,.009,.010)],skin,1)
         mark_region(before, "arm", side)
-    rings("Neck on shared pose", [(0,.015,4.25,.187,.165),(0,-.007,4.40,.164,.161),
-          (0,-.028,4.60,.148,.150),(0,-.039,4.79,.202,.177)],skin)
+    neck_mat = skin.copy()
+    neck_mat.name = "Skin under the jaw"
+    neck_mat["studio_surface"] = "neck"
+    neck = rings("Taper from jaw to collar",[(0,.015,4.25,.187,.165),(-.006,-.014,4.40,.152,.154),
+          (-.007,-.024,4.51,.138,.144),(0,-.033,4.64,.152,.154),
+          (0,-.039,4.79,.198,.174)],neck_mat)
+    warm_shadow = linear("b77b78")
+    color_attributes(neck,"Neck and throat tint",[
+        tuple(c+(shadow-c)*(.40*smooth_range(v.co.z,4.47,4.77))
+              for c,shadow in zip(skin.diffuse_color,warm_shadow))
+        for v in neck.data.vertices
+    ])
+    pigment = neck_mat.node_tree.nodes.new("ShaderNodeVertexColor")
+    pigment.layer_name = "Neck and throat tint"
+    shader = neck_mat.node_tree.nodes.get("Principled BSDF")
+    neck_mat.node_tree.links.new(pigment.outputs["Color"],shader.inputs["Base Color"])
 
 
 TORSO = [
@@ -1017,7 +1077,7 @@ def build():
     pigment.layer_name = "Lilac pigments"
     shader = lock.node_tree.nodes.get("Principled BSDF")
     lock.node_tree.links.new(pigment.outputs["Color"], shader.inputs["Base Color"])
-    violet = (material("Deep lilac scalp","483050",.48),lock,material("Flyaway lilac","8f6a9e",.43))
+    violet = (lock,material("Flyaway lilac","7f6794",.51,surface="hair"))
     head = make_variant("Peach complexion and facial features",face,skin,gold)
     hands(skin)
     hems = trousers(material("Indigo denim", "456385", cloth=True),

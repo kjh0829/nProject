@@ -26,6 +26,7 @@ def studio_ink_shader():
         ("Surface", "OUTPUT", "NodeSocketShader"),
         ("Pigment", "INPUT", "NodeSocketColor"),
         ("Shadows", "INPUT", "NodeSocketFloat"),
+        ("Soft shadows", "INPUT", "NodeSocketFloat"),
         ("Highlights", "INPUT", "NodeSocketFloat"),
         ("Highlight colour", "INPUT", "NodeSocketColor"),
         ("Edge ink", "INPUT", "NodeSocketFloat"),
@@ -69,12 +70,18 @@ def studio_ink_shader():
     brightness = tone_curve(tree,luma.outputs[0],[
         (0,shade),(.225,shade),(.267,mid),(.446,mid),(.485,lit),(1,lit)
     ],"Violet shadow · half-tone · warm light")
-    paint = mix("Light over pigment","MULTIPLY",panel["Shadows"],panel["Pigment"],brightness)
+    smooth_light = tone_curve(tree,luma.outputs[0],[
+        (0,(.60,.50,.63)),(.67,(1.04,1.01,1.0)),(1,(1.08,1.045,1.02))
+    ],"Soft light for painted skin")
+    shade_filter = mix("Blend the shadow edge","MIX",panel["Soft shadows"],brightness,smooth_light)
+    paint = mix("Light over pigment","MULTIPLY",panel["Shadows"],panel["Pigment"],shade_filter)
     lambert.location = (-1065,450)
     light.location = (-850,450)
     luma.location = (-666,450)
-    brightness.node.location = (-480,450)
-    paint.node.location = (50,450)
+    brightness.node.location = (-480,665)
+    smooth_light.node.location = (-480,410)
+    shade_filter.node.location = (-125,540)
+    paint.node.location = (70,540)
 
     geometry = nodes.new("ShaderNodeNewGeometry").outputs
     normal, eye = geometry["Normal"], geometry["Incoming"]
@@ -119,14 +126,15 @@ def studio_ink_shader():
 def style_materials():
     group = studio_ink_shader()
     surfaces = {
-        # Amount of banded light, highlight weight, coloured rim strength.
-        "face": (.49,.011,.09,"ffd7bc"),
-        "skin": (.68,.021,.22,"ffd6bc"),
-        "cloth": (.87,.055,.34,"ddd8f1"),
-        "hair": (.76,.26,.38,"e8d2ff"),
-        "metal": (.87,.80,.30,"ffe5a1"),
-        "leather": (.83,.19,.35,"fff4e3"),
-        "matte": (.83,.07,.28,"eadcf6"),
+        # Shadow amount, softness, physical sheen, coloured rim strength.
+        "face": (.30,.91,.008,.06,"ffd7bc"),
+        "skin": (.68,0,.021,.22,"ffd6bc"),
+        "neck": (.61,.52,.017,.17,"ffd6bc"),
+        "cloth": (.87,0,.055,.34,"ddd8f1"),
+        "hair": (.65,.23,.026,.23,"e8d2ff"),
+        "metal": (.87,0,.80,.30,"ffe5a1"),
+        "leather": (.83,0,.19,.35,"fff4e3"),
+        "matte": (.83,0,.07,.28,"eadcf6"),
     }
     for mat in bpy.data.materials:
         if not mat.use_nodes:
@@ -136,7 +144,7 @@ def style_materials():
         if shader is None:
             continue
         kind = mat.get("studio_surface","matte")
-        shadow,shine,ink,color = surfaces[kind]
+        shadow,soft,shine,ink,color = surfaces[kind]
         cel = tree.nodes.new("ShaderNodeGroup")
         cel.node_tree = group
         cel.label = "Cartoon paint and lighting"
@@ -146,6 +154,7 @@ def style_materials():
         if base.is_linked:
             tree.links.new(base.links[0].from_socket,cel.inputs["Pigment"])
         cel.inputs["Shadows"].default_value = shadow
+        cel.inputs["Soft shadows"].default_value = soft
         roughness = shader.inputs["Roughness"].default_value
         cel.inputs["Highlights"].default_value = shine*(1.14-.33*roughness)
         cel.inputs["Highlight colour"].default_value = (*linear(color),1)

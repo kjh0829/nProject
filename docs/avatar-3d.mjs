@@ -29,7 +29,7 @@ function draw(target, source, bounds, width, height) {
 function texture(name) {
   if (!assets.has(name)) {
     const image = new Image();
-    image.src = new URL(`./assets/avatar-studio/${name}.webp?v=4`, import.meta.url);
+    image.src = new URL(`./assets/avatar-studio/${name}.webp?v=5`, import.meta.url);
     assets.set(name, image.decode().then(() => image).catch(error => {
       assets.delete(name);
       throw error;
