@@ -8,6 +8,9 @@ import sys
 import bpy
 from mathutils import Vector
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from cel_style import add_outline, linear, style_materials
+
 
 OUTFITS = {
     "hoodie": ("hoodie","hair","boots"),
@@ -27,15 +30,11 @@ def command_line():
     return parser.parse_args(sys.argv[sys.argv.index("--") + 1:])
 
 
-def linear(hex_color):
-    values = [int(hex_color[i:i + 2], 16) / 255 for i in (0, 2, 4)]
-    return [v / 12.92 if v <= .04045 else ((v + .055) / 1.055) ** 2.4 for v in values]
-
-
-def material(name, color, roughness=.58, *, metal=0, cloth=False):
+def material(name, color, roughness=.58, *, metal=0, cloth=False, surface=None):
     result = bpy.data.materials.new(name)
     result.diffuse_color = (*linear(color), 1)
     result.use_nodes = True
+    result["studio_surface"] = surface or ("metal" if metal else "cloth" if cloth else "matte")
     nodes = result.node_tree.nodes
     links = result.node_tree.links
     shader = nodes.get("Principled BSDF")
@@ -43,23 +42,14 @@ def material(name, color, roughness=.58, *, metal=0, cloth=False):
     shader.inputs["Roughness"].default_value = roughness
     shader.inputs["Metallic"].default_value = metal
     if cloth:
-        shader.inputs["Sheen Weight"].default_value = .21
-        noise = nodes.new("ShaderNodeTexNoise")
-        noise.inputs["Scale"].default_value = 150
-        noise.inputs["Detail"].default_value = 2
         grain = nodes.new("ShaderNodeTexNoise")
-        grain.inputs["Scale"].default_value = 29
-        grain.inputs["Detail"].default_value = 2.6
+        grain.inputs["Scale"].default_value = 18
+        grain.inputs["Detail"].default_value = 1.2
         tint = nodes.new("ShaderNodeValToRGB")
-        tint.color_ramp.elements[0].color = tuple(c*.78 for c in result.diffuse_color[:3]) + (1,)
-        tint.color_ramp.elements[1].color = tuple(min(1,c*1.135+.003) for c in result.diffuse_color[:3]) + (1,)
+        tint.color_ramp.elements[0].color = tuple(c*.90 for c in result.diffuse_color[:3]) + (1,)
+        tint.color_ramp.elements[1].color = tuple(min(1,c*1.08+.003) for c in result.diffuse_color[:3]) + (1,)
         links.new(grain.outputs["Fac"], tint.inputs[0])
         links.new(tint.outputs[0], shader.inputs["Base Color"])
-        bump = nodes.new("ShaderNodeBump")
-        bump.inputs["Strength"].default_value = .19
-        bump.inputs["Distance"].default_value = .008
-        links.new(noise.outputs["Fac"], bump.inputs["Height"])
-        links.new(bump.outputs["Normal"], shader.inputs["Normal"])
     return result
 
 
@@ -173,11 +163,8 @@ def inset_panel(name, outline, mat, thickness=.012):
 def prepare_scene(draft):
     bpy.ops.wm.read_factory_settings(use_empty=True)
     scene = bpy.context.scene
-    scene.render.engine = "CYCLES"
-    scene.cycles.samples = 18 if draft else 128
-    scene.cycles.use_denoising = False
-    scene.cycles.adaptive_threshold = .019
-    scene.cycles.max_bounces = 5
+    scene.render.engine = "BLENDER_EEVEE_NEXT"
+    scene.eevee.taa_render_samples = 14 if draft else 32
     scene.render.threads_mode = "FIXED"
     scene.render.threads = 3
     scene.render.film_transparent = True
@@ -186,9 +173,9 @@ def prepare_scene(draft):
     scene.render.resolution_x = 680
     scene.render.resolution_y = 1060
     scene.render.resolution_percentage = 55 if draft else 100
-    scene.view_settings.view_transform = "AgX"
-    scene.view_settings.look = "AgX - Medium High Contrast"
-    scene.view_settings.exposure = -.13
+    scene.view_settings.view_transform = "Standard"
+    scene.view_settings.look = "None"
+    scene.view_settings.exposure = 0
     scene.world = bpy.data.worlds.new("Warm studio")
     scene.world.use_nodes = True
     scene.world.node_tree.nodes.get("Background").inputs[0].default_value = (.34, .29, .44, 1)
@@ -201,15 +188,15 @@ def prepare_scene(draft):
     scene.camera.data.type = "ORTHO"
     scene.camera.data.ortho_scale = 6.37
 
-    for name, where, power, size, color in [
-        ("Apricot key", (-4, -6, 8), 655, 3.7, (1, .84, .73)),
-        ("Lavender fill", (4, -5, 4.2), 235, 4, (.82, .86, 1)),
-        ("Hair and shoulder rim", (1, 3, 7), 600, 3.4, (.97, .78, 1)),
+    for name, where, power, angle, color in [
+        ("Warm drawing key", (-4.8, -6.6, 8.7), 1.86, .105, (1, .94, .91)),
+        ("Face fill", (3.2, -5.2, 3.7), .38, .23, (.94, .94, 1)),
+        ("Wave and shoulder rim", (1.5, 4.2, 7.1), .63, .115, (.92, .87, 1)),
     ]:
-        bpy.ops.object.light_add(type="AREA", location=where)
+        bpy.ops.object.light_add(type="SUN", location=where)
         obj = bpy.context.object
         obj.name = name
-        obj.data.energy, obj.data.size, obj.data.color = power, size, color
+        obj.data.energy, obj.data.angle, obj.data.color = power, angle, color
         obj.rotation_euler = (Vector((0, 0, 3.7)) - obj.location).to_track_quat("-Z", "Y").to_euler()
     return scene
 
@@ -250,9 +237,9 @@ def color_attributes(obj, name, colors):
 def painted_face_material(skin):
     paint = skin.copy()
     paint.name = "Wardrobe artwork on sculpted face"
+    paint["studio_surface"] = "face"
     nodes, links = paint.node_tree.nodes, paint.node_tree.links
     shader = nodes.get("Principled BSDF")
-    shader.inputs["Specular IOR Level"].default_value = .23
     mask = nodes.new("ShaderNodeVertexColor")
     mask.layer_name = "Paint coverage"
     image = nodes.new("ShaderNodeTexImage")
@@ -265,8 +252,6 @@ def painted_face_material(skin):
     links.new(mask.outputs["Color"], mix.inputs[0])
     links.new(image.outputs["Color"], mix.inputs[2])
     links.new(mix.outputs[0], shader.inputs["Base Color"])
-    links.new(mix.outputs[0], shader.inputs["Emission Color"])
-    shader.inputs["Emission Strength"].default_value = .42
     return paint, image.image.size[:]
 
 
@@ -1023,12 +1008,11 @@ def make_variant(name, callback, *args):
 
 
 def build():
-    skin = material("Peach skin", "efac8e", .58)
-    skin.node_tree.nodes.get("Principled BSDF").inputs["Subsurface Weight"].default_value = .07
+    skin = material("Peach skin", "f1ae91", .58, surface="skin")
     gold = material("Champagne brass", "d7a363", .27, metal=.65)
     ivory = material("Oatmeal cloth", "edded0", cloth=True)
     sole = material("Soft cocoa rubber", "5c4756")
-    lock = material("Satin highlights on lilac waves", "805391", .34)
+    lock = material("Painted lilac waves", "805391", .34, surface="hair")
     pigment = lock.node_tree.nodes.new("ShaderNodeVertexColor")
     pigment.layer_name = "Lilac pigments"
     shader = lock.node_tree.nodes.get("Principled BSDF")
@@ -1043,12 +1027,12 @@ def build():
         "hair":make_variant("Hair | airy lilac waves",hair,violet),
         "seat":make_variant("Hair | fitted to beret",hair,violet,True),
         "hat":make_variant("Cream beret",beret,ivory,material("Toasted wool edging","c9a991",cloth=True),gold),
-        "hoodie":make_variant("Mint hoodie",hoodie,material("Sea-glass fleece","719e8d", cloth=True),
-            material("Mint rib knit","547f70",cloth=True),material("Mint embroidery","bdd8bb"),ivory,gold),
-        "coat":make_variant("Night coat",coat,material("Mulberry twill","4d2947",cloth=True),
-            material("Violet collar","673b58",cloth=True),ivory,gold,material("Rose edge","a1748b")),
+        "hoodie":make_variant("Mint hoodie",hoodie,material("Sea-glass fleece","89b6a1", cloth=True),
+            material("Mint rib knit","6c947e",cloth=True),material("Mint embroidery","bdd8bb"),ivory,gold),
+        "coat":make_variant("Night coat",coat,material("Mulberry twill","653957",cloth=True),
+            material("Violet collar","7d4b69",cloth=True),ivory,gold,material("Rose edge","a1748b")),
         "sneakers":make_variant("Low canvas shoes",footwear,"sneakers",ivory,sole,gold,material("Laces","fff0d3")),
-        "boots":make_variant("Stardust boots",footwear,"boots",material("Ivory satin leather","e3ccac",.41),
+        "boots":make_variant("Stardust boots",footwear,"boots",material("Ivory satin leather","ead2b5",.41,surface="leather"),
             sole,gold,material("Lilac enamel","76538b",.26))
     }
     for hem in hems:
@@ -1073,6 +1057,8 @@ def main():
     args.output.mkdir(parents=True, exist_ok=True)
     scene = prepare_scene(args.draft)
     groups = build()
+    style_materials()
+    add_outline(scene,args.draft)
     fit_pose()
     fit_reference_pose(scene)
     select(groups, "hoodie", "hair", "boots")

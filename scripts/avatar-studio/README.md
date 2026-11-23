@@ -1,6 +1,6 @@
 # 3D 캐릭터 제작 시안
 
-Blender 4.3과 Pillow로 원화를 다시 만들 수 있다. `--blend`를 지정하면 코디별 컬렉션이 있는 편집용 장면도 저장한다. `--draft`는 카메라와 소재를 빠르게 검토하는 저해상도 출력이다. 일부 착장만 다시 그릴 때는 `--outfit coat --outfit coat-beret`처럼 지정한다.
+Blender 4.3의 EEVEE와 Pillow로 투명 렌더를 다시 출력할 수 있다. `--blend`를 지정하면 코디별 컬렉션과 재질 노드가 들어 있는 장면도 저장한다. `--draft`는 카메라와 소재를 빠르게 검토하는 저해상도 출력이다. 일부 착장만 다시 그릴 때는 `--outfit coat --outfit coat-beret`처럼 지정한다.
 
 ```bash
 blender -b --python-exit-code 1 --python scripts/avatar-studio/render.py -- --output /tmp/alchankki-renders --blend /tmp/alchankki.blend
@@ -14,3 +14,5 @@ python scripts/avatar-studio/pack.py /tmp/alchankki-renders docs/assets/avatar-s
 얼굴은 원화의 3/4 윤곽을 따라 턱·광대·눈두덩·콧등의 깊이를 모델링했다. 기존 `faces.png`의 표정을 얼굴 표면에 UV로 맞추고 관자놀이와 뒷면에서 피부색에 섞는다. 편집용 Blender 파일에는 이 텍스처가 포함된다. 머리 가닥별로 폭과 두께, 색의 하이라이트를 정의하며 베레모 아래 앞머리는 눌린 형태를 사용한다. 소매 굴곡, 코트 자락, 데님 무릎, 베레모 리본과 부츠 굽은 실제 모델에 들어 있다.
 
 맨머리의 정수리와 신발 밑바닥을 기준으로 원화의 키를 680×1060 렌더에 맞췄다. `fit_reference_pose`는 이 화면에서 잰 어깨·허리·골반과 팔다리의 위치를 3D 메시의 좌표에 적용한다. 머리·모발·모자는 함께 크기를 맞춘다. 팔은 손과 소매가 같은 변환을 따르고, 발은 좌우 발목을 중심으로 바짓단과 신발이 함께 회전한다. 비교 페이지의 전신과 확대 보기는 같은 배율을 쓴다. 브라우저 검사는 모자 없는 후디 착장에서 머리 주변의 폭, 골반 너비, 양쪽 발목 위치가 원화 기준에서 벗어나는 경우를 잡는다.
+
+`cel_style.py`는 EEVEE 조명의 밝기를 세 단계로 나눠 바탕색에 입힌다. 얼굴은 UV 원화가 잘 읽히도록 명암을 약하게, 머리와 금속 장식은 좁은 반사광이 보이도록 강하게 설정했다. 의상의 잔 요철을 줄이고 모델에서 만든 큰 주름을 색면으로 드러냈다. 화면 합성에서 어두운 자주색 외곽선을 2px 덧댄다. 각 재질의 `Wardrobe cel shading` 그룹에서 그림자와 하이라이트를 조정할 수 있다.
