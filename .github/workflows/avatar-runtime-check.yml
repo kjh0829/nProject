@@ -9,6 +9,8 @@ on:
       - 'docs/index.html'
       - 'tests/avatar-runtime-browser.cjs'
       - 'tests/avatar-footwear-browser.cjs'
+      - 'tests/avatar-studio-browser.cjs'
+      - 'docs/assets/avatar-studio/**'
       - 'scripts/wait-avatar-pages.mjs'
       - '.github/workflows/avatar-runtime-check.yml'
   workflow_dispatch:
@@ -38,6 +40,7 @@ jobs:
           python3 -m http.server 8000 --directory docs > "$RUNNER_TEMP/avatar-native-http.log" 2>&1 &
           NODE_PATH="$RUNNER_TEMP/avatar-native/node_modules" node tests/avatar-runtime-browser.cjs
           NODE_PATH="$RUNNER_TEMP/avatar-native/node_modules" node tests/avatar-footwear-browser.cjs
+          NODE_PATH="$RUNNER_TEMP/avatar-native/node_modules" node tests/avatar-studio-browser.cjs
       - name: Wait for the exact public deployment
         if: github.ref == 'refs/heads/master'
         run: node scripts/wait-avatar-pages.mjs https://kjh0829.github.io/nProject/
@@ -49,9 +52,12 @@ jobs:
         run: |
           NODE_PATH="$RUNNER_TEMP/avatar-native/node_modules" node tests/avatar-runtime-browser.cjs
           NODE_PATH="$RUNNER_TEMP/avatar-native/node_modules" node tests/avatar-footwear-browser.cjs
+          NODE_PATH="$RUNNER_TEMP/avatar-native/node_modules" node tests/avatar-studio-browser.cjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: avatar-native-${{ matrix.engine }}
-          path: test-results/avatar-canvas-*.png
+          path: |
+            test-results/avatar-canvas-*.png
+            test-results/avatar-studio-*.png
           if-no-files-found: ignore

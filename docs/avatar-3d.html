@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#f9f2e9">
+<meta name="description" content="같은 코디의 2D 원화와 3D 모델 렌더를 비교해 보세요.">
+<title>캐릭터 제작 시안 · 알찬끼</title>
+<link rel="stylesheet" href="./avatar-3d.css">
+<script type="module" src="./avatar-3d.mjs"></script>
+</head>
+<body>
+<main>
+  <header class="intro">
+    <a class="back" href="./#avatar">← 옷장으로</a>
+    <h1>캐릭터 제작 시안</h1>
+    <p>같은 코디를 현재 옷장과 새 모델에서 비교해 보세요.</p>
+  </header>
+
+  <form class="controls" aria-label="비교할 코디">
+    <fieldset>
+      <legend>상의</legend>
+      <label><input type="radio" name="top" value="hoodie" checked><span>민트 후디</span></label>
+      <label><input type="radio" name="top" value="coat"><span>밤하늘 코트</span></label>
+    </fieldset>
+    <fieldset>
+      <legend>모자</legend>
+      <label><input type="radio" name="hat" value="beret" checked><span>크림 베레모</span></label>
+      <label><input type="radio" name="hat" value="none"><span>모자 없이</span></label>
+    </fieldset>
+    <fieldset>
+      <legend>신발</legend>
+      <label><input type="radio" name="shoes" value="boots" checked><span>별가루 부츠</span></label>
+      <label><input type="radio" name="shoes" value="sneakers"><span>기본 캔버스</span></label>
+    </fieldset>
+    <fieldset class="view">
+      <legend>보기</legend>
+      <label><input type="radio" name="view" value="full" checked><span>전신</span></label>
+      <label><input type="radio" name="view" value="head"><span>머리·모자</span></label>
+      <label><input type="radio" name="view" value="top"><span>목·소매</span></label>
+      <label><input type="radio" name="view" value="feet"><span>발목·신발</span></label>
+    </fieldset>
+  </form>
+
+  <section class="comparison" aria-label="착장 비교" aria-busy="true">
+    <figure class="current">
+      <figcaption>현재 옷장</figcaption>
+      <canvas id="current" width="680" height="1060" role="img" aria-label="현재 옷장 착장"></canvas>
+      <p class="failure" data-error="current" hidden>현재 옷장 이미지를 불러오지 못했습니다.</p>
+    </figure>
+    <figure class="study">
+      <figcaption>3D 렌더 시안</figcaption>
+      <canvas id="study" width="680" height="1060" role="img" aria-label="3D 모델에서 출력한 착장"></canvas>
+      <p class="failure" data-error="study" hidden>시안 이미지를 불러오지 못했습니다.</p>
+    </figure>
+  </section>
+  <p class="status" role="status">착장을 불러오는 중입니다.</p>
+  <noscript><p>코디를 바꿔 보려면 자바스크립트가 필요합니다.</p></noscript>
+  <p class="note">라일락 웨이브와 산책 데님을 공통으로 입혔습니다. 시안에서 고른 코디는 내 옷장에 저장되지 않습니다.</p>
+</main>
+</body>
+</html>

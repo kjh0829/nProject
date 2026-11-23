@@ -1,0 +1,56 @@
+:root {
+  color-scheme: light;
+  font-family: "Instrument Sans", "Noto Sans KR", system-ui, sans-serif;
+  color: #33283a;
+  background: #f9f2e9;
+}
+* { box-sizing: border-box; }
+body { margin: 0; }
+main { max-width: 990px; margin: 0 auto; padding: 32px clamp(12px, 4vw, 40px) 28px; }
+.intro { margin-bottom: 22px; }
+.back { color: #52426b; text-decoration-thickness: 1px; text-underline-offset: 4px; font-weight: 650; }
+h1 { font-size: clamp(1.85rem, 5vw, 2.8rem); letter-spacing: -.05em; margin: 16px 0 6px; }
+p { margin: 0; line-height: 1.55; }
+.intro p, .note { color: #625569; }
+.controls {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px 12px;
+  margin-bottom: 16px;
+}
+fieldset { display: flex; flex-wrap: wrap; gap: 5px; min-width: 0; padding: 0; margin: 0; border: 0; }
+legend { padding: 0 0 5px; font-size: .82rem; font-weight: 700; }
+label { cursor: pointer; position: relative; }
+label input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+label span {
+  display: grid; place-items: center; min-height: 44px; padding: 4px 10px;
+  background: #fffbf7; border: 1px solid #e0d3d7; border-radius: 10px;
+  font-size: .82rem; font-weight: 600;
+}
+label input:checked + span { color: #fffaf4; background: #534269; border-color: #534269; }
+label input:focus-visible + span, .back:focus-visible { outline: 2px solid #714b99; outline-offset: 3px; }
+.comparison { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: clamp(8px, 2vw, 18px); }
+figure {
+  display: grid; grid-template-rows: auto 1fr; min-width: 0; position: relative; overflow: hidden; margin: 0;
+  border: 1px solid #e5d6cc; border-radius: 20px;
+  background: radial-gradient(ellipse at 49% 39%, #fff9f2 5%, #efe1d4 100%);
+}
+.study { background: radial-gradient(ellipse at 49% 39%, #fdf9f3 5%, #e7dcf0 100%); border-color: #dacde4; }
+figcaption { padding: 12px 14px 5px; font-size: .88rem; font-weight: 750; }
+canvas { display: block; width: 100%; max-height: 650px; object-fit: contain; }
+.failure { position: absolute; inset: 43% 8% auto; text-align: center; padding: 8px; background: #fffaf4; border-radius: 8px; }
+.status { min-height: 24px; padding-top: 6px; font-size: .78rem; }
+.note { font-size: .82rem; }
+@media (max-width: 805px) {
+  .controls { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 440px) {
+  main { padding-top: 18px; }
+  .intro { margin-bottom: 14px; }
+  .intro p { font-size: .88rem; }
+  .controls { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px 8px; }
+  .view { grid-column: 1 / -1; }
+  label span { font-size: .77rem; padding: 4px 7px; }
+  figcaption { padding: 9px 10px 4px; font-size: .80rem; }
+  figure { border-radius: 13px; }
+}
