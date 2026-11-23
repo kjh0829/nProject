@@ -6,16 +6,18 @@ const study = document.querySelector('#study');
 const comparison = document.querySelector('.comparison');
 const status = document.querySelector('.status');
 const assets = new Map();
+const artworkScale = .6183;
 const regions = {
-  full: {study: [0, 0, 680, 1060], current: frame(510, 750, 1700, 680/1060)},
-  head: {study: [155, 32, 380, 394], current: frame(511, 132, 462, 380/394)},
-  top: {study: [120, 245, 454, 326], current: frame(514, 506, 620, 454/326)},
-  feet: {study: [206, 797, 285, 249], current: frame(480, 1355, 435, 285/249)},
+  full: [0, 0, 680, 1060],
+  head: [195, 41, 286, 292],
+  top: [119, 223, 443, 386],
+  feet: [153, 794, 340, 246],
 };
 
-function frame(cx, cy, height, aspect) {
-  const width = height * aspect;
-  return [cx-width/2, cy-height/2, width, height];
+function artworkFrame([x, y, width, height]) {
+  // Align the reference at the same scale and floor as the Blender study.
+  return [528+(x-340)/artworkScale, 1508+(y-1015)/artworkScale,
+    width/artworkScale, height/artworkScale];
 }
 
 function draw(target, source, bounds, width, height) {
@@ -27,7 +29,7 @@ function draw(target, source, bounds, width, height) {
 function texture(name) {
   if (!assets.has(name)) {
     const image = new Image();
-    image.src = new URL(`./assets/avatar-studio/${name}.webp?v=2`, import.meta.url);
+    image.src = new URL(`./assets/avatar-studio/${name}.webp?v=3`, import.meta.url);
     assets.set(name, image.decode().then(() => image).catch(error => {
       assets.delete(name);
       throw error;
@@ -45,7 +47,7 @@ copy.height = 1060;
 async function update() {
   const revision = ++request;
   const {top, hat, shoes, view} = Object.fromEntries(new FormData(form));
-  const {study: crop, current: originalFrame} = regions[view];
+  const crop = regions[view];
   const [, , width, height] = crop;
   const description = [...form.querySelectorAll('input:checked')].map(input => input.nextElementSibling.textContent).join(', ');
   const withHat = hat === 'beret';
@@ -61,7 +63,7 @@ async function update() {
       const {renderAvatarCanvas} = await originalRenderer;
       if (revision !== request) return;
       const source = await renderAvatarCanvas({skin: 'peach', face: 'smile'}, {
-        frame: originalFrame, width, height, isCurrent: () => revision === request,
+        frame: artworkFrame(crop), width, height, isCurrent: () => revision === request,
         outfit: {
           ...starterOutfit, hair: 'hair-lilac', hat: withHat ? 'hat-beret' : null,
           top: top === 'coat' ? 'top-night' : 'top-mint', shoes: shoes === 'boots' ? 'shoes-star' : 'shoes-canvas',

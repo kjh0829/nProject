@@ -1,5 +1,6 @@
 """Build the pose and render the Alchankki wardrobe study with Blender 4.3."""
 import argparse
+from bisect import bisect_right
 from math import asin, cos, exp, pi, sin
 from pathlib import Path
 import sys
@@ -8,11 +9,21 @@ import bpy
 from mathutils import Vector
 
 
+OUTFITS = {
+    "hoodie": ("hoodie","hair","boots"),
+    "hoodie-beret": ("hoodie","seat","hat","boots"),
+    "coat": ("coat","hair","boots"),
+    "coat-beret": ("coat","seat","hat","boots"),
+    "sneakers": ("hoodie","hair","sneakers"),
+}
+
+
 def command_line():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--blend", type=Path)
     parser.add_argument("--draft", action="store_true")
+    parser.add_argument("--outfit", choices=OUTFITS, action="append")
     return parser.parse_args(sys.argv[sys.argv.index("--") + 1:])
 
 
@@ -477,6 +488,7 @@ def low_position(side):
 
 
 def trousers(denim, bright, dark, stitches):
+    before = set(bpy.context.scene.objects)
     pieces, turned_hems = [], []
 
     def knee_fold(point, a):
@@ -498,7 +510,8 @@ def trousers(denim, bright, dark, stitches):
         cuff = [(x,y,z+.015+k,rx+.009,ry+.006) for k,(x,y,z,rx,ry) in zip((0,.04),points[:2])]
         turned_hems.append(rings("Turned denim hem for low shoes", cuff, bright, cap=False))
     pieces.append(rings("Denim seat", [(0,.075,2.79,.407,.214),
-        (0,.07,2.99,.440,.241),(0,.07,3.17,.418,.229),(0,.07,3.27,.409,.220)],denim))
+        (0,.07,2.99,.440,.241),(0,.07,3.17,.418,.229),
+        (0,.068,3.27,.405,.218),(0,.058,3.35,.361,.199)],denim))
     # Fuse the overlapping hip and leg pattern pieces into one fabric surface.
     bpy.ops.object.select_all(action="DESELECT")
     for piece in pieces:
@@ -539,11 +552,13 @@ def trousers(denim, bright, dark, stitches):
                .0046,stitches,radii=[.25,1,.94,.37])
     strand("Denim fly topstitch", [(.020,-.163,3.26),(.026,-.180,3.127),
            (.038,-.185,2.993),(.078,-.184,2.907)], .005, stitches)
+    mark_region(before, "leg")
     return turned_hems
 
 
 def hands(skin):
     for side in (-1, 1):
+        before = set(bpy.context.scene.objects)
         x = side*(1.028 if side < 0 else .954)
         y = -.072 if side < 0 else -.19
         z = 3.04 if side < 0 else 3.09
@@ -559,6 +574,7 @@ def hands(skin):
                   (px+side*.027,y-.089,z-.062-length,.005,.007)],skin,1)
         tube("Curved thumb",[(x-side*.045,y-.02,z+.062,.039,.041),(x-side*.075,y-.059,z-.004,.032,.031),
              (x-side*.067,y-.10,z-.083,.024,.021),(x-side*.051,y-.104,z-.109,.009,.010)],skin,1)
+        mark_region(before, "arm", side)
     rings("Neck on shared pose", [(0,.015,4.25,.187,.165),(0,-.007,4.40,.164,.161),
           (0,-.028,4.60,.148,.150),(0,-.039,4.79,.202,.177)],skin)
 
@@ -572,6 +588,7 @@ TORSO = [
 
 def sleeves(fabric, cuff, trim=None):
     for side in (-1,1):
+        before = set(bpy.context.scene.objects)
         x = (1.028 if side < 0 else .954)
         dy = -.072 if side < 0 else -.19
         dz = 3.04 if side < 0 else 3.09
@@ -592,6 +609,8 @@ def sleeves(fabric, cuff, trim=None):
             strand("Cuff saddle stitching", [(side*(x-.141+i*.020),dy-.091,dz+.227-i*.010) for i in range(7)],.009,trim)
             for i in range(2):
                 sphere("Working sleeve button", (side*(x+.011-i*.019),dy-.093,dz+.22+i*.068),(.023,.016,.024),trim)
+
+        mark_region(before, "arm", side)
 
 
 def tailored_fold(point, angle, strength=1):
@@ -694,6 +713,7 @@ def coat(fabric, lapel, inner, gold, thread):
 def footwear(name, leather, outsole, trim, lace):
     boot = name == "boots"
     for side in (-1,1):
+        before = set(bpy.context.scene.objects)
         x, offset = low_position(side)
         offset+=.103
         def raised_arch(y,z):
@@ -778,6 +798,15 @@ def footwear(name, leather, outsole, trim, lace):
                       (x+t*.135,offset-.232,.579),(x+t*.091,offset-.266,.531),
                       (x,offset-.253,.529),(x+t*.097,offset-.315,.486)],.012,lace)
 
+        mark_region(before, "leg", side)
+
+
+def mark_region(before, region, side=None):
+    for obj in set(bpy.context.scene.objects)-before:
+        obj["studio_region"] = region
+        if side is not None:
+            obj["studio_side"] = side
+
 
 def fit_pose():
     """Move the shared figure and all costume variants to the same stance."""
@@ -823,6 +852,154 @@ def fit_pose():
                 x += t*(.045 if side < 0 else .075)
                 y -= t*(.105 if side < 0 else -.085)
             return local @ Vector((x,y,z))
+
+        if obj.type == "MESH":
+            for vertex in obj.data.vertices:
+                vertex.co = moved(vertex.co)
+        else:
+            for spline in obj.data.splines:
+                for point in spline.bezier_points:
+                    point.co = moved(point.co)
+
+
+# Landmarks in the 680 × 1060 orthographic render. The wardrobe artwork
+# was aligned to the baseline render at the (uncovered) crown and soles.
+# The first two values in each row are the old and fitted screen heights.
+# Torso rows also have a centre shift and width factor.
+TORSO_FIT = [
+    (208, 185, 0, .86), (247, 218, 0, .88), (278, 248, 1, .92),
+    (308, 278, 1, .95), (346, 318, 9, 1.035), (376, 351, 15, 1.05),
+    (412, 388, 18, .97), (438, 419, 14, .90), (460, 460, 10, 1.12),
+    (489, 508, 10, 1.27), (527, 545, 10, 1.21), (582, 591, 10, 1.13),
+    (624, 627, 7, 1.07), (690, 691, 0, 1), (770, 770, 0, 1),
+]
+# Arm rows add a horizontal shift from the original 3D silhouette. At
+# the sleeve head the arm follows the torso to keep the shoulder closed.
+ARM_FIT = {
+    -1: [(296, 271, 4), (345, 334, 14), (391, 394, 10),
+         (435, 436, -6), (479, 481, -22), (511, 521, -36), (570, 588, -40)],
+     1: [(296, 269, -8), (346, 319, -21), (396, 389, -22),
+         (437, 443, -29), (479, 509, -33), (526, 568, -16), (554, 593, -14)],
+}
+# Each leg has its own projected centre and knee/calf width. Taper below
+# the knees and move the free ankle outward, as in the illustrated pose.
+LEG_FIT = {
+    -1: [(598, 601, 299, 301, 1.02), (640, 643, 299, 306, .99),
+         (693, 694, 298, 295, .80), (722, 719, 299, 284, .80),
+         (754, 761, 296, 261, .99), (801, 805, 292, 241, .92),
+         (846, 873, 289, 229, .75), (880, 907, 287, 222, .82),
+         (925, 943, 286, 220, .84), (1016, 1016, 286, 221, .88)],
+     1: [(598, 601, 378, 391, 1.04), (640, 645, 378, 392, 1.00),
+         (696, 697, 378, 391, .79), (726, 730, 379, 390, .81),
+         (759, 770, 376, 385, .92), (810, 824, 375, 383, .92),
+         (854, 893, 374, 380, .86), (889, 918, 374, 380, .88),
+         (925, 948, 374, 381, .90), (1016, 1016, 374, 382, .94)],
+}
+
+
+def smooth_range(value, start, end):
+    t = max(0, min(1, (value-start)/(end-start)))
+    return t*t*(3-2*t)
+
+
+def smooth_profile(rows):
+    """Interpolate fitting landmarks without creases at the joined levels."""
+    heights = [row[0] for row in rows]
+    spans = [b-a for a,b in zip(heights, heights[1:])]
+    columns = list(zip(*(row[1:] for row in rows)))
+    tangents = []
+    for values in columns:
+        slopes = [(b-a)/h for a,b,h in zip(values, values[1:], spans)]
+        inner = [0 if a*b <= 0 else 2*a*b/(a+b) for a,b in zip(slopes, slopes[1:])]
+        tangents.append([slopes[0], *inner, slopes[-1]])
+
+    def sample(height):
+        if height <= heights[0]:
+            return rows[0][1:]
+        if height >= heights[-1]:
+            return rows[-1][1:]
+        i = bisect_right(heights, height)-1
+        h = spans[i]
+        t = (height-heights[i])/h
+        blend = t*t*(3-2*t)
+        return tuple(v[i]*(1-blend)+v[i+1]*blend
+                     +h*t*(1-t)*(m[i]*(1-t)-m[i+1]*t)
+                     for v,m in zip(columns, tangents))
+
+    return sample
+
+
+def fit_reference_pose(scene):
+    """Refit the model in the illustration camera, then keep the new 3D mesh."""
+    view = scene.camera.matrix_world.copy()
+    inverse = view.inverted()
+    corners = scene.camera.data.view_frame(scene=scene)
+    left, right = min(p.x for p in corners), max(p.x for p in corners)
+    bottom, top = min(p.y for p in corners), max(p.y for p in corners)
+    px = 680/(right-left)
+    py = 1060/(top-bottom)
+    body = smooth_profile(TORSO_FIT)
+    arms = {side: smooth_profile(rows) for side,rows in ARM_FIT.items()}
+    legs = {side: smooth_profile(rows) for side,rows in LEG_FIT.items()}
+
+    def screen(point):
+        p = inverse @ point
+        return (p.x-left)*px, (top-p.y)*py, p.z
+
+    def refit(point, region, side):
+        x,y,depth = screen(point)
+        if region == "head":
+            # Scale around the crown and bring in the hair and hat together.
+            return view @ Vector((left+(340+(x-340)*.775)/px,
+                                  top-(97+(y-97)*.779)/py, depth))
+        y_fit, shift, width = body(y)
+        x_fit = 340+(x-340)*width+shift
+        if region == "arm":
+            t = smooth_range(y,312,368)
+            arm_y,arm_shift = arms[side](y)
+            x_fit = x_fit*(1-t) + (x+arm_shift)*t
+            y_fit = y_fit*(1-t) + arm_y*t
+        elif region == "leg":
+            t = smooth_range(y,585,639)
+            leg_y,axis,new_axis,scale = legs[side](y)
+            # Pivot each shoe and trouser leg about the same real ankle
+            # before setting the stance. The right toe opens outward.
+            turn = (-.62 if side == -1 else .55)*smooth_range(y,849,937)
+            ankle_x,ankle_y = low_position(side)
+            ankle_x += .045 if side==-1 else .075
+            ankle_y += .015 if side==-1 else .205
+            dx,dy = point.x-ankle_x,point.y-ankle_y
+            turned = Vector((ankle_x+dx*cos(turn)-dy*sin(turn),
+                             ankle_y+dx*sin(turn)+dy*cos(turn),point.z))
+            foot_x,foot_y,foot_depth = screen(turned)
+            x_fit = x_fit*(1-t) + (new_axis+(foot_x-axis)*scale)*t
+            y_fit = y_fit*(1-t) + (leg_y+foot_y-y)*t
+            depth += (foot_depth-depth)*t
+        elif region == "coat":
+            # Give the front of the skirt ease over the bent thigh. The
+            # back cloth still hangs behind the legs in the same 3D view.
+            facing = 1-smooth_range(point.y,.01,.24)
+            depth += .16*facing*smooth_range(y,546,632)
+        return view @ Vector((left+x_fit/px,top-y_fit/py,depth))
+
+    bpy.context.view_layer.update()
+    for obj in scene.objects:
+        if obj.type not in ("MESH","CURVE"):
+            continue
+        world = obj.matrix_world.copy()
+        local = world.inverted()
+        if any(group.name.startswith(("Peach complexion", "Hair |", "Cream beret"))
+               for group in obj.users_collection):
+            region = "head"
+        else:
+            region = obj.get("studio_region","body")
+            if region=="body" and any(group.name=="Night coat" for group in obj.users_collection):
+                region = "coat"
+
+        def moved(co):
+            point = world @ co
+            side = obj.get("studio_side",-1 if point.x < 0 else 1)
+            return local @ refit(point,region,side)
 
         if obj.type == "MESH":
             for vertex in obj.data.vertices:
@@ -897,6 +1074,7 @@ def main():
     scene = prepare_scene(args.draft)
     groups = build()
     fit_pose()
+    fit_reference_pose(scene)
     select(groups, "hoodie", "hair", "boots")
     if args.blend:
         args.blend.parent.mkdir(parents=True, exist_ok=True)
@@ -905,15 +1083,8 @@ def main():
                 if area.type == "VIEW_3D":
                     area.spaces.active.region_3d.view_perspective = "CAMERA"
         bpy.ops.wm.save_as_mainfile(filepath=str(args.blend.resolve()))
-    variants = {
-        "hoodie": ("hoodie","hair","boots"),
-        "hoodie-beret": ("hoodie","seat","hat","boots"),
-        "coat": ("coat","hair","boots"),
-        "coat-beret": ("coat","seat","hat","boots"),
-        "sneakers": ("hoodie","hair","sneakers"),
-    }
-    for name, visible in variants.items():
-        select(groups, *visible)
+    for name in args.outfit or OUTFITS:
+        select(groups, *OUTFITS[name])
         scene.render.filepath = str((args.output/f"{name}.png").resolve())
         bpy.ops.render.render(write_still=True)
 
