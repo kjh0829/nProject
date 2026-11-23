@@ -9,8 +9,8 @@ const assets = new Map();
 const regions = {
   full: {study: [0, 0, 680, 1060], current: frame(510, 750, 1700, 680/1060)},
   head: {study: [159, 24, 360, 332], current: frame(513, 104, 396, 360/332)},
-  top: {study: [120, 245, 454, 326], current: frame(514, 465, 572, 454/326)},
-  feet: {study: [206, 797, 285, 249], current: frame(463, 1371, 318, 285/249)},
+  top: {study: [120, 245, 454, 326], current: frame(514, 506, 620, 454/326)},
+  feet: {study: [206, 797, 285, 249], current: frame(480, 1355, 435, 285/249)},
 };
 
 function frame(cx, cy, height, aspect) {

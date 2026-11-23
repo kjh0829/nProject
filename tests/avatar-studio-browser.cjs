@@ -65,6 +65,14 @@ const engine = process.env.AVATAR_BROWSER || 'chromium';
       const width = await page.locator('#study').getAttribute('width');
       assert.notEqual(width, '680');
     }
+    const shoeEdges = await page.locator('#current').evaluate(canvas => {
+      const ctx = canvas.getContext('2d');
+      const clear = pixels => pixels.every((value, index) => index % 4 !== 3 || value < 15);
+      return clear(ctx.getImageData(0, 0, 1, canvas.height).data)
+        && clear(ctx.getImageData(canvas.width-1, 0, 1, canvas.height).data)
+        && clear(ctx.getImageData(0, canvas.height-1, canvas.width, 1).data);
+    });
+    assert(shoeEdges, 'shoe zoom must show both shoes without clipping');
     await select('view', 'full');
     await ready();
     assert.equal(await page.locator('#study').getAttribute('width'), '680');
