@@ -341,11 +341,13 @@ def hair_lock(name, rows, material, palette, phase):
                                 for d,b,h in zip(shade,tone,shine)))
             root = .54*exp(-((t+.03)/.245)**2)
             fold = .48*(1-light_side)**1.4
-            glint = exp(-((t-.35-.117*width-.052*sin(phase))/.115)**2)
-            end_glint = exp(-((t-.73+.092*width-.071*cos(phase))/.090)**2)
+            glint = exp(-((t-.34-.125*width-.052*sin(phase))/.092)**2)
+            end_glint = exp(-((t-.73+.092*width-.071*cos(phase))/.079)**2)
             break_up = .76+.24*cos(8.5*width+phase+2*t)
-            ribbon = (.57*glint*break_up+.29*end_glint)*light_side**1.15
-            strokes = (.12+.34*glint+.23*end_glint)*light_side**1.4
+            fine_band = glint*exp(-((width+.20)/.51)**2)
+            bright_core = glint*exp(-((width+.25)/.21)**2)
+            ribbon = (.39*glint*break_up+.49*bright_core+.15*end_glint)*light_side**1.35
+            strokes = (.045+.55*fine_band+.12*end_glint)*light_side**1.4
             masks.append((min(.91,root+fold),ribbon,strokes))
     faces = [tuple(reversed(range(count)))]
     for j in range(len(rows)-1):
@@ -377,7 +379,7 @@ def feather_lock(label, rows, material, palettes, phase, tip_spread):
 def hair(materials, hatted=False):
     lock, fine = materials
     deep, violet, orchid, blush, silver = [linear(c) for c in
-         ("3d294c","77518e","946db0","ae8cbf","e1c7ef")]
+         ("46354e","896b8d","9d80a5","b599b9","e8cbe3")]
     def sculpt(label, rows, pale, phase, tip_spread=.063):
         main = (deep,orchid if pale else violet,silver)
         accent = (deep,blush if pale else orchid,silver)
@@ -400,8 +402,8 @@ def hair(materials, hatted=False):
             scalp_colors.append(tuple(shade+(pigment-shade)*(root+stroke)
                                        for shade,pigment in zip(deep,orchid)))
             front = .26+.74*max(0,cos(a))
-            sheen = exp(-((t-.49-.095*sin(a*2))/.155)**2)*front
-            scalp_masks.append((.51*exp(-(t/.29)**2)+.23*(1-front),.46*sheen,.32*sheen+.08*front))
+            sheen = exp(-((t-.48-.109*sin(a*2))/.113)**2)*front
+            scalp_masks.append((.51*exp(-(t/.29)**2)+.23*(1-front),.41*sheen,.40*sheen+.035*front))
     faces.append(tuple(range(count)))
     for j in range(30):
         for k in range(count):

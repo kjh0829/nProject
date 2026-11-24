@@ -143,10 +143,10 @@ def hair_cel_light():
     luma = nodes.new("ShaderNodeRGBToBW")
     links.new(light.outputs[0],rgb.inputs[0])
     links.new(rgb.outputs[0],luma.inputs[0])
-    shadow, half, lit = (.49,.39,.63), (.80,.70,.91), (1.08,1.03,1.05)
+    shadow, half, lit = (.48,.38,.52), (.76,.65,.79), (1.045,.955,.99)
     tone = tone_curve(tree,luma.outputs[0],[
-        (0,shadow),(.216,shadow),(.255,half),(.431,half),(.475,lit),(1,lit)
-    ],"Cool shadow · violet middle · pale light")
+        (0,shadow),(.226,shadow),(.278,half),(.464,half),(.525,lit),(1,lit)
+    ],"Plum shadow · muted lilac middle · soft light")
     paint = blend_colour(tree,"Cel values on the pigment","MULTIPLY",1,settings.outputs["Pigment"],tone)
     output = nodes.new("NodeGroupOutput")
     links.new(paint,output.inputs["Paint"])
@@ -201,9 +201,22 @@ def hair_brush_light():
     ],"Threads running with each lock")
     fibers.node.location = (-280,-60)
     lit = tone_curve(tree,settings.outputs["Light"],[
-        (0,(.33,.33,.33)),(.24,(.40,.40,.40)),(.58,(1,1,1)),(1,(1,1,1))
-    ],"Keep the shaded locks muted")
+        (0,(.18,.18,.18)),(.26,(.29,.29,.29)),(.64,(1,1,1)),(1,(1,1,1))
+    ],"Reflections fade in shadow")
     lit.node.location = (-720,340)
+
+    geometry = nodes.new("ShaderNodeNewGeometry")
+    geometry.location = (-920,-460)
+    aim = nodes.new("ShaderNodeVectorMath")
+    aim.operation = "DOT_PRODUCT"
+    aim.label = "Direction of the drawing key"
+    aim.location = (-710,-460)
+    aim.inputs[1].default_value = (-.58,-.61,.54)
+    links.new(geometry.outputs["Normal"],aim.inputs[0])
+    toward_key = tone_curve(tree,aim.outputs["Value"],[
+        (0,(.10,.10,.10)),(.39,(.24,.24,.24)),(.77,(1,1,1)),(1,(1,1,1))
+    ],"Reflection on the side facing the key")
+    toward_key.node.location = (-500,-460)
 
     def multiplier(label, a, b, position):
         node = nodes.new("ShaderNodeMath")
@@ -212,16 +225,18 @@ def hair_brush_light():
         set_socket(tree,b,node.inputs[1])
         return node.outputs[0]
 
-    band = multiplier("Curved reflection",lit,settings.outputs["Band mask"],(-410,340))
-    grain_weight = multiplier("Discontinuous fibers",fibers,settings.outputs["Fiber mask"],(22,-60))
+    light = multiplier("Light on this face of the lock",lit,toward_key,(-215,80))
+    band = multiplier("Curved reflection",light,settings.outputs["Band mask"],(0,380))
+    fiber_mask = multiplier("Discontinuous fibers",fibers,settings.outputs["Fiber mask"],(0,-90))
+    grain_weight = multiplier("Fine light facing the key",light,fiber_mask,(220,-90))
     base = blend_colour(tree,"Lilac reflection bands","SCREEN",band,settings.outputs["Paint"],
-                        (*linear("e0c2fa"),1))
-    base.node.location = (-174,350)
+                        (*linear("e2c2de"),1))
+    base.node.location = (226,380)
     final = blend_colour(tree,"Pale loose brush strokes","SCREEN",grain_weight,base,
-                         (*linear("f4dcff"),1))
-    final.node.location = (237,350)
+                         (*linear("fbe0f0"),1))
+    final.node.location = (452,380)
     output = nodes.new("NodeGroupOutput")
-    output.location = (490,350)
+    output.location = (676,380)
     links.new(final,output.inputs[0])
     return tree
 
