@@ -301,12 +301,25 @@ def face(skin, gold):
     sphere("Small gold earring", portrait_point(-.315,.173,4.959), (.025,.021,.025), gold)
 
 
+def hair_strokes(obj, masks, columns, levels, phase):
+    color_attributes(obj,"Hair paint masks",masks)
+    uv = obj.data.uv_layers.new(name="Hair stroke UV")
+    for face in obj.data.polygons:
+        corners = [obj.data.loops[i].vertex_index for i in face.loop_indices]
+        across = [(column/columns+.5) % 1 for column in (i % columns for i in corners)]
+        # The UV seam belongs on the rear of a lock. Keep each quad continuous.
+        wraps = len(corners) == 4 and max(across)-min(across) > .5
+        for loop,vertex,u in zip(face.loop_indices,corners,across):
+            uv.data[loop].uv = (u+int(wraps and u<.5)+phase*.062,
+                                (vertex//columns)/(levels-1))
+
+
 def hair_lock(name, rows, material, palette, phase):
     """A shallow, slightly twisted ribbon with lengthwise painted fibres."""
     shade, tone, shine = palette
     count = 48
     path = [portrait_point(x,depth,z) for x,depth,z,_,_ in rows]
-    vertices, colors = [], []
+    vertices, colors, masks = [], [], []
     for j, (center,row) in enumerate(zip(path,rows)):
         t = j/(len(rows)-1)
         tangent = (path[min(j+1,len(path)-1)]-path[max(0,j-1)]).normalized()
@@ -320,13 +333,19 @@ def hair_lock(name, rows, material, palette, phase):
             thickness = row[4]*facing*(.80+.20*exp(-((width+.23)/.52)**2))
             depth = thickness + row[3]*width*twist
             vertices.append(center+across*(row[3]*width)+front*depth)
-            grain = .047*cos(13.2*width+3.1*t+phase)+.021*cos(25*width-4.6*t+phase*1.9)
-            contour = .18+.71*light_side**.50
-            glint = exp(-((t-.38-.083*width-.041*sin(phase))/.16)**2)
-            gloss = .13*exp(-((width+.26)/.34)**2)+.043*exp(-((width-.48)/.16)**2)
-            ridge = (gloss*(.42+.58*glint)+.125*glint)*light_side
-            colors.append(tuple(d+(b-d)*(contour+grain*light_side)+(h-b)*ridge
+            contour = .31+.58*light_side**.67
+            variation = .05*cos(8.1*width+3*t+phase)*light_side
+            tint = .065*smooth_range(t,.48,1)*light_side
+            colors.append(tuple(d+(b-d)*(contour+variation)+(h-b)*tint
                                 for d,b,h in zip(shade,tone,shine)))
+            root = .54*exp(-((t+.03)/.245)**2)
+            fold = .48*(1-light_side)**1.4
+            glint = exp(-((t-.35-.117*width-.052*sin(phase))/.115)**2)
+            end_glint = exp(-((t-.73+.092*width-.071*cos(phase))/.090)**2)
+            break_up = .76+.24*cos(8.5*width+phase+2*t)
+            ribbon = (.57*glint*break_up+.29*end_glint)*light_side**1.15
+            strokes = (.12+.34*glint+.23*end_glint)*light_side**1.4
+            masks.append((min(.91,root+fold),ribbon,strokes))
     faces = [tuple(reversed(range(count)))]
     for j in range(len(rows)-1):
         for k in range(count):
@@ -335,6 +354,7 @@ def hair_lock(name, rows, material, palette, phase):
     faces.append(tuple(range(len(vertices)-count,len(vertices))))
     obj = mesh(name,vertices,faces,material,2)
     color_attributes(obj,"Lilac pigments",colors)
+    hair_strokes(obj,masks,count,len(rows),phase)
 
 
 def feather_lock(label, rows, material, palettes, phase):
@@ -362,7 +382,7 @@ def hair(materials, hatted=False):
         accent = (deep,blush if pale else orchid,silver)
         feather_lock(label,rows,lock,(main,accent),phase)
 
-    vertices, faces, scalp_colors = [], [], []
+    vertices, faces, scalp_colors, scalp_masks = [], [], [], []
     count = 96
     for j in range(31):
         for k in range(count):
@@ -378,6 +398,9 @@ def hair(materials, hatted=False):
             stroke = (.085*cos(22*a+2.9*t)+.046*cos(39*a-4*t))*sin(1.3*t)
             scalp_colors.append(tuple(shade+(pigment-shade)*(root+stroke)
                                        for shade,pigment in zip(deep,orchid)))
+            front = .26+.74*max(0,cos(a))
+            sheen = exp(-((t-.49-.095*sin(a*2))/.155)**2)*front
+            scalp_masks.append((.51*exp(-(t/.29)**2)+.23*(1-front),.46*sheen,.32*sheen+.08*front))
     faces.append(tuple(range(count)))
     for j in range(30):
         for k in range(count):
@@ -385,6 +408,7 @@ def hair(materials, hatted=False):
             faces.append(tuple(j*count+i for i in (k,k+count,n+count,n)))
     scalp = mesh("Combed crown and back volume",vertices,faces,lock,1)
     color_attributes(scalp,"Lilac pigments",scalp_colors)
+    hair_strokes(scalp,scalp_masks,count,31,.82)
 
     # Each lock moves over and under the adjacent curl at different heights.
     # All roots overlap the rear shell, leaving the cheek and jaw in front.
@@ -1216,6 +1240,7 @@ def build():
     ivory = material("Oatmeal cloth", "edded0", cloth=True)
     sole = material("Soft cocoa rubber", "5c4756")
     lock = material("Painted lilac waves", "805391", .34, surface="hair")
+    lock["painted_hair_masks"] = True
     pigment = lock.node_tree.nodes.new("ShaderNodeVertexColor")
     pigment.layer_name = "Lilac pigments"
     shader = lock.node_tree.nodes.get("Principled BSDF")
