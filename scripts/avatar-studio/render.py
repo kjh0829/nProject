@@ -263,6 +263,7 @@ def face(skin, gold):
     for j in range(levels):
         v = 4 + (452-4)*j/(levels-1)
         left, right, thick = cross_section(v)
+        lower_face = smooth_range(v,188,430)
         for k in range(count):
             a = k*2*pi/count
             u = (right+left)/2 + sin(a)*(right-left)/2
@@ -273,7 +274,8 @@ def face(skin, gold):
             orbital = -.017*exp(-((u-165)/55)**2 - ((v-246)/35)**2)
             chin = .066*smooth_range(v,381,452)
             d = thick*cos(a) + (tip+bridge+cheek+orbital)*frontal + chin
-            vertices.append(portrait_point((u-181)*.00228, d, 5.663-v*.00222))
+            vertices.append(portrait_point((u-181)*.00228*(1+.045*lower_face),
+                                           d, 5.663-v*.00222-.088*lower_face))
             # UVs align each level with the source rows. The three-quarter
             # painted features wrap into the skin colour at the temples.
             uvs.append(((124 + min(right-1.5, max(left+1.5, u)))/width, 1-(22+v)/height))
@@ -419,7 +421,9 @@ def hair(materials, hatted=False):
             (.400,-.080,4.471,.130,.034),(.475,-.041,4.353,.092,.024),
             (.441,.003,4.228,.044,.016),(.366,.055,4.217,.002,.003)]
     for side in (-1,1):
-        drape = [(side*x,d,z+(.05 if side>0 else 0)*i/7,w,t)
+        inset = .038 if side < 0 else 0
+        lift = .05 if side > 0 else 0
+        drape = [(side*(x-inset*exp(-((z-4.58)/.24)**2)),d,z+lift*i/7,w,t)
                  for i,(x,d,z,w,t) in enumerate(nape)]
         hair_lock("Hair behind the jaw and collar",drape,lock,(deep,violet,blush),side*.61)
 
@@ -653,12 +657,12 @@ def hands(skin):
     neck_mat = skin.copy()
     neck_mat.name = "Skin under the jaw"
     neck_mat["studio_surface"] = "neck"
-    neck = rings("Taper from jaw to collar",[(0,.015,4.25,.187,.165),(-.006,-.014,4.40,.152,.154),
-          (-.007,-.024,4.51,.138,.144),(0,-.033,4.64,.152,.154),
-          (0,-.039,4.79,.198,.174)],neck_mat)
+    neck = rings("Taper from jaw to collar",[(0,.016,4.25,.171,.154),(-.006,-.012,4.40,.124,.133),
+          (-.006,-.013,4.53,.099,.111),(-.003,-.016,4.65,.108,.120),
+          (.003,-.019,4.77,.138,.138),(.009,-.020,4.84,.157,.144)],neck_mat)
     warm_shadow = linear("b77b78")
     color_attributes(neck,"Neck and throat tint",[
-        tuple(c+(shadow-c)*(.40*smooth_range(v.co.z,4.47,4.77))
+        tuple(c+(shadow-c)*(.46*smooth_range(v.co.z,4.53,4.77))
               for c,shadow in zip(skin.diffuse_color,warm_shadow))
         for v in neck.data.vertices
     ])
@@ -740,7 +744,8 @@ def garment_front(obj):
 
 
 def hoodie(fabric, rib, seam, lining, gold):
-    body = rings("Mint fleece with diagonal folds",stitched_rows(TORSO),fabric,
+    rows = TORSO + [(0,-.011,4.420,.154,.149),(0,-.015,4.443,.121,.123)]
+    body = rings("Mint fleece with diagonal folds",stitched_rows(rows),fabric,
                  cap=False,sculpt=tailored_fold,smooth=1)
     surface = garment_front(body)
     pocket = [(3.438,.235),(3.467,.242),(3.530,.222),(3.613,.198),(3.658,.150)]
@@ -785,18 +790,18 @@ def hoodie(fabric, rib, seam, lining, gold):
     ring = [(0,.066,4.22,.271,.234),(0,.086,4.33,.269,.235),
             (0,.115,4.454,.272,.225),(0,.13,4.496,.240,.207)]
     rings("Folded hood behind neck",ring,fabric,start=.64,stop=2*pi-.64,cap=False)
-    strand("Bound hood edge",[(.219,-.039,4.447),(.160,-.168,4.398),
-           (0,-.186,4.340),(-.158,-.168,4.400),(-.219,-.039,4.450)],.026,rib)
+    strand("Bound hood edge",[(.219,-.039,4.447),(.138,-.131,4.443),
+           (0,-.157,4.400),(-.138,-.131,4.443),(-.219,-.039,4.450)],.020,rib)
 
 
 def coat(fabric, lapel, inner, gold, thread):
     rows = [(x,y,z,w*.93,d*.95) for x,y,z,w,d in TORSO] + [
-        (0,-.002,4.433,.166,.157),(0,-.021,4.452,.163,.157)]
+        (0,-.008,4.433,.158,.147),(0,-.016,4.467,.131,.131)]
     rings("Cream knit with pressed neckline", stitched_rows(rows), inner, cap=False,
           sculpt=tailored_fold, smooth=1)
-    rings("Folded knit collar around neck", [(0,-.020,4.420,.169,.159),
-          (0,-.021,4.453,.170,.159),(0,-.023,4.482,.164,.157),
-          (0,-.023,4.487,.143,.143)], inner, cap=False, smooth=1)
+    rings("Folded knit collar around neck", [(0,-.016,4.446,.155,.147),
+          (0,-.016,4.474,.139,.140),(0,-.017,4.504,.130,.127),
+          (0,-.017,4.509,.115,.116)], inner, cap=False, smooth=1)
     rows = [
         (0,.067,2.13,.672,.473),(0,.067,2.158,.674,.477),(0,.069,2.305,.659,.461),
         (0,.062,2.64,.609,.390),(0,.053,3.01,.528,.336),(0,.043,3.39,.464,.301),

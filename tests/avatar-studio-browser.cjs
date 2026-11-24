@@ -59,12 +59,15 @@ const engine = process.env.AVATAR_BROWSER || 'chromium';
         // the ear behind the near lock and the gap beside the lower jaw.
         const exposedEar = fraction(294, 166, 8, 15, (red, blue, alpha) => alpha>160 && red>blue+45);
         const jawGap = fraction(302, 191, 15, 15, (_red, _blue, alpha) => alpha<150);
+        const neckWidth = 64*fraction(300, 224, 64, 14, (red, blue, alpha) => alpha>190 && red>134 && red>blue+38);
         return {hash: Array.from(hash).join(','), newPixels: rendered.pixels, oldPixels: read(current).pixels,
-          exposedEar, jawGap};
+          exposedEar, jawGap, neckWidth};
       });
       assert(result.newPixels > 60_000 && result.oldPixels > 60_000);
       assert(result.exposedEar < .12, `${top}/${hat}: the side lock exposes the ear`);
       assert(result.jawGap < .10, `${top}/${hat}: the side lock separates from the jaw`);
+      assert(result.neckWidth >= 20 && result.neckWidth <= 36,
+        `${top}/${hat}: visible neck width drifted (${result.neckWidth.toFixed(1)}px)`);
       images.add(result.hash);
     }
     assert.equal(images.size, 8, 'each outfit must change the pixels');
