@@ -325,12 +325,13 @@ def hair_lock(name, rows, material, palette, phase):
         tangent = (path[min(j+1,len(path)-1)]-path[max(0,j-1)]).normalized()
         across = tangent.cross(PORTRAIT_FRONT).normalized()
         front = across.cross(tangent).normalized()
-        twist = .24*sin(7.6*t+phase)
+        twist = .18*sin(7.6*t+phase)
+        ridge_center = -.23+.20*sin(5*t+phase)
         for k in range(count):
             a = k*2*pi/count
             width, facing = sin(a), cos(a)
             light_side = max(0,facing)
-            thickness = row[4]*facing*(.80+.20*exp(-((width+.23)/.52)**2))
+            thickness = row[4]*facing*(.65+.35*exp(-((width-ridge_center)/.48)**2))
             depth = thickness + row[3]*width*twist
             vertices.append(center+across*(row[3]*width)+front*depth)
             contour = .31+.58*light_side**.67
@@ -357,30 +358,30 @@ def hair_lock(name, rows, material, palette, phase):
     hair_strokes(obj,masks,count,len(rows),phase)
 
 
-def feather_lock(label, rows, material, palettes, phase):
+def feather_lock(label, rows, material, palettes, phase, tip_spread):
     """Offset the sibling ribbons in width, depth and the positions of their tips."""
-    for n, (edge, scale) in enumerate(((-.16,.79),(.61,.30))):
+    for n, (edge, scale, role) in enumerate(((-.16,.79,"main"),(.61,.30,"split tip"))):
         split = []
         for j,(x,d,z,w,thickness) in enumerate(rows):
             t = j/(len(rows)-1)
             curl = sin(pi*t)*(sin(5.5*t+phase+n*.83)*.19+.12*edge)
             taper = abs(edge)*t**1.7
-            split.append((x+w*(edge+curl)+edge*.063*t**1.55,
+            split.append((x+w*(edge+curl)+edge*tip_spread*t**1.55,
                           d+(.014 if n==0 else -.014)+.009*sin(8*t+phase+n),
                           z + taper*(.145 if n==0 else -.064),
                           w*scale,
                           thickness*(.67-.21*t)))
-        hair_lock(label,split,material,palettes[n],phase+n*.71)
+        hair_lock(f"{label} | {role}",split,material,palettes[n],phase+n*.71)
 
 
 def hair(materials, hatted=False):
     lock, fine = materials
     deep, violet, orchid, blush, silver = [linear(c) for c in
          ("3d294c","77518e","946db0","ae8cbf","e1c7ef")]
-    def sculpt(label, rows, pale, phase):
+    def sculpt(label, rows, pale, phase, tip_spread=.063):
         main = (deep,orchid if pale else violet,silver)
         accent = (deep,blush if pale else orchid,silver)
-        feather_lock(label,rows,lock,(main,accent),phase)
+        feather_lock(label,rows,lock,(main,accent),phase,tip_spread)
 
     vertices, faces, scalp_colors, scalp_masks = [], [], [], []
     count = 96
@@ -410,12 +411,21 @@ def hair(materials, hatted=False):
     color_attributes(scalp,"Lilac pigments",scalp_colors)
     hair_strokes(scalp,scalp_masks,count,31,.82)
 
-    # Each lock moves over and under the adjacent curl at different heights.
-    # All roots overlap the rear shell, leaving the cheek and jaw in front.
-    profiles = [
-       [(.28,.03,5.52,.078,.047),(.48,.02,5.29,.119,.068),(.51,.05,5.00,.123,.065),
-        (.44,.10,4.82,.122,.064),(.48,.13,4.68,.112,.068),(.65,.16,4.53,.111,.059),
-        (.71,.13,4.37,.090,.051),(.60,.13,4.21,.049,.033),(.50,.18,4.20,.002,.003)],
+    # The two shoulders have independent arcs. The near outer lock opens
+    # after the ear and folds back down; the far one folds sooner and ends high.
+    outer_profiles = {
+        -1: [(.279,.037,5.520,.078,.044),(.478,.047,5.282,.119,.047),
+             (.496,.049,5.055,.111,.052),(.429,.097,4.857,.115,.046),
+             (.493,.142,4.690,.116,.044),(.677,.169,4.541,.104,.039),
+             (.780,.198,4.410,.076,.029),(.729,.237,4.313,.055,.023),
+             (.610,.264,4.258,.042,.019),(.617,.298,4.127,.002,.003)],
+         1: [(.277,.045,5.527,.081,.047),(.477,.038,5.315,.109,.046),
+             (.500,.068,5.073,.114,.045),(.435,.110,4.901,.107,.040),
+             (.486,.144,4.741,.104,.039),(.649,.190,4.622,.106,.038),
+             (.716,.229,4.511,.073,.028),(.688,.273,4.406,.052,.022),
+             (.570,.309,4.387,.044,.021),(.545,.328,4.286,.002,.003)],
+    }
+    supporting_profiles = [
        [(.31,.16,5.45,.075,.044),(.46,.21,5.20,.114,.051),(.43,.23,4.97,.108,.046),
         (.39,.25,4.82,.089,.039),(.51,.33,4.66,.077,.052),(.66,.37,4.51,.075,.043),
         (.65,.41,4.37,.070,.044),(.49,.36,4.23,.049,.032),(.49,.32,4.09,.003,.003)],
@@ -462,7 +472,12 @@ def hair(materials, hatted=False):
             rows = []
             lift,fan = tips[side][i]
             at_temple = side == -1 and i == 1
-            profile = temple_profile if at_temple else profiles[i]
+            if i == 0:
+                profile, role = outer_profiles[side], "Outer silhouette"
+            elif at_temple:
+                profile, role = temple_profile, "Temple sweep"
+            else:
+                profile, role = supporting_profiles[i-1], "Underlapping curl"
             for j,(x,depth,z,w,thickness) in enumerate(profile):
                 fall = 1-smooth_range(z,4.13,4.81)
                 swing = sin(5.5*fall+i*.93)*.17*fall
@@ -475,16 +490,23 @@ def hair(materials, hatted=False):
                              depth+(.035*cos(i*1.24+fall*4.1)*fall),
                              z+fall*lift,w,
                              thickness*(.94 if i==1 else .84)))
-            sculpt("Asymmetric shoulder curls",rows,i in (1,3),i*.91+side*.31)
+            name = f"{'Near' if side < 0 else 'Far'} shoulder | {role} {i+1}"
+            sculpt(name,rows,i in (1,3),i*.91+side*.31,tip_spread=.15 if i in (0,2) else .09)
         guide = [
-            (.48,.09,5.01),(.61,.12,4.85),(.736,.15,4.72),(.789,.18,4.59),
-            (.734,.24,4.49),(.615,.29,4.51)
+            (.468,.106,5.048),(.589,.146,4.886),(.738,.162,4.763),(.808,.199,4.644),
+            (.777,.247,4.535),(.668,.279,4.480)
         ] if side<0 else [
-            (.48,.10,5.015),(.57,.15,4.87),(.674,.18,4.71),(.736,.24,4.58),
-            (.714,.28,4.51),(.64,.32,4.46)
+            (.478,.128,4.977),(.555,.162,4.831),(.678,.197,4.732),(.772,.253,4.622),
+            (.756,.286,4.520),(.674,.326,4.451)
         ]
         strand("Off-silhouette hair accent", [portrait_point(side*x,d,z) for x,d,z in guide],
-               .0055,fine,radii=[.08,.65,.90,.74,.37,.04])
+               .0075,fine,radii=[.07,.61,.90,.74,.39,.03])
+
+    shoulder_flick = [(-.410,.257,4.995,.014,.009),(-.419,.310,4.850,.034,.015),
+                     (-.502,.358,4.718,.042,.017),(-.651,.369,4.588,.048,.018),
+                     (-.730,.353,4.477,.033,.015),(-.730,.319,4.383,.022,.012),
+                     (-.792,.273,4.331,.002,.002)]
+    hair_lock("Near shoulder | loose tapered lock",shoulder_flick,lock,(deep,blush,silver),1.91)
 
     bangs = [
        [(.094,.19,5.69,.065,.044),(-.039,.286,5.634,.115,.046),(-.208,.357,5.511,.108,.045),
@@ -508,10 +530,10 @@ def hair(materials, hatted=False):
                     w*(.84 if j<2 else 1),depth) for j,(x,d,z,w,depth) in enumerate(raw)]
         sculpt("Fine side-swept fringe",raw,i in (0,2),.31+i*1.35)
 
-    loose_fringe = [(.123,.247,5.657,.027,.016),(.048,.366,5.587,.044,.022),
-        (-.066,.440,5.492,.058,.025),(-.153,.446,5.394,.064,.025),
-        (-.202,.426,5.289,.055,.021),(-.277,.378,5.229,.042,.017),
-        (-.332,.321,5.190,.017,.008),(-.355,.295,5.171,.002,.002)]
+    loose_fringe = [(.123,.247,5.657,.019,.012),(.047,.366,5.581,.036,.018),
+        (-.082,.439,5.480,.050,.019),(-.171,.441,5.379,.043,.018),
+        (-.215,.421,5.295,.033,.016),(-.274,.380,5.229,.027,.014),
+        (-.343,.329,5.179,.016,.008),(-.402,.285,5.159,.002,.002)]
     if hatted:
         loose_fringe = [(x,d-(.100 if j<2 else 0),z-(.13 if j<2 else 0),w,thickness)
                        for j,(x,d,z,w,thickness) in enumerate(loose_fringe)]
