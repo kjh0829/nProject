@@ -101,7 +101,7 @@ def rings(name, rows, mat, *, start=0, stop=2*pi, count=40, cap=True, smooth=2, 
     return mesh(name, vertices, faces, mat, smooth)
 
 
-def strand(name, points, radius, mat, *, radii=None, bevel=4):
+def strand(name, points, radius, mat, *, radii=None, bevel=4, handles="AUTO"):
     curve = bpy.data.curves.new(name, "CURVE")
     curve.dimensions = "3D"
     curve.resolution_u = 12
@@ -112,7 +112,7 @@ def strand(name, points, radius, mat, *, radii=None, bevel=4):
     spline.bezier_points.add(len(points)-1)
     for i, (point, co) in enumerate(zip(spline.bezier_points, points)):
         point.co = co
-        point.handle_left_type = point.handle_right_type = "AUTO"
+        point.handle_left_type = point.handle_right_type = handles
         if radii:
             point.radius = radii[i]
     obj = bpy.data.objects.new(name, curve)
@@ -318,10 +318,11 @@ def hair_lock(name, rows, material, palette, phase):
             thickness = row[4]*facing*(.80+.20*exp(-((width+.23)/.52)**2))
             depth = thickness + row[3]*width*twist
             vertices.append(center+across*(row[3]*width)+front*depth)
-            grain = .073*cos(13.2*width+3.1*t+phase) + .033*cos(25*width-4.6*t+phase*1.9)
-            contour = .12+.78*light_side**.50
-            ridge = (.27*exp(-((width+.24)/.27)**2)+.125*exp(-((width-.41)/.13)**2))
-            ridge *= (.40+.60*sin(pi*(.13+t*.75))**1.6)*light_side
+            grain = .047*cos(13.2*width+3.1*t+phase)+.021*cos(25*width-4.6*t+phase*1.9)
+            contour = .18+.71*light_side**.50
+            glint = exp(-((t-.38-.083*width-.041*sin(phase))/.16)**2)
+            gloss = .13*exp(-((width+.26)/.34)**2)+.043*exp(-((width-.48)/.16)**2)
+            ridge = (gloss*(.42+.58*glint)+.125*glint)*light_side
             colors.append(tuple(d+(b-d)*(contour+grain*light_side)+(h-b)*ridge
                                 for d,b,h in zip(shade,tone,shine)))
     faces = [tuple(reversed(range(count)))]
@@ -336,14 +337,14 @@ def hair_lock(name, rows, material, palette, phase):
 
 def feather_lock(label, rows, material, palettes, phase):
     """Offset the sibling ribbons in width, depth and the positions of their tips."""
-    for n, (edge, scale) in enumerate(((-.48,.50),(.47,.455))):
+    for n, (edge, scale) in enumerate(((-.16,.79),(.61,.30))):
         split = []
         for j,(x,d,z,w,thickness) in enumerate(rows):
             t = j/(len(rows)-1)
             curl = sin(pi*t)*(sin(5.5*t+phase+n*.83)*.19+.12*edge)
             taper = abs(edge)*t**1.7
             split.append((x+w*(edge+curl)+edge*.063*t**1.55,
-                          d + (.016 if n==0 else -.006) + .010*sin(8*t+phase+n),
+                          d+(.014 if n==0 else -.014)+.009*sin(8*t+phase+n),
                           z + taper*(.145 if n==0 else -.064),
                           w*scale,
                           thickness*(.67-.21*t)))
@@ -353,7 +354,7 @@ def feather_lock(label, rows, material, palettes, phase):
 def hair(materials, hatted=False):
     lock, fine = materials
     deep, violet, orchid, blush, silver = [linear(c) for c in
-         ("3d294c","76538e","9674ac","a889b9","d9c2ea")]
+         ("3d294c","77518e","946db0","ae8cbf","e1c7ef")]
     def sculpt(label, rows, pale, phase):
         main = (deep,orchid if pale else violet,silver)
         accent = (deep,blush if pale else orchid,silver)
@@ -402,28 +403,35 @@ def hair(materials, hatted=False):
         (.50,.22,4.75,.051,.038),(.59,.27,4.65,.051,.034),(.63,.27,4.52,.038,.027),
         (.54,.27,4.45,.026,.016),(.50,.31,4.50,.002,.002)],
     ]
-    for side in (-1,1):
-        tip_height = (.024,-.048,.062,.036,.085) if side<0 else (.096,.109,.054,.142,.045)
-        tip_fan = (-.01,.035,.008,-.049,.018)
-        for i, profile in enumerate(profiles):
+    # The near shoulder carries a wider curl. On the far side the hair
+    # turns back towards the collar and ends above the near-side tips.
+    tips = {
+        -1: [(.018,-.005),(-.056,.060),(.123,.020),(.040,-.068),(.183,-.019)],
+         1: [(.132,-.035),(.082,-.082),(.204,-.027),(.163,-.092),(.090,.030)],
+    }
+    for side, order in [(-1,(0,2,1,3,4)),(1,(0,2,1,3))]:
+        for i in order:
             rows = []
-            for x,depth,z,w,thickness in profile:
-                end = 1-smooth_range(z,4.13,4.76)
+            lift,fan = tips[side][i]
+            for x,depth,z,w,thickness in profiles[i]:
+                fall = 1-smooth_range(z,4.13,4.81)
+                swing = sin(5.5*fall+i*.93)*.17*fall
                 eye_room = .113*exp(-((z-5.152)/.253)**2)-.014 if side>0 else 0
-                rows.append((side*(x+end*tip_fan[i])+eye_room,
-                             depth+(.012 if side>0 else 0),
-                             z+end*tip_height[i],w,thickness))
-            sculpt("Overlapping tapered waves",rows,i in (1,3),i*.89+side*.26)
-        outlines = [
-            [(.49,.10,5.03),(.62,.10,4.87),(.75,.14,4.72),(.795,.18,4.59),
-             (.734,.24,4.49),(.628,.30,4.53)],
-            [(.45,.18,4.71),(.59,.22,4.57),(.757,.14,4.44),(.764,.16,4.34),
-             (.682,.26,4.27),(.610,.28,4.32)],
+                bias = .55 if i==2 else 1
+                rows.append((side*(x+fall*fan+swing*bias)+eye_room,
+                             depth+(.035*cos(i*1.24+fall*4.1)*fall),
+                             z+fall*lift,w,
+                             thickness*(.94 if i==1 else .84)))
+            sculpt("Asymmetric shoulder curls",rows,i in (1,3),i*.91+side*.31)
+        guide = [
+            (.48,.09,5.01),(.61,.12,4.85),(.736,.15,4.72),(.789,.18,4.59),
+            (.734,.24,4.49),(.615,.29,4.51)
+        ] if side<0 else [
+            (.48,.10,5.015),(.57,.15,4.87),(.674,.18,4.71),(.736,.24,4.58),
+            (.714,.28,4.51),(.64,.32,4.46)
         ]
-        for i,guide in enumerate(outlines):
-            strand("Tapered flyaway", [portrait_point(side*x,d,z+(.038 if side>0 else 0))
-                                     for x,d,z in guide],.006 if i==0 else .0048,fine,
-                   radii=[.08,.76,.94,.81,.51,.035])
+        strand("Off-silhouette hair accent", [portrait_point(side*x,d,z) for x,d,z in guide],
+               .0055,fine,radii=[.08,.65,.90,.74,.37,.04])
 
     bangs = [
        [(.094,.19,5.69,.065,.044),(-.039,.286,5.634,.115,.046),(-.208,.357,5.511,.108,.045),
@@ -475,8 +483,10 @@ def beret(cream, edge, gold):
     def woven_crown(point, angle):
         x,y,z = point
         f = max(0, 1-((z-5.59)/.23)**2)
-        bend = (.033*sin(6*angle+3*z) + .014*sin(11*angle-9*z))*f
-        return x+bend*sin(angle), y-bend*cos(angle), z-x*.115+bend*.27
+        panel = .023*sin(5*angle+3*z)+.011*sin(8*angle-8*z)
+        gather = .032*exp(-((angle-.62)/.29)**2)-.018*exp(-((angle-.94)/.22)**2)
+        bend = (panel+gather)*f
+        return x+bend*sin(angle),y-bend*cos(angle),z-x*.115+bend*.42
 
     rings("Soft paneled wool beret", stitched_rows(rows,.027), cream, sculpt=woven_crown, smooth=1)
     rim = rings("Fitted wool hatband", [(*row[:3],row[3]+.010,row[4]+.010) for row in rows[:3]], edge, cap=False)
@@ -524,9 +534,11 @@ def trousers(denim, bright, dark, stitches):
 
     def knee_fold(point, a):
         x,y,z = point
-        v = (z-1.63+.15*sin(a))/.063
-        d = .016*(exp(-v*v)-.67*exp(-(v-1.2)**2))*max(0,cos(a))
-        return x+d*sin(a), y-d*cos(a), z
+        d = 0
+        for center,skew,width,height in ((1.62,.16,.057,.019),(1.48,-.10,.052,.011)):
+            v = (z-center+skew*sin(a))/width
+            d += height*(exp(-v*v)-.60*exp(-(v-1.2)**2))*max(0,cos(a))
+        return x+d*sin(a),y-d*cos(a),z
     for side in (-1, 1):
         points = []
         basex, basey = low_position(side)
@@ -577,12 +589,18 @@ def trousers(denim, bright, dark, stitches):
     links.new(diffuse.links[0].from_socket, multiply.inputs[1])
     links.new(pigment.outputs["Color"], multiply.inputs[2])
     links.new(multiply.outputs[0], diffuse)
+    front = garment_front(pants)
     for side in (-1,1):
-        strand("Denim pocket topstitch",[(side*x,y,z) for x,y,z in
-               ((.143,-.142,3.211),(.181,-.141,3.161),(.240,-.130,3.134),(.294,-.111,3.125))],
-               .0046,stitches,radii=[.25,1,.94,.37])
-    strand("Denim fly topstitch", [(.020,-.163,3.26),(.026,-.180,3.127),
-           (.038,-.185,2.993),(.078,-.184,2.907)], .005, stitches)
+        pattern = [(.143,3.235),(.172,3.181),(.216,3.145),(.267,3.131),(.311,3.146)]
+        strand("Inset denim pocket",[front(side*x,z,.006) for x,z in pattern],.008,dark,
+               radii=[.23,.93,1,.92,.30])
+        strand("Pocket twin-needle seam",[front(side*(x+.009),z-.013,.008) for x,z in pattern],
+               .0039,stitches,radii=[.13,.85,.96,.81,.18])
+    fly = [(.037,3.270),(.044,3.153),(.059,3.047),(.086,2.981),(.109,2.966)]
+    strand("Recessed fly seam",[front(x,z,.005) for x,z in fly],.007,dark,
+           radii=[.40,.9,1,.77,.25])
+    strand("Fly topstitch",[front(x+.012,z,.007) for x,z in fly],.0032,stitches,
+           radii=[.32,.93,1,.80,.16])
     mark_region(before, "leg")
     return turned_hems
 
@@ -677,28 +695,72 @@ def stitched_rows(rows, step=.035):
                          for x,y,w,d in [interpolate(coords,z)]]
 
 
+def garment_front(obj):
+    """Sample the finished fabric so seams and hardware follow its surface."""
+    bpy.context.view_layer.update()
+    evaluated = obj.evaluated_get(bpy.context.evaluated_depsgraph_get())
+    world = evaluated.matrix_world
+    inverse = world.inverted()
+    direction = (inverse.to_3x3() @ Vector((0,1,0))).normalized()
+
+    def point(x, z, relief=0):
+        hit, local, normal, _ = evaluated.ray_cast(inverse@Vector((x,-3,z)),direction)
+        if not hit:
+            raise ValueError(f"{obj.name}: trim anchor outside fabric at {x:.3f}, {z:.3f}")
+        hit_point = world @ local
+        return (hit_point.x,hit_point.y-relief,hit_point.z)
+
+    return point
+
+
 def hoodie(fabric, rib, seam, lining, gold):
-    rings("Mint fleece with diagonal folds", stitched_rows(TORSO), fabric, cap=False,
-          sculpt=tailored_fold, smooth=1)
-    sleeves(fabric, rib)
-    rows = [(0,.042,3.253,.397,.243),(0,.043,3.273,.421,.264),(0,.040,3.403,.430,.268),(0,.041,3.441,.409,.248)]
-    rings("Rib-knit waistband", rows, rib, cap=False)
+    body = rings("Mint fleece with diagonal folds",stitched_rows(TORSO),fabric,
+                 cap=False,sculpt=tailored_fold,smooth=1)
+    surface = garment_front(body)
+    pocket = [(3.438,.235),(3.467,.242),(3.530,.222),(3.613,.198),(3.658,.150)]
+    count = 15
+    vertices = []
+    for j,(z,half) in enumerate(pocket):
+        for k in range(count):
+            fraction = 2*k/(count-1)-1
+            puff = .019*(1-fraction*fraction)*sin(pi*j/(len(pocket)-1))
+            vertices.append(surface(half*fraction,z,.011+puff))
+    faces = [(j*count+i,j*count+i+1,(j+1)*count+i+1,(j+1)*count+i)
+             for j in range(len(pocket)-1) for i in range(count-1)]
+    mesh("Kangaroo pocket shaped over the fabric",vertices,faces,fabric,1)
+    for side in (-1,1):
+        strand("Bound pocket opening",
+               [surface(side*(w-.010),z,.016) for z,w in pocket[1:]],.008,rib,
+               radii=[.32,.88,1,.48])
+        strand("Topstitch following the pocket",
+               [surface(side*(w-.030),z+.006,.020) for z,w in pocket[1:-1]],.0034,seam,
+               radii=[.20,1,.23])
+        cord = [surface(side*x,z,relief) for x,z,relief in [
+            (.102,4.312,.018),(.104,4.229,.036),(.096,4.079,.032),
+            (.110,3.990+side*.029,.029)
+        ]]
+        x,y,z = cord[0]
+        sphere("Hood eyelet rim",(x,y+.008,z),(.019,.010,.017),rib)
+        strand("Cotton drawcord",cord,.0085,lining,radii=[.64,1,.94,.77])
+        x,y,z = cord[-1]
+        sphere("Drawcord cap",(x,y,z-.012),(.010,.010,.022),gold)
+    strand("Pocket lower seam",[surface(x,3.445,.013) for x in (-.23,-.115,0,.115,.23)],
+           .005,rib,radii=[.35,.9,1,.9,.35])
+    flower("Hoodie blossom embroidery",*surface(.283,3.971,.009),.032,seam,lining)
+
+    sleeves(fabric,rib)
+    rows = [(0,.042,3.253,.397,.243),(0,.043,3.273,.421,.264),
+            (0,.040,3.390,.430,.268),(0,.041,3.430,.409,.248)]
+    rings("Rib-knit waistband",rows,rib,cap=False)
     for a in (i*pi/27 for i in range(-12,13)):
         strand("Waistband ribs",[(rx*sin(a),y-ry*cos(a)-.002,z)
-               for _,y,z,rx,ry in rows[1:-1]],.004,rib)
+               for _,y,z,rx,ry in rows[1:-1]],.0035,rib)
 
-    ring = [(0,.066,4.22,.271,.234),(0,.086,4.33,.269,.235),(0,.115,4.454,.272,.225),(0,.13,4.496,.240,.207)]
-    rings("Folded hood behind neck", ring, fabric, start=.64, stop=2*pi-.64, cap=False)
-    strand("Bound hood edge", [(.219,-.039,4.447),(.160,-.168,4.398),(0,-.186,4.340),(-.158,-.168,4.400),(-.219,-.039,4.450)],.035,rib)
-    inset_panel("Kangaroo pocket", [(-.234,-.170,3.391),(-.198,-.201,3.506),(-.157,-.220,3.627),
-          (0,-.203,3.676),(.157,-.220,3.627),(.198,-.201,3.506),(.234,-.170,3.391),(0,-.234,3.396)], fabric,.020)
-    for side in (-1,1):
-        strand("Double topstitch of pocket",[(side*.234,-.177,3.397),(side*.213,-.200,3.492),
-              (side*.176,-.226,3.602),(side*.158,-.222,3.622)],.006,seam)
-        strand("Cotton drawcord",[(side*.115,-.204,4.357),(side*.118,-.254,4.240),
-              (side*.098,-.269,4.102),(side*.128,-.253,3.974+side*.028)],.011,lining)
-        sphere("Drawcord tip",(side*.128,-.253,3.956+side*.028),(.014,.013,.034),gold)
-    flower("Hoodie blossom embroidery", .315,-.152,3.99,.044,seam,lining)
+    ring = [(0,.066,4.22,.271,.234),(0,.086,4.33,.269,.235),
+            (0,.115,4.454,.272,.225),(0,.13,4.496,.240,.207)]
+    rings("Folded hood behind neck",ring,fabric,start=.64,stop=2*pi-.64,cap=False)
+    strand("Bound hood edge",[(.219,-.039,4.447),(.160,-.168,4.398),
+           (0,-.186,4.340),(-.158,-.168,4.400),(-.219,-.039,4.450)],.026,rib)
 
 
 def coat(fabric, lapel, inner, gold, thread):
@@ -726,37 +788,48 @@ def coat(fabric, lapel, inner, gold, thread):
                 start=.42, stop=2*pi-.42, cap=False, sculpt=coat_fold, smooth=1)
     thickness = obj.modifiers.new("Visible hem and lining", "SOLIDIFY")
     thickness.thickness = .021
+    profile = [(z,x,y,w,d) for x,y,z,w,d in rows]
+
+    def seam_at(angle,z,relief=0):
+        x,y,w,d = interpolate(profile,z)
+        surface = coat_fold((x+w*sin(angle),y-d*cos(angle),z),angle)
+        return (surface[0],surface[1]-relief,surface[2])
+
+    def folded_at(x,z,relief=0):
+        cx,_,w,_ = interpolate(profile,z)
+        return seam_at(asin(max(-1,min(1,(x-cx)/w))),z,relief)
+
     sleeves(fabric,lapel,gold)
     for side in (-1,1):
-        path = [(side*.101,-.154,4.453),(side*.302,-.162,4.292),(side*.252,-.222,4.169),
-                (side*.357,-.199,4.159),(side*.239,-.306,3.922),(side*.167,-.246,3.709),
-                (side*.119,-.225,3.766),(side*.142,-.230,3.996),(side*.109,-.184,4.290)]
-        inset_panel("Folded coat lapel", path, lapel, .022)
-        strand("Lapelled rose edging",[(x,y-.014,z) for x,y,z in path[:7]],.009,thread,
-               radii=[.33,.8,.83,.86,.68,.47,.1])
-        def surface(x, z, relief=.0):
-            y, w, d = interpolate([(z,y,w,d) for _,y,z,w,d in rows], z)
-            a = asin(max(-1,min(1,x/w)))
-            return coat_fold((x,y-d*cos(a),z),a)[1] - relief
-
-        binding = []
-        for x,z in [(.167,3.71),(.203,3.51),(.210,3.20),(.234,2.82),(.261,2.43),(.279,2.15)]:
-            binding.append((side*x,surface(x,z,.009),z))
-        strand("Front opening edge", binding, .012, lapel)
-        for x,z in ((.237,3.482),(.262,3.223),(.294,2.966)):
-            y = surface(x,z,.021)
-            sphere("Brass coat button rim",(side*x,y,z),(.053,.026,.054),gold)
-            sphere("Recessed engraved button",(side*x,y-.022,z),(.033,.011,.034),lapel)
-            sphere("Button centre",(side*x,y-.034,z),(.016,.007,.016),gold)
-        flap = [(side*x,surface(x,z,.021),z) for x,z in [
-            (.345,2.976),(.468,3.019),(.480,2.915),(.363,2.875)]]
-        inset_panel("Coat pocket flap",flap,lapel,.013)
-        strand("Pocket piping",[(x,y-.011,z) for x,y,z in flap[:2]],.008,thread)
-
+        # Narrow at the collar, with a short hard notch before the long lapel.
+        pattern = [(.101,4.438),(.276,4.312),(.226,4.216),(.334,4.186),
+                   (.241,3.990),(.157,3.740),(.130,3.790),(.118,3.990),(.107,4.292)]
+        path = [folded_at(side*x,z,.023 if i in (1,3,4) else .014)
+                for i,(x,z) in enumerate(pattern)]
+        inset_panel("Notched folded lapel",path,lapel,.015)
+        stroke = [(x,y-.006,z) for x,y,z in path[:6]]
+        strand("Notch and lapel topstitch",stroke,.0055,thread,handles="VECTOR",
+               radii=[.23,.85,.90,1,.74,.13])
+        strand("Bound coat opening",[seam_at(side*.425,z,.005)
+               for z in (3.754,3.54,3.26,2.93,2.60,2.34,2.157)],.009,lapel,
+               radii=[.4,.85,.96,1,.91,.83,.30])
+        for angle,z in ((.55,3.482),(.57,3.223),(.59,2.966)):
+            x,y,z = seam_at(side*angle,z,.017)
+            sphere("Engraved brass button rim",(x,y,z),(.039,.014,.042),gold)
+            sphere("Brass button inset",(x,y-.010,z),(.026,.008,.028),lapel)
+            sphere("Brass button center",(x,y-.016,z),(.011,.005,.012),gold)
+        flap = [seam_at(side*a,z,.017 if j<2 else .021) for j,(a,z) in enumerate(
+                ((.70,3.062),(1.03,3.100),(1.10,2.973),(.73,2.943)))]
+        inset_panel("Tailored pocket flap",flap,lapel,.012)
+        strand("Pocket flap perimeter",[(x,y-.005,z) for x,y,z in flap+[flap[0]]],
+              .0042,thread,handles="VECTOR")
+        x,y,z = seam_at(side*.86,2.999,.026)
+        sphere("Pocket flap fastening",(x,y,z),(.023,.010,.024),gold)
 
 
 def footwear(name, leather, outsole, trim, lace):
     boot = name == "boots"
+    binding = trim if boot else material("Canvas trim","b5a197",.73,cloth=True)
     for side in (-1,1):
         before = set(bpy.context.scene.objects)
         x, offset = low_position(side)
@@ -797,15 +870,16 @@ def footwear(name, leather, outsole, trim, lace):
         band = .038 if boot else .052
         shape([(z-band,cy-.002,rx+.007,ry+.006),(z-band+.012,cy,rx+.013,ry+.010),
               (z-.004,cy,rx+.014,ry+.011),(z+.006,cy,rx+.006,ry+.005)],
-              "Open padded shoe collar",trim,cap=False)
+              "Open padded shoe collar",binding,cap=False)
         pts = [profile((x+.207*sin(a),offset-.183-.402*cos(a),.155),a)
                for a in (i*2*pi/48 for i in range(49))]
-        strand("Welt stitch",pts,.0075,trim)
-        if boot:
-            def upper(a,z,relief=.012):
-                y,w,d = interpolate(rows,z)
-                return profile((x+(w+relief)*sin(a),offset+y-(d+relief)*cos(a),z),a)
+        strand("Welt stitch",pts,.0062,binding)
 
+        def upper(a,z,relief=.012):
+            y,w,d = interpolate(rows,z)
+            return profile((x+(w+relief)*sin(a),offset+y-(d+relief)*cos(a),z),a)
+
+        if boot:
             for half in (-1,1):
                 strand("Pointed toe embroidery", [upper(half*a,z,.011)
                        for a,z in ((0,.205),(.18,.230),(.37,.290),(.57,.318),(.75,.330))],
@@ -814,11 +888,16 @@ def footwear(name, leather, outsole, trim, lace):
             # curves around the ankle and stays under the raised straps.
             tongue = [upper(a,z,.008) for a,z in [
                 (-.72,.622),(-.71,.83),(-.46,.894),(0,1.006),(.46,.894),(.71,.83),(.72,.622),(0,.603)]]
-            inset_panel("Pointed leather tongue", tongue, leather, .009)
+            inset_panel("Pointed leather tongue",tongue,leather,.009)
+            for side_offset in (-1,1):
+                strand("Embossed tongue edge",
+                       [upper(side_offset*a,z,.017) for a,z in ((.686,.665),(.693,.816),
+                               (.47,.881),(.18,.951),(0,.986))],
+                       .0044,trim,radii=[.26,.92,1,.87,.35])
             for direction in (-1,1):
                 strap = [upper(a,.735+direction*a*.103,.024)
                          for a in (-1.09,-.66,-.26,.0,.27,.66,1.09)]
-                strand("Gilded crossed boot strap",strap,.017,trim,radii=[.5,.91,1,1,1,.91,.5])
+                strand("Gilded crossed boot strap",strap,.013,trim,radii=[.4,.93,1,1,1,.93,.4])
             points = [(x+(.114 if i%2==0 else .039)*sin(i*pi/4),offset-.192,
                        .728+(.125 if i%2==0 else .043)*cos(i*pi/4)) for i in range(8)]
             inset_panel("Four-point engraved star", points, trim, .015)
@@ -832,16 +911,27 @@ def footwear(name, leather, outsole, trim, lace):
                     sphere("Embossed toe stitch",upper(side_offset*(.29+i*.18),.254+i*.030,.011),
                            (.006,.006,.007),trim)
         else:
-            for i in range(4):
-                z, y = .346+i*.053, offset-.394+i*.056
-                for t in (-1,1):
-                    sphere("Brass eyelet",(x+t*.098,y,z),(.023,.015,.016),trim)
-                strand("Fine cotton lacing",[(x-.099,y-.011,z),(x-.019,y-.014,z+.006),
-                       (x+.044,y+.006,z+.028),(x+.1,y+.029,z+.035)],.011,lace)
-            for t in (-1, 1):
-                strand("Lace bow",[(x,offset-.246,.532),(x+t*.069,offset-.241,.568),
-                      (x+t*.135,offset-.232,.579),(x+t*.091,offset-.266,.531),
-                      (x,offset-.253,.529),(x+t*.097,offset-.315,.486)],.012,lace)
+            levels = (.310,.356,.410,.463)
+            for edge in (-1,1):
+                strand("Stitched canvas eyelet facing",
+                       [upper(edge*a,z,.009) for a,z in ((.45,.294),(.46,.344),(.47,.405),(.50,.466),(.45,.505))],
+                       .006,binding,radii=[.24,.9,1,.88,.24])
+                for z in levels:
+                    sphere("Stitched eyelet",upper(edge*.38,z,.013),(.013,.009,.012),binding)
+            for j,z in enumerate(levels[:-1]):
+                for lead in (-1,1):
+                    end = levels[j+1]
+                    cross = [upper(lead*.38,z,.018),upper(0,(z+end)/2,.024),
+                             upper(-lead*.38,end,.018)]
+                    strand("Crossed cotton lace",cross,.007+(.001 if lead==1 else 0),lace)
+            bow = upper(0,.478,.023)
+            for edge in (-1,1):
+                loop = [bow,upper(edge*.27,.507,.043),upper(edge*.49,.495,.031),
+                        upper(edge*.32,.468,.032),bow,upper(edge*.32,.420,.015)]
+                strand("Tied cotton bow",loop,.008,lace,radii=[1,.86,.96,.91,1,.42])
+                strand("Toe-cap stitches",
+                       [upper(edge*a,z,.009) for a,z in ((0,.214),(.28,.220),(.54,.234),(.81,.255),(1.04,.268))],
+                       .004,binding,radii=[.32,.83,.95,.80,.20])
 
         mark_region(before, "leg", side)
 

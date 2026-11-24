@@ -107,3 +107,5 @@
 - iOS 반복 종료 대응 이후 제품 아바타는 `avatar-canvas.mjs`의 Canvas 2D만 사용한다. 재귀 SVG 메시/필터를 제품 DOM이나 PNG 내보내기에 되돌리지 않는다. 원본 PNG와 공유 피팅 수학은 유지하며 캐시/표면 픽셀 예산, 직렬 작업, 숨은 화면/pagehide 시 버퍼 해제를 지킨다. Chromium만으로 iPhone 복구를 완료했다고 보고하지 않는다. `avatar-runtime-check.yml`의 WebKit/Chromium 결과와 현재 962개 양쪽 렌더러 검사·전체 집계를 확인한다. [iOS 렌더링 기준](team/briefs/AVATAR-IOS-CANVAS.md).
 
 - 낮은 신발은 `avatar-shoe-fit.mjs`와 registry의 필수 `footFit`으로 좌우 뒤축과 입구를 맞춘다. 실제 발/바짓단은 입구 안에만 복원하고 앞쪽 혀와 테두리, 접촉 그림자를 유지한다. 원본 PNG를 편집하지 않는다. 부츠/발목 회귀와 252개 운동화·하의·피부 조합을 WebKit/Chromium에서 검사하며, 전체 QA는 v3/962개/16분할이다. [신발 피팅 기준](team/briefs/AVATAR-SHOE-FIT.md).
+
+- 3D 제작 시안의 머리·의상·재질은 [2D 애니메이션풍 제작 기준](scripts/avatar-studio/STYLE-GUIDE.md)을 따른다. 주요 부위를 확대해 원화와 비교하고, 패커의 알파·이어짐 검사와 WebKit·Chromium의 코디 8종 검사를 실행한다.
