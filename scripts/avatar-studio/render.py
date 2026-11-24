@@ -291,7 +291,7 @@ def face(skin, gold):
         uv.data[loop.index].uv = uvs[loop.vertex_index]
     color_attributes(head, "Paint coverage", coverage)
 
-    ear = sphere("Visible ear", portrait_point(-.318,.113,5.042), (.104,.062,.125), skin)
+    ear = sphere("Ear beneath the side locks", portrait_point(-.318,.113,5.042), (.104,.062,.125), skin)
     ear.rotation_euler.z = -PORTRAIT_YAW
     inset = material("Ear warm shade", "bb7565", .72)
     ear_shape = sphere("Ear concha", portrait_point(-.347,.164,5.033), (.044,.017,.067), inset)
@@ -403,6 +403,26 @@ def hair(materials, hatted=False):
         (.50,.22,4.75,.051,.038),(.59,.27,4.65,.051,.034),(.63,.27,4.52,.038,.027),
         (.54,.27,4.45,.026,.016),(.50,.31,4.50,.002,.002)],
     ]
+    # The visible-side fringe crosses the temple and ear before curling over
+    # the shoulder. Its front surface stays ahead of the ear around 5.04.
+    temple_profile = [
+        (.207,.324,5.531,.061,.019),(.325,.358,5.341,.089,.027),
+        (.390,.322,5.177,.104,.033),(.343,.293,5.019,.132,.037),
+        (.325,.278,4.843,.109,.032),(.366,.308,4.692,.106,.029),
+        (.515,.343,4.550,.092,.026),(.564,.385,4.417,.071,.026),
+        (.484,.414,4.293,.053,.020),(.356,.389,4.235,.002,.003),
+    ]
+    # A darker layer behind the neck connects the curls to the crown, with
+    # enough space between its tapered ends for the shoulder to show.
+    nape = [(.365,-.079,5.202,.101,.042),(.374,-.083,4.992,.131,.040),
+            (.338,-.104,4.796,.146,.044),(.310,-.108,4.638,.136,.035),
+            (.400,-.080,4.471,.130,.034),(.475,-.041,4.353,.092,.024),
+            (.441,.003,4.228,.044,.016),(.366,.055,4.217,.002,.003)]
+    for side in (-1,1):
+        drape = [(side*x,d,z+(.05 if side>0 else 0)*i/7,w,t)
+                 for i,(x,d,z,w,t) in enumerate(nape)]
+        hair_lock("Hair behind the jaw and collar",drape,lock,(deep,violet,blush),side*.61)
+
     # The near shoulder carries a wider curl. On the far side the hair
     # turns back towards the collar and ends above the near-side tips.
     tips = {
@@ -413,11 +433,16 @@ def hair(materials, hatted=False):
         for i in order:
             rows = []
             lift,fan = tips[side][i]
-            for x,depth,z,w,thickness in profiles[i]:
+            at_temple = side == -1 and i == 1
+            profile = temple_profile if at_temple else profiles[i]
+            for j,(x,depth,z,w,thickness) in enumerate(profile):
                 fall = 1-smooth_range(z,4.13,4.81)
                 swing = sin(5.5*fall+i*.93)*.17*fall
                 eye_room = .113*exp(-((z-5.152)/.253)**2)-.014 if side>0 else 0
                 bias = .55 if i==2 else 1
+                if hatted and at_temple and j<2:
+                    depth -= .094 if j==0 else .024
+                    z -= .101 if j==0 else .022
                 rows.append((side*(x+fall*fan+swing*bias)+eye_room,
                              depth+(.035*cos(i*1.24+fall*4.1)*fall),
                              z+fall*lift,w,
@@ -455,9 +480,10 @@ def hair(materials, hatted=False):
                     w*(.84 if j<2 else 1),depth) for j,(x,d,z,w,depth) in enumerate(raw)]
         sculpt("Fine side-swept fringe",raw,i in (0,2),.31+i*1.35)
 
-    loose_fringe = [( .136,.245,5.647,.028,.018),(.077,.363,5.591,.041,.023),
-        (-.083,.443,5.484,.052,.026),(-.217,.426,5.354,.043,.020),
-        (-.262,.401,5.241,.026,.014),(-.225,.395,5.210,.002,.002)]
+    loose_fringe = [(.123,.247,5.657,.027,.016),(.048,.366,5.587,.044,.022),
+        (-.066,.440,5.492,.058,.025),(-.153,.446,5.394,.064,.025),
+        (-.202,.426,5.289,.055,.021),(-.277,.378,5.229,.042,.017),
+        (-.332,.321,5.190,.017,.008),(-.355,.295,5.171,.002,.002)]
     if hatted:
         loose_fringe = [(x,d-(.100 if j<2 else 0),z-(.13 if j<2 else 0),w,thickness)
                        for j,(x,d,z,w,thickness) in enumerate(loose_fringe)]

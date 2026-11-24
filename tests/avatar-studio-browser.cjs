@@ -49,9 +49,22 @@ const engine = process.env.AVATAR_BROWSER || 'chromium';
         };
         const rendered = read(study);
         const hash = new Uint8Array(await crypto.subtle.digest('SHA-256', rendered.data));
-        return {hash: Array.from(hash).join(','), newPixels: rendered.pixels, oldPixels: read(current).pixels};
+        const fraction = (x, y, width, height, matches) => {
+          const {data} = study.getContext('2d').getImageData(x, y, width, height);
+          let count = 0;
+          for (let i=0; i<data.length; i+=4) if (matches(data[i], data[i+2], data[i+3])) count++;
+          return count/(width*height);
+        };
+        // These landmarks belong to the fixed three-quarter camera. Sample
+        // the ear behind the near lock and the gap beside the lower jaw.
+        const exposedEar = fraction(294, 166, 8, 15, (red, blue, alpha) => alpha>160 && red>blue+45);
+        const jawGap = fraction(302, 191, 15, 15, (_red, _blue, alpha) => alpha<150);
+        return {hash: Array.from(hash).join(','), newPixels: rendered.pixels, oldPixels: read(current).pixels,
+          exposedEar, jawGap};
       });
       assert(result.newPixels > 60_000 && result.oldPixels > 60_000);
+      assert(result.exposedEar < .12, `${top}/${hat}: the side lock exposes the ear`);
+      assert(result.jawGap < .10, `${top}/${hat}: the side lock separates from the jaw`);
       images.add(result.hash);
     }
     assert.equal(images.size, 8, 'each outfit must change the pixels');
