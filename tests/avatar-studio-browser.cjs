@@ -72,20 +72,37 @@ const engine = process.env.AVATAR_BROWSER || 'chromium';
     await ready();
     const [artwork, study] = await page.evaluate(() => ['current','study'].map(id => {
       const ctx = document.querySelector('#'+id).getContext('2d');
-      const span = (y, start=195, end=470) => {
+      const opaqueColumns = (y, start, end) => {
         const {data} = ctx.getImageData(start, y, end-start, 1);
         const opaque = [];
         for (let x=start; x<end; x++) if (data[(x-start)*4+3] > 190) opaque.push(x);
+        return opaque;
+      };
+      const span = (y, start=195, end=470) => {
+        const opaque = opaqueColumns(y, start, end);
         return [opaque[0], opaque.at(-1)];
       };
       const width = bounds => bounds[1]-bounds[0];
       const center = bounds => (bounds[0]+bounds[1])/2;
       const crown = [168, 182, 196, 208, 220].map(y => width(span(y))).sort((a,b) => a-b)[2];
-      return {crown, hips: width(span(552,230,457)),
+      let consecutive = 0;
+      let inseam;
+      for (let y=540; y<700; y++) {
+        const columns = opaqueColumns(y, 228, 452);
+        const gap = columns.some((x, i) => i>=30 && columns.length-i>=30 && x-columns[i-1]>=5);
+        consecutive = gap ? consecutive+1 : 0;
+        if (consecutive === 7) {
+          inseam = y-6;
+          break;
+        }
+      }
+      return {crown, inseam, hips: width(span(552,230,457)),
         nearAnkle: center(span(827,160,327)), farAnkle: center(span(827,330,501))};
     }));
-    assert(study.crown >= artwork.crown*.82 && study.crown <= artwork.crown*1.24,
+    assert(study.crown >= artwork.crown*.82 && study.crown <= artwork.crown*1.17,
       `head width drifted from the same-scale illustration: ${study.crown}/${artwork.crown}`);
+    assert(Math.abs(study.inseam-artwork.inseam) <= 20,
+      `inseam height drifted from the same-scale illustration: ${study.inseam}/${artwork.inseam}`);
     assert(study.hips >= artwork.hips*.89 && study.hips <= artwork.hips*1.13,
       `hip width drifted from the same-scale illustration: ${study.hips}/${artwork.hips}`);
     for (const landmark of ['nearAnkle','farAnkle']) {

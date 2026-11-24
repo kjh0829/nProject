@@ -1031,6 +1031,14 @@ LEG_FIT = {
          (925, 948, 374, 381, .90), (1016, 1016, 374, 382, .94)],
 }
 
+# Projected landmarks after the reference pose is fitted. Lift the waist
+# and inseam, keeping the shoes grounded and the knee bend gradual.
+SILHOUETTE_HEIGHTS = [
+    (185, 176), (248, 236), (310, 300), (374, 358),
+    (445, 424), (510, 482), (562, 529), (628, 583), (660, 613),
+    (707, 686), (797, 784), (898, 895), (1016, 1016), (1060, 1060),
+]
+
 
 def smooth_range(value, start, end):
     t = max(0, min(1, (value-start)/(end-start)))
@@ -1076,6 +1084,7 @@ def fit_reference_pose(scene):
     body = smooth_profile(TORSO_FIT)
     arms = {side: smooth_profile(rows) for side,rows in ARM_FIT.items()}
     legs = {side: smooth_profile(rows) for side,rows in LEG_FIT.items()}
+    silhouette_height = smooth_profile(SILHOUETTE_HEIGHTS)
 
     def screen(point):
         p = inverse @ point
@@ -1084,11 +1093,12 @@ def fit_reference_pose(scene):
     def refit(point, region, side):
         x,y,depth = screen(point)
         if region == "head":
-            # Scale around the crown and bring in the hair and hat together.
-            return view @ Vector((left+(340+(x-340)*.775)/px,
-                                  top-(97+(y-97)*.779)/py, depth))
+            # Keep the face, hair and hat in the same fitting group.
+            return view @ Vector((left+(340+(x-340)*.731)/px,
+                                  top-(97+(y-97)*.710)/py, depth))
         y_fit, shift, width = body(y)
         x_fit = 340+(x-340)*width+shift
+        axis_fit = 340+shift
         if region == "arm":
             t = smooth_range(y,312,368)
             arm_y,arm_shift = arms[side](y)
@@ -1109,13 +1119,25 @@ def fit_reference_pose(scene):
             foot_x,foot_y,foot_depth = screen(turned)
             x_fit = x_fit*(1-t) + (new_axis+(foot_x-axis)*scale)*t
             y_fit = y_fit*(1-t) + (leg_y+foot_y-y)*t
+            axis_fit = axis_fit*(1-t)+new_axis*t
             depth += (foot_depth-depth)*t
         elif region == "coat":
             # Give the front of the skirt ease over the bent thigh. The
             # back cloth still hangs behind the legs in the same 3D view.
             facing = 1-smooth_range(point.y,.01,.24)
             depth += .16*facing*smooth_range(y,546,632)
-        return view @ Vector((left+x_fit/px,top-y_fit/py,depth))
+        taper = smooth_range(y_fit,335,486)*(1-smooth_range(y_fit,658,814))
+        if region == "arm":
+            taper *= 1-smooth_range(y,312,368)
+        width_factor = 1-.052*taper
+        if region == "leg":
+            width_factor -= .06*smooth_range(y_fit,891,985)
+        x_fit = axis_fit+(x_fit-axis_fit)*width_factor
+        lifted, = silhouette_height(y_fit)
+        if region == "arm":
+            # Let the bent elbows and wrists hang at their original reach.
+            lifted += (y_fit-6-lifted)*smooth_range(y,330,545)
+        return view @ Vector((left+x_fit/px,top-lifted/py,depth))
 
     bpy.context.view_layer.update()
     for obj in scene.objects:
