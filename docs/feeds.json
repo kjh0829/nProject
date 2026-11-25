@@ -1,18 +1,12 @@
 {
-  "attemptedAt": "2026-11-24T05:25:45.599711+00:00",
+  "attemptedAt": "2026-11-25T04:27:12.876167+00:00",
   "sources": {
     "fire": {
       "name": "Google 뉴스 · FIRE/경제적 자유",
       "feedUrl": "https://news.google.com/rss/search?q=FIRE%20%EA%B2%BD%EC%A0%9C%EC%A0%81%EC%9E%90%EC%9C%A0%20when%3A30d&hl=ko&gl=KR&ceid=KR:ko",
-      "updatedAt": "2026-11-24T05:25:45.599711+00:00",
+      "updatedAt": "2026-11-25T04:27:12.876167+00:00",
       "stale": false,
       "items": [
-        {
-          "title": "\"경제적 자유가 행복 보장하진 않아\"…파이어족 꿈 접은 이유 - 뉴시스",
-          "url": "https://news.google.com/rss/articles/CBMiYkFVX3lxTFBLQjA0dVNWNlVwdFpSUVNSQmpjaGk3Mmdla1VpQTF6MVl2bjVWQlhzS3d4ZUZqd2pDX1F1TTR5LVNMN240SFdGR0N1WmM1U29hMVgwTnI4NVhBOXdEMDluYmxn?oc=5",
-          "publisher": "뉴시스",
-          "published": "Sun, 25 Oct 2026 07:00:00 GMT"
-        },
         {
           "title": "보증금 빼서 주식에...6억→13억, '파이어' 한 40대 투자 비결 - 머니투데이 - 머니투데이",
           "url": "https://news.google.com/rss/articles/CBMiaEFVX3lxTE1sZVVWbjVqMmg0TVBZUExaOWhrczQ5VEV3S0JPX3ZFZmlIeGUyQnR5a3NVengxeE5hMnowWWRlSzRLMUNlRFIxSzFCaWJUMjBHVllfMi1lS21BNWFUY1BSaDg1X2ZNaFlt0gFuQVVfeXFMT05MQkZGSmRYWWtmaERsZW43S21tamUtTFR0RkVRd3FsQnVWSlVlU285ZHh1bVFYWjc1TzNPbzNndzk5MThtZUxIRlBfNjhkbW8yQjIzUGdXNFhRSWw3cy1GQTY5d3dNOHR0Yi1BNlE?oc=5",
@@ -23,21 +17,27 @@
           "title": "\"42억 있어도 한 달 200만원\" 파이어족, 조기 은퇴 이후 생기는 고민들 - 시사통신",
           "url": "https://news.google.com/rss/articles/CBMiZ0FVX3lxTFBWU2RZeUMtT2JCLWZyVDBQZEVScUR1OFg1VGp0dXJaZUQwQ1NRVndzd0FONzgxQ2tHb1ZEYndnemJMeTNKWG5zQVVaZFVvMkQwRmtQM0xxa2s0Y2hQS2xSbWlUaE4zODA?oc=5",
           "publisher": "시사통신",
-          "published": "Mon, 02 Nov 2026 04:51:00 GMT"
+          "published": "Mon, 02 Nov 2026 08:00:00 GMT"
+        },
+        {
+          "title": "매년 2500만원 주식 팔아 생활비로…16억 모은 30대의 은퇴 전략 - 머니투데이 - 머니투데이",
+          "url": "https://news.google.com/rss/articles/CBMiaEFVX3lxTE5SXzQ1QkZLYkpIb19heGFkbnV2MnpUODhJZFVPamUwMXlUb0Fya0lrUG55OUM1UDB5Y2RNUnItTjRDX3ktQVR2LUFTY2pGcEpmSWFHYno3S0QxOXlseHVIY1BqOVJiY3Ew0gFuQVVfeXFMUGdpY3ZiZkJibEg4TVJBQldCT1psNUlYLXluRktQdlNxWFdMdVJBaGwtTjFCZFVpSlBqOEJlU204dUFWVjQ1Mk1uN004eGZFbWNaUkdObVNndWxkeTVLMGVyRmZpME03b05rS0NIOHc?oc=5",
+          "publisher": "머니투데이",
+          "published": "Thu, 19 Nov 2026 18:13:36 GMT"
         }
       ]
     },
     "discovery": {
       "name": "NASA · Image of the Day (영문)",
       "feedUrl": "https://www.nasa.gov/feeds/iotd-feed/",
-      "updatedAt": "2026-11-24T05:25:45.599711+00:00",
+      "updatedAt": "2026-11-25T04:27:12.876167+00:00",
       "stale": false,
       "items": [
         {
-          "title": "Studying Cancer Cells in Microgravity",
-          "url": "https://www.nasa.gov/image-detail/jsc2026e426880/",
+          "title": "Webb Reveals New Details in Supernova Remnant",
+          "url": "https://www.nasa.gov/image-detail/cas-a-webb-miri/",
           "publisher": "NASA Image of the Day",
-          "published": "Mon, 23 Nov 2026 17:29 GMT"
+          "published": "Tue, 24 Nov 2026 16:52 GMT"
         }
       ]
     }
