@@ -123,13 +123,19 @@ const engine = process.env.AVATAR_BROWSER || 'chromium';
           break;
         }
       }
-      return {crown, inseam, hips: width(span(552,230,457)),
+      const calfWidths = [820, 827, 835, 844].map(y => width(span(y,170,320))+width(span(y,330,490)));
+      const calfWidth = calfWidths.reduce((sum, value) => sum+value, 0)/calfWidths.length;
+      return {crown, inseam, shoulders: width(span(310,190,480)), hips: width(span(552,230,457)), calfWidth,
         nearAnkle: center(span(827,160,327)), farAnkle: center(span(827,330,501))};
     }));
     assert(study.crown >= artwork.crown*.82 && study.crown <= artwork.crown*1.17,
       `head width drifted from the same-scale illustration: ${study.crown}/${artwork.crown}`);
     assert(Math.abs(study.inseam-artwork.inseam) <= 20,
       `inseam height drifted from the same-scale illustration: ${study.inseam}/${artwork.inseam}`);
+    assert(study.shoulders >= artwork.shoulders*.9 && study.shoulders <= artwork.shoulders*1.19,
+      `shoulder width drifted from the same-scale illustration: ${study.shoulders}/${artwork.shoulders}`);
+    assert(study.calfWidth >= artwork.calfWidth*.9 && study.calfWidth <= artwork.calfWidth*1.19,
+      `calf width drifted from the same-scale illustration: ${study.calfWidth}/${artwork.calfWidth}`);
     assert(study.hips >= artwork.hips*.89 && study.hips <= artwork.hips*1.13,
       `hip width drifted from the same-scale illustration: ${study.hips}/${artwork.hips}`);
     for (const landmark of ['nearAnkle','farAnkle']) {

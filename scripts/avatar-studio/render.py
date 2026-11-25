@@ -1136,6 +1136,16 @@ SILHOUETTE_HEIGHTS = [
     (707, 686), (797, 784), (898, 895), (1016, 1016), (1060, 1060),
 ]
 
+# Final image heights, in pixels, with the width and depth of each section.
+# The neckline and ankle keep their fit. The waist and calf taper gradually.
+TAILORING_PROFILE = [
+    (247, 1, 1), (277, .977, .979), (312, .926, .945),
+    (350, .915, .912), (392, .888, .887), (430, .879, .897),
+    (472, .904, .927), (510, .941, .954), (552, .957, .975),
+    (592, .948, .981), (642, .949, .991), (710, .934, .997),
+    (790, .904, 1), (850, .936, 1), (899, 1, 1),
+]
+
 
 def smooth_range(value, start, end):
     t = max(0, min(1, (value-start)/(end-start)))
@@ -1182,6 +1192,7 @@ def fit_reference_pose(scene):
     arms = {side: smooth_profile(rows) for side,rows in ARM_FIT.items()}
     legs = {side: smooth_profile(rows) for side,rows in LEG_FIT.items()}
     silhouette_height = smooth_profile(SILHOUETTE_HEIGHTS)
+    tailoring = smooth_profile(TAILORING_PROFILE)
 
     def screen(point):
         p = inverse @ point
@@ -1229,8 +1240,13 @@ def fit_reference_pose(scene):
         width_factor = 1-.052*taper
         if region == "leg":
             width_factor -= .06*smooth_range(y_fit,891,985)
-        x_fit = axis_fit+(x_fit-axis_fit)*width_factor
         lifted, = silhouette_height(y_fit)
+        fitted_width, fitted_depth = tailoring(lifted)
+        x_fit = axis_fit+(x_fit-axis_fit)*width_factor*fitted_width
+        # Use the same depth adjustment for the body and its clothing so
+        # pocket, cuff, and lapel surfaces still meet their matching base.
+        depth_axis = (inverse @ Vector((0,.04,point.z))).z
+        depth = depth_axis+(depth-depth_axis)*fitted_depth
         if region == "arm":
             # Let the bent elbows and wrists hang at their original reach.
             lifted += (y_fit-6-lifted)*smooth_range(y,330,545)
