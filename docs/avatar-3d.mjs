@@ -7,6 +7,10 @@ const comparison = document.querySelector('.comparison');
 const status = document.querySelector('.status');
 const assets = new Map();
 const artworkScale = .6183;
+const hairstyles = {
+  lilac: {suffix: '', artwork: {hair: 'hair-lilac', hat: null}},
+  beret: {suffix: '-beret', artwork: {hair: 'hair-lilac', hat: 'hat-beret'}},
+};
 const regions = {
   full: [0, 0, 680, 1060],
   head: [195, 41, 286, 292],
@@ -29,7 +33,7 @@ function draw(target, source, bounds, width, height) {
 function texture(name) {
   if (!assets.has(name)) {
     const image = new Image();
-    image.src = new URL(`./assets/avatar-studio/${name}.webp?v=12`, import.meta.url);
+    image.src = new URL(`./assets/avatar-studio/${name}.webp?v=13`, import.meta.url);
     assets.set(name, image.decode().then(() => image).catch(error => {
       assets.delete(name);
       throw error;
@@ -46,11 +50,11 @@ copy.height = 1060;
 
 async function update() {
   const revision = ++request;
-  const {top, hat, shoes, view} = Object.fromEntries(new FormData(form));
+  const {top, hair, shoes, view} = Object.fromEntries(new FormData(form));
+  const hairstyle = hairstyles[hair];
   const crop = regions[view];
   const [, , width, height] = crop;
   const description = [...form.querySelectorAll('input:checked')].map(input => input.nextElementSibling.textContent).join(', ');
-  const withHat = hat === 'beret';
   comparison.setAttribute('aria-busy', 'true');
   status.textContent = '착장을 불러오는 중입니다.';
 
@@ -65,7 +69,7 @@ async function update() {
       const source = await renderAvatarCanvas({skin: 'peach', face: 'smile'}, {
         frame: artworkFrame(crop), width, height, isCurrent: () => revision === request,
         outfit: {
-          ...starterOutfit, hair: 'hair-lilac', hat: withHat ? 'hat-beret' : null,
+          ...starterOutfit, ...hairstyle.artwork,
           top: top === 'coat' ? 'top-night' : 'top-mint', shoes: shoes === 'boots' ? 'shoes-star' : 'shoes-canvas',
         },
       });
@@ -78,7 +82,7 @@ async function update() {
       }
     })(),
     (async () => {
-      const [upper, lower] = await Promise.all([texture(top + (withHat ? '-beret' : '')), texture(shoes)]);
+      const [upper, lower] = await Promise.all([texture(top + hairstyle.suffix), texture(shoes)]);
       if (revision !== request) return;
       if (upper.width !== copy.width || lower.width !== copy.width || upper.height + lower.height !== copy.height) {
         throw Error('Unexpected layer dimensions');

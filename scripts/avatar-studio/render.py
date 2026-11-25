@@ -13,11 +13,11 @@ from cel_style import add_outline, linear, style_materials
 
 
 OUTFITS = {
-    "hoodie": ("hoodie","hair","boots"),
-    "hoodie-beret": ("hoodie","seat","hat","boots"),
-    "coat": ("coat","hair","boots"),
-    "coat-beret": ("coat","seat","hat","boots"),
-    "sneakers": ("hoodie","hair","sneakers"),
+    "hoodie": ("hoodie","lilac_hair","boots"),
+    "hoodie-beret": ("hoodie","beret_hair","boots"),
+    "coat": ("coat","lilac_hair","boots"),
+    "coat-beret": ("coat","beret_hair","boots"),
+    "sneakers": ("hoodie","lilac_hair","sneakers"),
 }
 
 
@@ -510,6 +510,25 @@ def hair(materials, hatted=False):
                      (-.792,.273,4.331,.002,.002)]
     hair_lock("Near shoulder | loose tapered lock",shoulder_flick,lock,(deep,blush,silver),1.91)
 
+    if hatted:
+        # Roots begin inside the band. The shallow section at the brim then
+        # opens into a side sweep and ends above the eye, beside the temple.
+        beret_fringe = [
+            [(.142,.269,5.451,.047,.016),(.103,.352,5.382,.068,.022),
+             (-.002,.412,5.330,.076,.025),(-.107,.441,5.274,.072,.022),
+             (-.201,.421,5.223,.054,.018),(-.285,.374,5.189,.034,.012),
+             (-.354,.321,5.136,.002,.002)],
+            [(.064,.241,5.447,.043,.016),(-.036,.345,5.397,.067,.020),
+             (-.157,.418,5.340,.063,.019),(-.252,.392,5.281,.044,.016),
+             (-.323,.334,5.237,.023,.011),(-.379,.291,5.197,.002,.002)],
+            [(.244,.233,5.458,.050,.018),(.282,.326,5.378,.079,.024),
+             (.351,.364,5.279,.075,.030),(.398,.335,5.176,.054,.023),
+             (.407,.288,5.111,.026,.014),(.374,.269,5.067,.002,.002)],
+        ]
+        for i, rows in enumerate(beret_fringe):
+            sculpt(f"Fringe tucked under the beret | {i+1}",rows,i!=1,.56+i*1.24)
+        return
+
     bangs = [
        [(.094,.19,5.69,.065,.044),(-.039,.286,5.634,.115,.046),(-.208,.357,5.511,.108,.045),
         (-.344,.317,5.360,.098,.041),(-.443,.230,5.210,.070,.036),(-.434,.214,5.090,.034,.023),
@@ -527,18 +546,12 @@ def hair(materials, hatted=False):
         if i>=2:
             raw = [(x+.066*max(0,min(1,(5.49-z)/.20)),d,z,w*(.87 if j>2 else 1),depth)
                    for j,(x,d,z,w,depth) in enumerate(raw)]
-        if hatted:
-            raw = [(x,d-.128 if j<3 else d,z-(.137 if j<3 else .012),
-                    w*(.84 if j<2 else 1),depth) for j,(x,d,z,w,depth) in enumerate(raw)]
         sculpt("Fine side-swept fringe",raw,i in (0,2),.31+i*1.35)
 
     loose_fringe = [(.123,.247,5.657,.019,.012),(.047,.366,5.581,.036,.018),
         (-.082,.439,5.480,.050,.019),(-.171,.441,5.379,.043,.018),
         (-.215,.421,5.295,.033,.016),(-.274,.380,5.229,.027,.014),
         (-.343,.329,5.179,.016,.008),(-.402,.285,5.159,.002,.002)]
-    if hatted:
-        loose_fringe = [(x,d-(.100 if j<2 else 0),z-(.13 if j<2 else 0),w,thickness)
-                       for j,(x,d,z,w,thickness) in enumerate(loose_fringe)]
     hair_lock("Light strand over the temple",loose_fringe,lock,(deep,blush,silver),.72)
 
 
@@ -592,6 +605,11 @@ def beret(cream, edge, gold):
         strand("Gold thread on ribbon",tail[1:],.0052,gold)
     flower("Enamel dogwood brooch",x,y-.066,z+.010,.072,flower_cream,gold)
     flower("Tiny leaf pin",x-.080,y-.052,z+.073,.037,gold,flower_cream)
+
+
+def beret_hairstyle(hair_materials, cream, edge, gold):
+    hair(hair_materials,hatted=True)
+    beret(cream,edge,gold)
 
 
 DENIM = [
@@ -1033,7 +1051,7 @@ def fit_pose():
         is_arm = obj.name.startswith(("Wrist", "Relaxed finger", "Curved thumb",
                                      "Separately fitted sleeve", "Soft sleeve fold",
                                      "Finished wrist cuff", "Cuff saddle", "Working sleeve"))
-        is_head = any(group.name.startswith(("Peach complexion", "Hair |", "Cream beret"))
+        is_head = any(group.name.startswith(("Peach complexion", "Hair |"))
                       for group in obj.users_collection)
 
         def moved(co):
@@ -1224,7 +1242,7 @@ def fit_reference_pose(scene):
             continue
         world = obj.matrix_world.copy()
         local = world.inverted()
-        if any(group.name.startswith(("Peach complexion", "Hair |", "Cream beret"))
+        if any(group.name.startswith(("Peach complexion", "Hair |"))
                for group in obj.users_collection):
             region = "head"
         else:
@@ -1276,9 +1294,9 @@ def build():
                    material("Faded denim cuff", "557696", cloth=True),
                    material("Deep indigo seam", "344960"),material("Canvas topstitch", "b2956f"))
     groups = {
-        "hair":make_variant("Hair | airy lilac waves",hair,violet),
-        "seat":make_variant("Hair | fitted to beret",hair,violet,True),
-        "hat":make_variant("Cream beret",beret,ivory,material("Toasted wool edging","c9a991",cloth=True),gold),
+        "lilac_hair":make_variant("Hair | Lilac waves",hair,violet),
+        "beret_hair":make_variant("Hair | Cream beret waves",beret_hairstyle,violet,ivory,
+                                  material("Toasted wool edging","c9a991",cloth=True),gold),
         "hoodie":make_variant("Mint hoodie",hoodie,material("Sea-glass fleece","89b6a1", cloth=True),
             material("Mint rib knit","6c947e",cloth=True),material("Mint embroidery","bdd8bb"),ivory,gold),
         "coat":make_variant("Night coat",coat,material("Mulberry twill","653957",cloth=True),
@@ -1291,7 +1309,7 @@ def build():
         for collection in list(hem.users_collection):
             collection.objects.unlink(hem)
         groups["sneakers"].objects.link(hem)
-    for collection in (head, groups["hair"], groups["seat"], groups["hat"]):
+    for collection in (head, groups["lilac_hair"], groups["beret_hair"]):
         for obj in collection.objects:
             obj.location.z -= .074
     return groups
@@ -1313,7 +1331,7 @@ def main():
     add_outline(scene,args.draft)
     fit_pose()
     fit_reference_pose(scene)
-    select(groups, "hoodie", "hair", "boots")
+    select(groups, "hoodie", "beret_hair", "boots")
     if args.blend:
         args.blend.parent.mkdir(parents=True, exist_ok=True)
         for screen in bpy.data.screens:

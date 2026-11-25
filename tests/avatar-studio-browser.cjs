@@ -31,10 +31,13 @@ const engine = process.env.AVATAR_BROWSER || 'chromium';
     const ready = () => page.waitForSelector('.comparison[aria-busy="false"]');
     const select = (name, value) => page.locator(`label:has(input[name="${name}"][value="${value}"])`).click();
     await ready();
+    const hairChoices = page.getByRole('group', {name: '헤어', exact: true});
+    assert.equal(await hairChoices.getByRole('radio').count(), 2);
+    assert.equal(await page.locator('input[name="hat"]').count(), 0);
     const images = new Set();
-    for (const top of ['hoodie', 'coat']) for (const hat of ['beret', 'none']) for (const shoe of ['boots', 'sneakers']) {
+    for (const top of ['hoodie', 'coat']) for (const hair of ['beret', 'lilac']) for (const shoe of ['boots', 'sneakers']) {
       await select('top', top);
-      await select('hat', hat);
+      await select('hair', hair);
       await select('shoes', shoe);
       await ready();
       assert.equal(await page.locator('.failure:visible').count(), 0);
@@ -60,14 +63,22 @@ const engine = process.env.AVATAR_BROWSER || 'chromium';
         const exposedEar = fraction(294, 166, 8, 15, (red, blue, alpha) => alpha>160 && red>blue+45);
         const jawGap = fraction(302, 191, 15, 15, (_red, _blue, alpha) => alpha<150);
         const neckWidth = 64*fraction(300, 224, 64, 14, (red, blue, alpha) => alpha>190 && red>134 && red>blue+38);
+        const hasBeret = canvas => {
+          const {data} = canvas.getContext('2d').getImageData(200, 53, 250, 35);
+          let opaque = 0;
+          for (let i=3; i<data.length; i+=4) if (data[i]>190) opaque++;
+          return opaque > 100;
+        };
         return {hash: Array.from(hash).join(','), newPixels: rendered.pixels, oldPixels: read(current).pixels,
-          exposedEar, jawGap, neckWidth};
+          exposedEar, jawGap, neckWidth, studyBeret: hasBeret(study), artworkBeret: hasBeret(current)};
       });
       assert(result.newPixels > 60_000 && result.oldPixels > 60_000);
-      assert(result.exposedEar < .12, `${top}/${hat}: the side lock exposes the ear`);
-      assert(result.jawGap < .10, `${top}/${hat}: the side lock separates from the jaw`);
+      assert.equal(result.studyBeret, hair === 'beret', `${top}/${hair}: rendered headwear differs from the hairstyle`);
+      assert.equal(result.artworkBeret, hair === 'beret', `${top}/${hair}: reference headwear differs from the hairstyle`);
+      assert(result.exposedEar < .12, `${top}/${hair}: the side lock exposes the ear`);
+      assert(result.jawGap < .10, `${top}/${hair}: the side lock separates from the jaw`);
       assert(result.neckWidth >= 20 && result.neckWidth <= 36,
-        `${top}/${hat}: visible neck width drifted (${result.neckWidth.toFixed(1)}px)`);
+        `${top}/${hair}: visible neck width drifted (${result.neckWidth.toFixed(1)}px)`);
       images.add(result.hash);
     }
     assert.equal(images.size, 8, 'each outfit must change the pixels');
@@ -83,7 +94,7 @@ const engine = process.env.AVATAR_BROWSER || 'chromium';
     assert(Math.max(...boundaries)-Math.min(...boundaries) < 9, 'denim silhouette jumps at the split');
 
     await select('top', 'hoodie');
-    await select('hat', 'none');
+    await select('hair', 'lilac');
     await select('shoes', 'boots');
     await ready();
     const [artwork, study] = await page.evaluate(() => ['current','study'].map(id => {
@@ -127,7 +138,7 @@ const engine = process.env.AVATAR_BROWSER || 'chromium';
     }
 
     await select('top', 'coat');
-    await select('hat', 'beret');
+    await select('hair', 'beret');
     await select('shoes', 'boots');
     for (const view of ['head', 'top', 'feet']) {
       await select('view', view);
