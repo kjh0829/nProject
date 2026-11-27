@@ -1,10 +1,10 @@
 {
-  "attemptedAt": "2026-11-26T03:41:37.115129+00:00",
+  "attemptedAt": "2026-11-27T03:42:28.531914+00:00",
   "sources": {
     "fire": {
       "name": "Google 뉴스 · FIRE/경제적 자유",
       "feedUrl": "https://news.google.com/rss/search?q=FIRE%20%EA%B2%BD%EC%A0%9C%EC%A0%81%EC%9E%90%EC%9C%A0%20when%3A30d&hl=ko&gl=KR&ceid=KR:ko",
-      "updatedAt": "2026-11-26T03:41:37.115129+00:00",
+      "updatedAt": "2026-11-27T03:42:28.531914+00:00",
       "stale": false,
       "items": [
         {
@@ -15,7 +15,7 @@
         },
         {
           "title": "보증금 빼서 주식에...6억→13억, '파이어' 한 40대 투자 비결 - 머니투데이 - 머니투데이",
-          "url": "https://news.google.com/rss/articles/CBMidkFVX3lxTE5Md09fVUFDWkNQTXQ4ZjVpNXotbm1JdVh0M056NFRpbTZyaks0MlQzSmpjQVFrVjcxNkQxVURHbTNFRTNxa3ZNdDh4Qk5zR0JEVlU5MElEMDlOS1VUNUhPVFQwRnpBQk1zcG8tZ0tOQ0gwUTRiaXfSAXtBVV95cUxOQVBIZDJicXdMS1dIRUFGZEVkTEZhMVY2cUxCSGRubktsQW9OX1EtNzBHUGhrdVVwdXJpNlVVWGZqbnBaRDRfYUE1M2xTdmFlc1lnR2hOMGdxbDJ2T2NuMWJDMXJaMXhRWllFTTUteVo0b0tCdEwyYkJuWjg?oc=5",
+          "url": "https://news.google.com/rss/articles/CBMiaEFVX3lxTE1sZVVWbjVqMmg0TVBZUExaOWhrczQ5VEV3S0JPX3ZFZmlIeGUyQnR5a3NVengxeE5hMnowWWRlSzRLMUNlRFIxSzFCaWJUMjBHVllfMi1lS21BNWFUY1BSaDg1X2ZNaFlt0gFuQVVfeXFMT05MQkZGSmRYWWtmaERsZW43S21tamUtTFR0RkVRd3FsQnVWSlVlU285ZHh1bVFYWjc1TzNPbzNndzk5MThtZUxIRlBfNjhkbW8yQjIzUGdXNFhRSWw3cy1GQTY5d3dNOHR0Yi1BNlE?oc=5",
           "publisher": "머니투데이",
           "published": "Wed, 28 Oct 2026 07:00:00 GMT"
         },
@@ -30,7 +30,7 @@
     "discovery": {
       "name": "NASA · Image of the Day (영문)",
       "feedUrl": "https://www.nasa.gov/feeds/iotd-feed/",
-      "updatedAt": "2026-11-26T03:41:37.115129+00:00",
+      "updatedAt": "2026-11-27T03:42:28.531914+00:00",
       "stale": false,
       "items": [
         {
