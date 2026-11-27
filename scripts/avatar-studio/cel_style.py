@@ -279,7 +279,12 @@ def layered_hair_shader():
     return tree
 
 
+HAIR_MATTE = "Hair coverage"
+
+
 def style_materials():
+    hair_matte = bpy.context.view_layer.aovs.add()
+    hair_matte.name, hair_matte.type = HAIR_MATTE, "VALUE"
     group = studio_ink_shader()
     hair_group = layered_hair_shader()
     surfaces = {
@@ -301,6 +306,11 @@ def style_materials():
         if shader is None:
             continue
         kind = mat.get("studio_surface","matte")
+        if kind == "hair":
+            matte = tree.nodes.new("ShaderNodeOutputAOV")
+            matte.aov_name = HAIR_MATTE
+            matte.inputs["Value"].default_value = 1
+            matte.location = (0,-490)
         shadow,soft,shine,ink,color = surfaces[kind]
         cel = tree.nodes.new("ShaderNodeGroup")
         layered_hair = kind == "hair" and mat.get("painted_hair_masks",False)
@@ -334,20 +344,37 @@ def add_outline(scene, draft):
     tree = scene.node_tree
     tree.nodes.clear()
     render = tree.nodes.new("CompositorNodeRLayers")
-    expanded = tree.nodes.new("CompositorNodeDilateErode")
-    expanded.mode = "DISTANCE"
-    expanded.distance = 1 if draft else 2
-    tree.links.new(render.outputs["Alpha"],expanded.inputs[0])
+    def matte_math(operation, a, b, x, y):
+        node = tree.nodes.new("CompositorNodeMath")
+        node.operation, node.location = operation, (x,y)
+        set_socket(tree,a,node.inputs[0])
+        set_socket(tree,b,node.inputs[1])
+        return node.outputs[0]
+
+    def expand(matte, pixels, x, y):
+        node = tree.nodes.new("CompositorNodeDilateErode")
+        node.mode, node.distance, node.location = "DISTANCE", pixels, (x,y)
+        tree.links.new(matte,node.inputs[0])
+        return node.outputs[0]
+
+    # A two-pixel contour closes the spaces between fine flyaways. Give
+    # the visible hair its own softer ink while keeping the garment contour.
+    hair = render.outputs[HAIR_MATTE]
+    solid = matte_math("SUBTRACT",render.outputs["Alpha"],hair,-640,-60)
+    body_ink = expand(solid,1 if draft else 2,-420,-60)
+    hair_ink = expand(hair,1,-640,-230)
+    soft_ink = matte_math("MULTIPLY",hair_ink,.60,-420,-230)
+    outline = matte_math("MAXIMUM",body_ink,soft_ink,-220,-50)
     stroke = tree.nodes.new("CompositorNodeSetAlpha")
     stroke.mode = "REPLACE_ALPHA"
     stroke.inputs["Image"].default_value = (*linear("473347"),1)
-    tree.links.new(expanded.outputs[0],stroke.inputs["Alpha"])
+    tree.links.new(outline,stroke.inputs["Alpha"])
     layer = tree.nodes.new("CompositorNodeAlphaOver")
     layer.inputs[0].default_value = 1
     tree.links.new(stroke.outputs[0],layer.inputs[1])
     tree.links.new(render.outputs["Image"],layer.inputs[2])
     output = tree.nodes.new("CompositorNodeComposite")
     tree.links.new(layer.outputs[0],output.inputs[0])
-    for node,location in [(render,(-620,160)),(expanded,(-418,-15)),(stroke,(-207,-15)),
-                          (layer,(35,160)),(output,(247,160))]:
+    for node,location in [(render,(-880,160)),(stroke,(0,-20)),
+                          (layer,(220,160)),(output,(448,160))]:
         node.location = location

@@ -59,7 +59,9 @@ const engine = process.env.AVATAR_BROWSER || 'chromium';
           return count/(width*height);
         };
         // These landmarks belong to the fixed three-quarter camera. Sample
-        // the ear behind the near lock and the gap beside the lower jaw.
+        // the sweep across one brow, the ear behind it and the gap beside the jaw.
+        const nearFringe = fraction(322, 152, 10, 8, (red, blue, alpha) => alpha>190 && blue>60 && blue+12>red);
+        const openBrow = fraction(354, 157, 8, 6, (red, blue, alpha) => alpha>190 && red>134 && red>blue+38);
         const exposedEar = fraction(294, 166, 8, 15, (red, blue, alpha) => alpha>160 && red>blue+45);
         const jawGap = fraction(302, 191, 15, 15, (_red, _blue, alpha) => alpha<150);
         const neckWidth = 64*fraction(300, 224, 64, 14, (red, blue, alpha) => alpha>190 && red>134 && red>blue+38);
@@ -70,11 +72,13 @@ const engine = process.env.AVATAR_BROWSER || 'chromium';
           return opaque > 100;
         };
         return {hash: Array.from(hash).join(','), newPixels: rendered.pixels, oldPixels: read(current).pixels,
-          exposedEar, jawGap, neckWidth, studyBeret: hasBeret(study), artworkBeret: hasBeret(current)};
+          nearFringe, openBrow, exposedEar, jawGap, neckWidth, studyBeret: hasBeret(study), artworkBeret: hasBeret(current)};
       });
       assert(result.newPixels > 60_000 && result.oldPixels > 60_000);
       assert.equal(result.studyBeret, hair === 'beret', `${top}/${hair}: rendered headwear differs from the hairstyle`);
       assert.equal(result.artworkBeret, hair === 'beret', `${top}/${hair}: reference headwear differs from the hairstyle`);
+      assert(result.nearFringe > .72 && result.openBrow > .72,
+        `${top}/${hair}: expected the fringe to sweep over one brow and leave the other visible`);
       assert(result.exposedEar < .12, `${top}/${hair}: the side lock exposes the ear`);
       assert(result.jawGap < .10, `${top}/${hair}: the side lock separates from the jaw`);
       assert(result.neckWidth >= 20 && result.neckWidth <= 36,

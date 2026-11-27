@@ -314,9 +314,29 @@ def hair_strokes(obj, masks, columns, levels, phase):
                                 (vertex//columns)/(levels-1))
 
 
+def sample_hair_curve(rows, steps=4):
+    """Sample a cubic B-spline, retaining the endpoints of each tapered tip."""
+    first, last = rows[0], rows[-1]
+    # Extrapolate the two end controls so the first and last samples pass
+    # exactly through the root and tip, including their widths.
+    controls = [tuple(2*a-b for a,b in zip(first,rows[1])), *rows,
+                tuple(2*a-b for a,b in zip(last,rows[-2]))]
+    samples = []
+    for i in range(len(rows)-1):
+        for j in range(steps):
+            t = j/steps
+            weights = ((1-t)**3, 4-6*t*t+3*t**3, 1+3*t+3*t*t-3*t**3, t**3)
+            samples.append(tuple(sum(w*c for w,c in zip(weights,axis))/6
+                                 for axis in zip(*controls[i:i+4])))
+    return [*samples,last]
+
+
 def hair_lock(name, rows, material, palette, phase):
     """A shallow, slightly twisted ribbon with lengthwise painted fibres."""
     shade, tone, shine = palette
+    # Separate the paint resolution from the sculptor's control points, so
+    # a short glint or a curved parting does not smear across a whole lock.
+    rows = sample_hair_curve(rows)
     count = 48
     path = [portrait_point(x,depth,z) for x,depth,z,_,_ in rows]
     vertices, colors, masks = [], [], []
@@ -334,19 +354,34 @@ def hair_lock(name, rows, material, palette, phase):
             thickness = row[4]*facing*(.65+.35*exp(-((width-ridge_center)/.48)**2))
             depth = thickness + row[3]*width*twist
             vertices.append(center+across*(row[3]*width)+front*depth)
-            contour = .31+.58*light_side**.67
+            # A broad painted face with a narrow turned edge reads as one
+            # overlapping sheet, including on the small shoulder curls.
+            contour = .30+.62*smooth_range(light_side,.06,.64)
             variation = .05*cos(8.1*width+3*t+phase)*light_side
             tint = .065*smooth_range(t,.48,1)*light_side
-            colors.append(tuple(d+(b-d)*(contour+variation)+(h-b)*tint
-                                for d,b,h in zip(shade,tone,shine)))
             root = .54*exp(-((t+.03)/.245)**2)
             fold = .48*(1-light_side)**1.4
-            glint = exp(-((t-.34-.125*width-.052*sin(phase))/.092)**2)
+            part_line = exp(-((width-.54-.13*sin(4.2*t+phase))/.095)**2)
+            fold += .30*part_line*light_side*smooth_range(t,0,.17)*(1-smooth_range(t,.73,.99))
+            # Neighbouring sheets share a plane of light across the crown.
+            # The shoulder gets its own softer band where the wave turns.
+            x, _, z, _, _ = row
+            lit_height = 5.50-.14*x+.038*width+.015*sin(phase)
+            crown_glint = exp(-((z-lit_height)/.034)**2)
+            wave_glint = exp(-((z-4.54+.09*x+.035*width+.05*sin(phase))/.050)**2)
+            glint = max(crown_glint,.66*wave_glint)
+            # Paint a broken, narrow band into the pigment as well. Its
+            # colour still passes through the same cel light and fold shadow.
+            brush = exp(-((width+.18+.30*sin(phase+3*t))/.63)**2)
+            filament = exp(-((width+.50+.15*sin(phase+4*t))/.12)**2)
+            painted = glint*(.36*brush+.31*filament)*light_side
+            colors.append(tuple(d+(b-d)*(contour+variation-.14*part_line*light_side)
+                                +(h-b)*(tint+painted) for d,b,h in zip(shade,tone,shine)))
             end_glint = exp(-((t-.73+.092*width-.071*cos(phase))/.079)**2)
             break_up = .76+.24*cos(8.5*width+phase+2*t)
             fine_band = glint*exp(-((width+.20)/.51)**2)
             bright_core = glint*exp(-((width+.25)/.21)**2)
-            ribbon = (.39*glint*break_up+.49*bright_core+.15*end_glint)*light_side**1.35
+            ribbon = (.48*glint*break_up+.53*bright_core+.095*end_glint)*light_side**1.35
             strokes = (.045+.55*fine_band+.12*end_glint)*light_side**1.4
             masks.append((min(.91,root+fold),ribbon,strokes))
     faces = [tuple(reversed(range(count)))]
@@ -355,7 +390,7 @@ def hair_lock(name, rows, material, palette, phase):
             n = (k+1)%count
             faces.append(tuple(j*count+i for i in (k,n,n+count,k+count)))
     faces.append(tuple(range(len(vertices)-count,len(vertices))))
-    obj = mesh(name,vertices,faces,material,2)
+    obj = mesh(name,vertices,faces,material,1)
     color_attributes(obj,"Lilac pigments",colors)
     hair_strokes(obj,masks,count,len(rows),phase)
 
@@ -379,7 +414,7 @@ def feather_lock(label, rows, material, palettes, phase, tip_spread):
 def hair(materials, hatted=False):
     lock, fine = materials
     deep, violet, orchid, blush, silver = [linear(c) for c in
-         ("46354e","896b8d","9d80a5","b599b9","e8cbe3")]
+         ("49344e","907194","a886ac","bb97b9","edcde4")]
     def sculpt(label, rows, pale, phase, tip_spread=.063):
         main = (deep,orchid if pale else violet,silver)
         accent = (deep,blush if pale else orchid,silver)
@@ -444,11 +479,12 @@ def hair(materials, hatted=False):
     # The visible-side fringe crosses the temple and ear before curling over
     # the shoulder. Its front surface stays ahead of the ear around 5.04.
     temple_profile = [
-        (.207,.324,5.531,.061,.019),(.325,.358,5.341,.089,.027),
+        (.207,.184,5.490,.034,.014),(.325,.278,5.341,.080,.023),
         (.390,.322,5.177,.104,.033),(.343,.293,5.019,.132,.037),
-        (.325,.278,4.843,.109,.032),(.366,.308,4.692,.106,.029),
-        (.515,.343,4.550,.092,.026),(.564,.385,4.417,.071,.026),
-        (.484,.414,4.293,.053,.020),(.356,.389,4.235,.002,.003),
+        (.371,.304,4.853,.094,.029),(.274,.373,4.745,.090,.026),
+        (.231,.438,4.655,.084,.024),(.316,.471,4.566,.069,.021),
+        (.462,.463,4.471,.058,.019),(.497,.441,4.381,.033,.014),
+        (.426,.404,4.303,.002,.002),
     ]
     # A darker layer behind the neck connects the curls to the crown, with
     # enough space between its tapered ends for the shoulder to show.
@@ -490,19 +526,19 @@ def hair(materials, hatted=False):
                     z -= .101 if j==0 else .022
                 rows.append((side*(x+fall*fan+swing*bias)+eye_room,
                              depth+(.035*cos(i*1.24+fall*4.1)*fall),
-                             z+fall*lift,w,
+                             z+fall*lift,w*(1-.22*fall),
                              thickness*(.94 if i==1 else .84)))
             name = f"{'Near' if side < 0 else 'Far'} shoulder | {role} {i+1}"
             sculpt(name,rows,i in (1,3),i*.91+side*.31,tip_spread=.15 if i in (0,2) else .09)
         guide = [
-            (.468,.106,5.048),(.589,.146,4.886),(.738,.162,4.763),(.808,.199,4.644),
-            (.777,.247,4.535),(.668,.279,4.480)
+            (.468,.106,5.048),(.589,.146,4.886),(.792,.162,4.763),(.868,.199,4.644),
+            (.827,.247,4.535),(.668,.279,4.480)
         ] if side<0 else [
-            (.478,.128,4.977),(.555,.162,4.831),(.678,.197,4.732),(.772,.253,4.622),
-            (.756,.286,4.520),(.674,.326,4.451)
+            (.478,.128,4.977),(.555,.162,4.831),(.678,.197,4.732),(.826,.253,4.622),
+            (.818,.286,4.520),(.674,.326,4.451)
         ]
         strand("Off-silhouette hair accent", [portrait_point(side*x,d,z) for x,d,z in guide],
-               .0075,fine,radii=[.07,.61,.90,.74,.39,.03])
+               .007,fine,radii=[.10,.57,1,.72,.32,.025])
 
     shoulder_flick = [(-.410,.257,4.995,.014,.009),(-.419,.310,4.850,.034,.015),
                      (-.502,.358,4.718,.042,.017),(-.651,.369,4.588,.048,.018),
@@ -510,31 +546,52 @@ def hair(materials, hatted=False):
                      (-.792,.273,4.331,.002,.002)]
     hair_lock("Near shoulder | loose tapered lock",shoulder_flick,lock,(deep,blush,silver),1.91)
 
+    # The inner sheet closes the part down to the temple. Its front is
+    # behind both painted forelocks and in front of the forehead.
+    under_fringe = [
+        (.142,.195,5.663,.036,.012),(.082,.339,5.552,.116,.024),
+        (-.016,.412,5.442,.148,.024),(-.116,.436,5.340,.144,.021),
+        (-.205,.415,5.246,.113,.020),(-.275,.389,5.172,.074,.014),
+        (-.354,.341,5.101,.014,.006)]
+    if hatted:
+        under_fringe = [(.103,.226,5.44,.078,.015),(-.014,.347,5.366,.132,.019),
+                        (-.130,.398,5.278,.140,.019), *under_fringe[-3:]]
+    hair_lock("Forelock underpainting",under_fringe,lock,(deep,violet,orchid),1.69)
+
+    # A small lifted curl breaks the far temple silhouette. The narrow
+    # return touches the side mass again before it reaches the cheek.
+    temple_wisp = [(.340,.255,5.406,.017,.008),(.433,.292,5.318,.032,.012),
+                   (.508,.277,5.226,.030,.012),(.567,.248,5.136,.020,.009),
+                   (.598,.236,5.059,.014,.007),(.579,.254,5.002,.010,.005),
+                   (.519,.286,4.962,.002,.002)]
+    hair_lock("Far temple | returning wisp",temple_wisp,lock,(deep,violet,silver),2.20)
+
     if hatted:
         # Roots begin inside the band. The shallow section at the brim then
         # opens into a side sweep and ends above the eye, beside the temple.
         beret_fringe = [
-            [(.142,.269,5.451,.047,.016),(.103,.352,5.382,.068,.022),
-             (-.002,.412,5.330,.076,.025),(-.107,.441,5.274,.072,.022),
-             (-.201,.421,5.223,.054,.018),(-.285,.374,5.189,.034,.012),
-             (-.354,.321,5.136,.002,.002)],
-            [(.064,.241,5.447,.043,.016),(-.036,.345,5.397,.067,.020),
-             (-.157,.418,5.340,.063,.019),(-.252,.392,5.281,.044,.016),
-             (-.323,.334,5.237,.023,.011),(-.379,.291,5.197,.002,.002)],
-            [(.244,.233,5.458,.050,.018),(.282,.326,5.378,.079,.024),
+            [(.195,.248,5.460,.060,.013),(.143,.310,5.376,.105,.015),
+             (.078,.398,5.324,.116,.020),(-.020,.452,5.285,.118,.019),
+             (-.115,.444,5.218,.077,.016),(-.205,.410,5.166,.038,.010),
+             (-.287,.384,5.100,.003,.002)],
+            [(.238,.247,5.447,.036,.012),(.223,.316,5.358,.066,.015),
+             (.174,.421,5.281,.071,.019),(.101,.474,5.230,.053,.015),
+             (.028,.461,5.186,.025,.010),(-.034,.432,5.153,.002,.002)],
+            [(.230,.172,5.406,.025,.012),(.281,.283,5.326,.062,.020),
              (.351,.364,5.279,.075,.030),(.398,.335,5.176,.054,.023),
              (.407,.288,5.111,.026,.014),(.374,.269,5.067,.002,.002)],
         ]
         for i, rows in enumerate(beret_fringe):
-            sculpt(f"Fringe tucked under the beret | {i+1}",rows,i!=1,.56+i*1.24)
+            hair_lock(f"Beret fringe | {i+1}",rows,lock,(deep,orchid if i!=1 else blush,silver),.56+i*1.24)
         return
 
     bangs = [
        [(.094,.19,5.69,.065,.044),(-.039,.286,5.634,.115,.046),(-.208,.357,5.511,.108,.045),
         (-.344,.317,5.360,.098,.041),(-.443,.230,5.210,.070,.036),(-.434,.214,5.090,.034,.023),
         (-.363,.246,5.085,.002,.003)],
-       [(.111,.206,5.665,.048,.041),(.015,.365,5.574,.087,.042),(-.139,.422,5.452,.093,.040),
-        (-.257,.407,5.301,.074,.034),(-.33,.366,5.196,.044,.025),(-.385,.292,5.175,.002,.002)],
+       [(.095,.192,5.678,.033,.019),(.141,.308,5.592,.112,.024),(.108,.428,5.493,.156,.030),
+        (.047,.473,5.391,.152,.030),(-.031,.468,5.299,.128,.022),(-.134,.446,5.212,.080,.019),
+        (-.241,.409,5.145,.042,.013),(-.287,.371,5.055,.002,.002)],
        [(.103,.234,5.665,.035,.032),(.214,.337,5.575,.095,.043),(.311,.363,5.454,.110,.043),
         (.389,.342,5.316,.092,.044),(.434,.288,5.18,.049,.027),(.413,.267,5.071,.002,.002)],
        [(.116,.189,5.687,.025,.022),(.247,.255,5.624,.093,.056),(.381,.251,5.492,.112,.056),
@@ -546,13 +603,17 @@ def hair(materials, hatted=False):
         if i>=2:
             raw = [(x+.066*max(0,min(1,(5.49-z)/.20)),d,z,w*(.87 if j>2 else 1),depth)
                    for j,(x,d,z,w,depth) in enumerate(raw)]
+        x,d,z,_,_ = raw[0]
+        raw[0] = (x,d-.044,z-.048,.012,.008)
         sculpt("Fine side-swept fringe",raw,i in (0,2),.31+i*1.35)
 
-    loose_fringe = [(.123,.247,5.657,.019,.012),(.047,.366,5.581,.036,.018),
-        (-.082,.439,5.480,.050,.019),(-.171,.441,5.379,.043,.018),
-        (-.215,.421,5.295,.033,.016),(-.274,.380,5.229,.027,.014),
-        (-.343,.329,5.179,.016,.008),(-.402,.285,5.159,.002,.002)]
-    hair_lock("Light strand over the temple",loose_fringe,lock,(deep,blush,silver),.72)
+    # A convex forelock crosses the brow; the narrower tip turns back
+    # above the lashes. Its root sits in the same part as the broad sweep.
+    loose_fringe = [(.161,.188,5.664,.020,.012),(.193,.336,5.588,.062,.020),
+        (.177,.461,5.491,.079,.023),(.150,.503,5.391,.082,.021),
+        (.137,.499,5.309,.061,.019),(.121,.489,5.249,.036,.015),
+        (.086,.470,5.206,.018,.009),(.020,.452,5.162,.002,.002)]
+    hair_lock("Brow-skimming forelock",loose_fringe,lock,(deep,blush,silver),.72)
 
 
 def flower(name, x, y, z, r, petals, middle):
