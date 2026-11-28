@@ -93,6 +93,10 @@ def studio_ink_shader(tailored=False):
             (.88,(1.09,1.04,1.00)),(1,(1.15,1.10,1.05))
         ],"Broad light across the fabric")
         shade_filter = blend_colour(tree,"Contact and form light","MIX",.70,shade_filter,fill)
+        underfold = nodes.new("ShaderNodeAttribute")
+        underfold.attribute_name = "Drape shadow"
+        shade_filter = blend_colour(tree,"Turn under the draped cloth","MULTIPLY",
+                                    underfold.outputs["Fac"],shade_filter,(.48,.48,.59,1))
     paint = blend_colour(tree,"Light over pigment","MULTIPLY",panel["Shadows"],panel["Pigment"],shade_filter)
     lambert.location = (-1065,450)
     light.location = (-850,450)

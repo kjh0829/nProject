@@ -838,10 +838,10 @@ def sleeves(fabric, cuff, trim=None):
 # settles against the waist sooner than the closed fleece front.
 BODICE_SECTIONS = [
     # height, fleece ease, coat ease
-    (3.50,.000,.000), (3.64,.138,.031), (3.76,.199,.070),
-    (3.86,.220,.098), (3.96,.259,.165), (4.04,.323,.248),
-    (4.10,.328,.279), (4.16,.236,.251), (4.23,.142,.105),
-    (4.30,.067,.075), (4.39,.000,.000),
+    (3.50,.000,.000), (3.64,.067,.004), (3.76,.167,.085),
+    (3.86,.175,.089), (3.96,.206,.126), (4.04,.279,.211),
+    (4.10,.303,.250), (4.16,.247,.234), (4.23,.116,.166),
+    (4.30,.048,.088), (4.39,.000,.000),
 ]
 
 
@@ -851,12 +851,17 @@ def tailored_fold(point, angle, strength=1, coat=False):
     side = sin(angle)
     section = coat_section if coat else fleece_section
     ease, = section(z)
-    # The closer side faces the camera. Roll the fabric down and around
-    # it before it meets the waist, with a soft bridge across the front.
-    near = exp(-((side+.49)/.44)**2)
-    drape, = section(z+.090*near)
-    x += ease*(.50*side+.26*front+.26*smooth_range(side,-.2,.72))
-    y -= front*(.91*drape+.137*near*exp(-((z-3.92)/.25)**2))
+    # The outer edge is a shallow arc. Shape the visible front panel
+    # independently so its volume is still readable in the three-quarter view.
+    x += ease*(.47*side+.22*front+.20*smooth_range(side,-.2,.72))
+    panel = exp(-((side+.46)/.44)**2)
+    far_panel = exp(-((side-.40)/.47)**2)
+    roundness = exp(-((z-4.015-.070*side)/.188)**2)
+    y -= front*(.84*ease + roundness*(.171*panel+.060*far_panel))
+    # Cloth bridges the lower curve and picks up a diagonal tension fold
+    # where the near side seam turns towards the waist.
+    diagonal = (z-3.83+.12*side)/.082
+    y -= front*.033*panel*(exp(-diagonal**2)-.62*exp(-(diagonal+.94)**2))
     waist = exp(-((z-3.655)/.142)**2)
     x -= .023*side*waist
     y += .034*front*waist
@@ -875,6 +880,19 @@ def stitched_rows(rows, step=.035):
     return [(x,y,z,w,d) for z in (z0+(z1-z0)*i/round((z1-z0)/step)
                                      for i in range(round((z1-z0)/step)+1))
                          for x,y,w,d in [interpolate(coords,z)]]
+
+
+def paint_fabric_turn(obj):
+    """Carry a soft underfold across the sewn panels in pattern coordinates."""
+    shade = obj.data.attributes.new("Drape shadow", "FLOAT", "POINT")
+    for vertex, sample in zip(obj.data.vertices, shade.data):
+        x,y,z = vertex.co
+        # The cloth tucks into the near side seam and hangs lower at centre.
+        height = 3.887 + .132*((x+.11)/.43)**2 + .14*x
+        below = exp(-((z-height)/.082)**2)
+        near_side = exp(-((x+.19)/.39)**2)
+        facing = smooth_range(-y,-.02,.27)
+        sample.value = .74*below*near_side*facing
 
 
 def garment_front(obj):
@@ -898,7 +916,8 @@ def garment_front(obj):
 def hoodie(fabric, rib, seam, lining, gold):
     rows = TORSO + [(0,-.011,4.420,.154,.149),(0,-.015,4.443,.121,.123)]
     body = rings("Mint fleece with diagonal folds",stitched_rows(rows),fabric,
-                 cap=False,sculpt=tailored_fold,smooth=1)
+                 count=64,cap=False,sculpt=tailored_fold,smooth=1)
+    paint_fabric_turn(body)
     surface = garment_front(body)
     pocket = [(3.438,.235),(3.467,.242),(3.530,.222),(3.613,.198),(3.658,.150)]
     count = 15
@@ -952,8 +971,9 @@ def hoodie(fabric, rib, seam, lining, gold):
 def coat(fabric, lapel, inner, gold, thread):
     rows = [(x,y,z,w*.93,d*.95) for x,y,z,w,d in TORSO] + [
         (0,-.008,4.433,.158,.147),(0,-.016,4.467,.131,.131)]
-    rings("Cream knit with pressed neckline", stitched_rows(rows), inner, cap=False,
+    bodice = rings("Cream knit with pressed neckline", stitched_rows(rows), inner, count=64, cap=False,
           sculpt=lambda point,angle: tailored_fold(point,angle,coat=True), smooth=1)
+    paint_fabric_turn(bodice)
     rings("Folded knit collar around neck", [(0,-.016,4.446,.155,.147),
           (0,-.016,4.474,.139,.140),(0,-.017,4.504,.130,.127),
           (0,-.017,4.509,.115,.116)], inner, cap=False, smooth=1)
@@ -971,7 +991,8 @@ def coat(fabric, lapel, inner, gold, thread):
         return x+sin(angle)*wave-sweep*.52, y-cos(angle)*wave+sweep, z
 
     obj = rings("Tailored night coat with draped skirt", stitched_rows(rows), fabric,
-                start=.42, stop=2*pi-.42, cap=False, sculpt=coat_fold, smooth=1)
+                start=.42, stop=2*pi-.42, count=64, cap=False, sculpt=coat_fold, smooth=1)
+    paint_fabric_turn(obj)
     thickness = obj.modifiers.new("Visible hem and lining", "SOLIDIFY")
     thickness.thickness = .021
     profile = [(z,x,y,w,d) for x,y,z,w,d in rows]
@@ -1007,6 +1028,7 @@ def coat(fabric, lapel, inner, gold, thread):
                     faces.append(quad if side>0 else quad[::-1])
             edge_points.append(vertices[-1])
         panel = mesh("Notched folded lapel",vertices,faces,lapel)
+        paint_fabric_turn(panel)
         lining = panel.modifiers.new("Folded edge thickness","SOLIDIFY")
         lining.thickness = .010
         strand("Notch and lapel topstitch",[(x,y-.005,z) for x,y,z in edge_points],
@@ -1376,7 +1398,7 @@ def fit_reference_pose(scene):
             lifted += (y_fit-6-lifted)*smooth_range(y,330,545)
             if side > 0:
                 # The far sleeve passes behind the rib cage in this pose.
-                x_fit -= 9*exp(-((lifted-370)/38)**2)
+                x_fit -= 13*exp(-((lifted-365)/39)**2)
         # The far shoulder falls away in this three-quarter pose. Shape
         # sleeves, seams and torso together, fading back into the upper arm.
         shoulder = smooth_range(lifted,227,258)*(1-smooth_range(lifted,296,363))
