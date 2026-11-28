@@ -44,8 +44,9 @@ def blend_colour(tree, label, operation, weight, base, layer):
     return node.outputs[0]
 
 
-def studio_ink_shader():
-    tree = shader_group("Wardrobe cel shading", (
+def studio_ink_shader(tailored=False):
+    name = "Draped fabric light" if tailored else "Wardrobe cel shading"
+    tree = shader_group(name, (
         ("Surface", "OUTPUT", "NodeSocketShader"),
         ("Pigment", "INPUT", "NodeSocketColor"),
         ("Shadows", "INPUT", "NodeSocketFloat"),
@@ -80,6 +81,18 @@ def studio_ink_shader():
         (0,(.60,.50,.63)),(.67,(1.04,1.01,1.0)),(1,(1.08,1.045,1.02))
     ],"Soft light for painted skin")
     shade_filter = blend_colour(tree,"Blend the shadow edge","MIX",panel["Soft shadows"],brightness,smooth_light)
+    geometry = nodes.new("ShaderNodeNewGeometry").outputs
+    normal, eye = geometry["Normal"], geometry["Incoming"]
+    if tailored:
+        # A broad studio key rolls continuously around the cloth. Keep
+        # part of the scene light for contact shadows under cords and lapels.
+        aim = math_node("DOT_PRODUCT",normal,(-.69,-.33,.644),vector=True)
+        wrap = math_node("ADD",math_node("MULTIPLY",aim,.5),.5)
+        fill = tone_curve(tree,wrap,[
+            (0,(.36,.30,.39)),(.39,(.55,.49,.55)),(.67,(.87,.83,.85)),
+            (.88,(1.09,1.04,1.00)),(1,(1.15,1.10,1.05))
+        ],"Broad light across the fabric")
+        shade_filter = blend_colour(tree,"Contact and form light","MIX",.70,shade_filter,fill)
     paint = blend_colour(tree,"Light over pigment","MULTIPLY",panel["Shadows"],panel["Pigment"],shade_filter)
     lambert.location = (-1065,450)
     light.location = (-850,450)
@@ -89,8 +102,6 @@ def studio_ink_shader():
     shade_filter.node.location = (-125,540)
     paint.node.location = (70,540)
 
-    geometry = nodes.new("ShaderNodeNewGeometry").outputs
-    normal, eye = geometry["Normal"], geometry["Incoming"]
     def dot(a,b):
         return math_node("DOT_PRODUCT",a,b,vector=True)
 
@@ -286,6 +297,7 @@ def style_materials():
     hair_matte = bpy.context.view_layer.aovs.add()
     hair_matte.name, hair_matte.type = HAIR_MATTE, "VALUE"
     group = studio_ink_shader()
+    clothing_group = studio_ink_shader(tailored=True)
     hair_group = layered_hair_shader()
     surfaces = {
         # Shadow amount, softness, physical sheen, coloured rim strength.
@@ -315,7 +327,9 @@ def style_materials():
         shadow,soft,shine,ink,color = surfaces[kind]
         cel = tree.nodes.new("ShaderNodeGroup")
         layered_hair = kind == "hair" and mat.get("painted_hair_masks",False)
-        cel.node_tree = hair_group if layered_hair else group
+        cel.node_tree = clothing_group if kind=="tailored cloth" else group
+        if layered_hair:
+            cel.node_tree = hair_group
         cel.label = "Layered hair paint" if layered_hair else "Cartoon paint and lighting"
         cel.location = (shader.location.x+280,shader.location.y)
         base = shader.inputs["Base Color"]

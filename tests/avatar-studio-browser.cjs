@@ -70,10 +70,15 @@ const engine = process.env.AVATAR_BROWSER || 'chromium';
           };
           return {pixels, data, wave: average([209,215,221],width),
             shoulders: average([290,300,310],width), hips: average([515,530,545,560],hipWidth),
+            // Track the entire upper and lower turn. A pointed front can
+            // still have the same maximum extent as the reference.
+            chestProfile: Array.from({length:48},(_,i) => rightEdge(309+i)),
             chestArc: average([332,336,340],rightEdge)-average([358,362,366],rightEdge)};
         };
         const rendered = read(study);
         const reference = read(current);
+        const contourError = rendered.chestProfile.reduce((sum,x,i) =>
+          sum+Math.abs(x-reference.chestProfile[i]),0)/rendered.chestProfile.length;
         const hash = new Uint8Array(await crypto.subtle.digest('SHA-256', rendered.data));
         const fraction = (x, y, width, height, matches) => {
           const {data} = study.getContext('2d').getImageData(x, y, width, height);
@@ -96,13 +101,14 @@ const engine = process.env.AVATAR_BROWSER || 'chromium';
         };
         return {hash: Array.from(hash).join(','), newPixels: rendered.pixels, oldPixels: reference.pixels,
           waveRatio: rendered.wave/reference.wave, shoulderRatio: rendered.shoulders/reference.shoulders,
-          hipRatio: rendered.hips/reference.hips, chestArcError: Math.abs(rendered.chestArc-reference.chestArc),
+          contourError, hipRatio: rendered.hips/reference.hips, chestArcError: Math.abs(rendered.chestArc-reference.chestArc),
           nearFringe, openBrow, exposedEar, jawGap, neckWidth, studyBeret: hasBeret(study), artworkBeret: hasBeret(current)};
       });
       assert(result.newPixels > 60_000 && result.oldPixels > 60_000);
       assert(Math.abs(result.waveRatio-1) < .10, `${top}/${hair}: wave width differs from the artwork`);
       assert(Math.abs(result.shoulderRatio-1) < .10, `${top}/${hair}: shoulder width differs from the artwork`);
       assert(Math.abs(result.hipRatio-1) < .09, `${top}/${hair}: hip silhouette differs from the artwork`);
+      assert(result.contourError < 2.5, `${top}/${hair}: bodice contour differs by ${result.contourError.toFixed(1)}px on average`);
       assert(result.chestArcError < 9, `${top}/${hair}: front bodice lost its curve`);
       assert.equal(result.studyBeret, hair === 'beret', `${top}/${hair}: rendered headwear differs from the hairstyle`);
       assert.equal(result.artworkBeret, hair === 'beret', `${top}/${hair}: reference headwear differs from the hairstyle`);

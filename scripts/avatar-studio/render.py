@@ -833,25 +833,36 @@ def sleeves(fabric, cuff, trim=None):
         mark_region(before, "arm", side)
 
 
-def tailored_fold(point, angle, strength=1, chest_ease=1):
+# Additional room across successive horizontal sections of the dress form.
+# Both garments turn gradually under the rib cage. The open, tailored coat
+# settles against the waist sooner than the closed fleece front.
+BODICE_SECTIONS = [
+    # height, fleece ease, coat ease
+    (3.50,.000,.000), (3.64,.138,.031), (3.76,.199,.070),
+    (3.86,.220,.098), (3.96,.259,.165), (4.04,.323,.248),
+    (4.10,.328,.279), (4.16,.236,.251), (4.23,.142,.105),
+    (4.30,.067,.075), (4.39,.000,.000),
+]
+
+
+def tailored_fold(point, angle, strength=1, coat=False):
     x,y,z = point
-    # The cloth bridges the chest, turns under the rib cage and relaxes at
-    # the waist. Use the same dress form for the knit, fleece and coat.
     front = max(0, cos(angle))
     side = sin(angle)
-    crest = 4.025+.075*side
-    chest = chest_ease*exp(-((z-crest)/.245)**2)
-    # The cross-section rounds on either side of the sternum. Give the
-    # side seam some ease and let the fabric bridge the centre softly.
-    rounded = exp(-((abs(side)-.54)/.38)**2)
-    x += chest*(.116*side+.055*front+.138*smooth_range(side,-.2,.72))
-    y -= chest*front*(.180+.118*rounded)
+    section = coat_section if coat else fleece_section
+    ease, = section(z)
+    # The closer side faces the camera. Roll the fabric down and around
+    # it before it meets the waist, with a soft bridge across the front.
+    near = exp(-((side+.49)/.44)**2)
+    drape, = section(z+.090*near)
+    x += ease*(.50*side+.26*front+.26*smooth_range(side,-.2,.72))
+    y -= front*(.91*drape+.137*near*exp(-((z-3.92)/.25)**2))
     waist = exp(-((z-3.655)/.142)**2)
     x -= .023*side*waist
     y += .034*front*waist
     pucker = 0
     for center, bias, span, height in ((3.49,.22,.043,.023),(3.61,-.26,.038,.021),
-                                      (3.75,-.31,.038,.022),(4.08,.17,.055,.013)):
+                                      (3.74,-.38,.058,.015),(4.08,.22,.072,.004)):
         t = (z-center + bias*x)/span
         pucker += height*(exp(-t*t) - .66*exp(-(t-1.23)**2))
     pucker *= max(0, cos(angle))**.8 * strength
@@ -942,7 +953,7 @@ def coat(fabric, lapel, inner, gold, thread):
     rows = [(x,y,z,w*.93,d*.95) for x,y,z,w,d in TORSO] + [
         (0,-.008,4.433,.158,.147),(0,-.016,4.467,.131,.131)]
     rings("Cream knit with pressed neckline", stitched_rows(rows), inner, cap=False,
-          sculpt=lambda point,angle: tailored_fold(point,angle,chest_ease=.75), smooth=1)
+          sculpt=lambda point,angle: tailored_fold(point,angle,coat=True), smooth=1)
     rings("Folded knit collar around neck", [(0,-.016,4.446,.155,.147),
           (0,-.016,4.474,.139,.140),(0,-.017,4.504,.130,.127),
           (0,-.017,4.509,.115,.116)], inner, cap=False, smooth=1)
@@ -953,7 +964,7 @@ def coat(fabric, lapel, inner, gold, thread):
         (0,.024,4.284,.510,.241),(0,.023,4.356,.417,.219),(0,.014,4.440,.214,.173)
     ]
     def coat_fold(point, angle):
-        x,y,z = tailored_fold(point, angle, strength=.44, chest_ease=.75)
+        x,y,z = tailored_fold(point, angle, strength=.44, coat=True)
         flex = max(0,min(1,(3.5-z)/1.48))
         wave = (.042*sin(5*angle+.55) + .018*sin(10*angle))*flex
         sweep = (.071+.080*sin(angle-.46))*flex*flex
@@ -1271,6 +1282,10 @@ def smooth_profile(rows):
                      for v,m in zip(columns, tangents))
 
     return sample
+
+
+fleece_section = smooth_profile([(z,fleece) for z,fleece,_ in BODICE_SECTIONS])
+coat_section = smooth_profile([(z,coat) for z,_,coat in BODICE_SECTIONS])
 
 
 def fit_reference_pose(scene):
