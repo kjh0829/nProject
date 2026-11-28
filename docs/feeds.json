@@ -1,10 +1,10 @@
 {
-  "attemptedAt": "2026-11-27T03:42:28.531914+00:00",
+  "attemptedAt": "2026-11-28T03:26:27.952703+00:00",
   "sources": {
     "fire": {
       "name": "Google 뉴스 · FIRE/경제적 자유",
       "feedUrl": "https://news.google.com/rss/search?q=FIRE%20%EA%B2%BD%EC%A0%9C%EC%A0%81%EC%9E%90%EC%9C%A0%20when%3A30d&hl=ko&gl=KR&ceid=KR:ko",
-      "updatedAt": "2026-11-27T03:42:28.531914+00:00",
+      "updatedAt": "2026-11-28T03:26:27.952703+00:00",
       "stale": false,
       "items": [
         {
@@ -14,30 +14,30 @@
           "published": "Mon, 02 Nov 2026 08:00:00 GMT"
         },
         {
-          "title": "보증금 빼서 주식에...6억→13억, '파이어' 한 40대 투자 비결 - 머니투데이 - 머니투데이",
-          "url": "https://news.google.com/rss/articles/CBMiaEFVX3lxTE1sZVVWbjVqMmg0TVBZUExaOWhrczQ5VEV3S0JPX3ZFZmlIeGUyQnR5a3NVengxeE5hMnowWWRlSzRLMUNlRFIxSzFCaWJUMjBHVllfMi1lS21BNWFUY1BSaDg1X2ZNaFlt0gFuQVVfeXFMT05MQkZGSmRYWWtmaERsZW43S21tamUtTFR0RkVRd3FsQnVWSlVlU285ZHh1bVFYWjc1TzNPbzNndzk5MThtZUxIRlBfNjhkbW8yQjIzUGdXNFhRSWw3cy1GQTY5d3dNOHR0Yi1BNlE?oc=5",
-          "publisher": "머니투데이",
-          "published": "Wed, 28 Oct 2026 07:00:00 GMT"
-        },
-        {
           "title": "매년 2500만원 주식 팔아 생활비로…16억 모은 30대의 은퇴 전략 - 머니투데이 - 머니투데이",
           "url": "https://news.google.com/rss/articles/CBMiaEFVX3lxTE5SXzQ1QkZLYkpIb19heGFkbnV2MnpUODhJZFVPamUwMXlUb0Fya0lrUG55OUM1UDB5Y2RNUnItTjRDX3ktQVR2LUFTY2pGcEpmSWFHYno3S0QxOXlseHVIY1BqOVJiY3Ew0gFuQVVfeXFMUGdpY3ZiZkJibEg4TVJBQldCT1psNUlYLXluRktQdlNxWFdMdVJBaGwtTjFCZFVpSlBqOEJlU204dUFWVjQ1Mk1uN004eGZFbWNaUkdObVNndWxkeTVLMGVyRmZpME03b05rS0NIOHc?oc=5",
           "publisher": "머니투데이",
           "published": "Wed, 18 Nov 2026 21:00:00 GMT"
+        },
+        {
+          "title": "2000만원→4억 만든 직장인…비결은 \"매달 부업 500만원 몽땅 투자\" - 머니투데이 - 머니투데이",
+          "url": "https://news.google.com/rss/articles/CBMiaEFVX3lxTE84elUtNFdhTVotaUxGbXNBWi1hc1dCY0JxVDdEcnZ3d2tzOWl5c0MtVUdXbTM2OVZaRVdJNk5vd081eGU0WVdmZklEMWM5Qi1FUVp1MEkwRVlTMk1pTTlkNU1ZZFhKbUJv0gFuQVVfeXFMT0twMW9kT3FpU3Nvcng3U2JzY0g5NnUxMElwRk9XeWpFdnQ1Q3RfLXdHR2g3U0Fic0ZmWGQ2SWs3SVJROElIRHZaX2s5REkyZUtNZVFCM0VEdGZ0UTZlOU1LOEZjTXdxdTF5a1dtREE?oc=5",
+          "publisher": "머니투데이",
+          "published": "Sat, 28 Nov 2026 01:37:28 GMT"
         }
       ]
     },
     "discovery": {
       "name": "NASA · Image of the Day (영문)",
       "feedUrl": "https://www.nasa.gov/feeds/iotd-feed/",
-      "updatedAt": "2026-11-27T03:42:28.531914+00:00",
+      "updatedAt": "2026-11-28T03:26:27.952703+00:00",
       "stale": false,
       "items": [
         {
-          "title": "Eye of the Sahara",
-          "url": "https://www.nasa.gov/image-detail/iss075e0274930/",
+          "title": "Artemis III Astronaut Andre Douglas Visits VAB",
+          "url": "https://www.nasa.gov/image-detail/afs-8-101-1328/",
           "publisher": "NASA Image of the Day",
-          "published": "Wed, 25 Nov 2026 16:22 GMT"
+          "published": "Fri, 27 Nov 2026 15:02 GMT"
         }
       ]
     }
