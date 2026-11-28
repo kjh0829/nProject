@@ -293,6 +293,7 @@ def style_materials():
         "skin": (.68,0,.021,.22,"ffd6bc"),
         "neck": (.61,.52,.017,.17,"ffd6bc"),
         "cloth": (.87,0,.055,.34,"ddd8f1"),
+        "tailored cloth": (.92,.59,.075,.26,"f0dde6"),
         "hair": (.65,.23,.026,.23,"e8d2ff"),
         "metal": (.87,0,.80,.30,"ffe5a1"),
         "leather": (.83,0,.19,.35,"fff4e3"),

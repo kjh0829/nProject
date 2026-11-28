@@ -48,14 +48,29 @@ const engine = process.env.AVATAR_BROWSER || 'chromium';
           const {data} = canvas.getContext('2d').getImageData(0, 0, canvas.width, canvas.height);
           let pixels = 0;
           for (let i = 3; i < data.length; i += 4) if (data[i] > 200) pixels++;
-          const meanWidth = rows => rows.reduce((sum, y) => {
-            const rowAlpha = x => data[(y*canvas.width+x)*4+3];
-            let left = 0, right = canvas.width-1;
-            while (left <= right && rowAlpha(left) <= 190) left++;
-            while (right >= left && rowAlpha(right) <= 190) right--;
-            return sum+Math.max(0,right-left);
-          }, 0)/rows.length;
-          return {pixels, data, wave: meanWidth([209,215,221]), shoulders: meanWidth([290,300,310])};
+          const opaque = (x,y) => data[(y*canvas.width+x)*4+3]>190;
+          const average = (rows, measure) => rows.reduce((sum,y) => sum+measure(y),0)/rows.length;
+          const rightEdge = y => {
+            let x = canvas.width-1;
+            while (x>=0 && !opaque(x,y)) x--;
+            return x;
+          };
+          const width = y => {
+            let left = 0;
+            while (left<canvas.width && !opaque(left,y)) left++;
+            return Math.max(0,rightEdge(y)-left);
+          };
+          // At hip level the arms are separate islands. Follow only the
+          // opaque garment or denim crossing the centre of the fixed camera.
+          const hipWidth = y => {
+            let left = 340, right = 340;
+            while (left>0 && opaque(left-1,y)) left--;
+            while (right<canvas.width-1 && opaque(right+1,y)) right++;
+            return right-left;
+          };
+          return {pixels, data, wave: average([209,215,221],width),
+            shoulders: average([290,300,310],width), hips: average([515,530,545,560],hipWidth),
+            chestArc: average([332,336,340],rightEdge)-average([358,362,366],rightEdge)};
         };
         const rendered = read(study);
         const reference = read(current);
@@ -81,11 +96,14 @@ const engine = process.env.AVATAR_BROWSER || 'chromium';
         };
         return {hash: Array.from(hash).join(','), newPixels: rendered.pixels, oldPixels: reference.pixels,
           waveRatio: rendered.wave/reference.wave, shoulderRatio: rendered.shoulders/reference.shoulders,
+          hipRatio: rendered.hips/reference.hips, chestArcError: Math.abs(rendered.chestArc-reference.chestArc),
           nearFringe, openBrow, exposedEar, jawGap, neckWidth, studyBeret: hasBeret(study), artworkBeret: hasBeret(current)};
       });
       assert(result.newPixels > 60_000 && result.oldPixels > 60_000);
       assert(Math.abs(result.waveRatio-1) < .10, `${top}/${hair}: wave width differs from the artwork`);
       assert(Math.abs(result.shoulderRatio-1) < .10, `${top}/${hair}: shoulder width differs from the artwork`);
+      assert(Math.abs(result.hipRatio-1) < .09, `${top}/${hair}: hip silhouette differs from the artwork`);
+      assert(result.chestArcError < 9, `${top}/${hair}: front bodice lost its curve`);
       assert.equal(result.studyBeret, hair === 'beret', `${top}/${hair}: rendered headwear differs from the hairstyle`);
       assert.equal(result.artworkBeret, hair === 'beret', `${top}/${hair}: reference headwear differs from the hairstyle`);
       assert(result.nearFringe > .72 && result.openBrow > .72,

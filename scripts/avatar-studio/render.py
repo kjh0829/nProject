@@ -833,8 +833,22 @@ def sleeves(fabric, cuff, trim=None):
         mark_region(before, "arm", side)
 
 
-def tailored_fold(point, angle, strength=1):
+def tailored_fold(point, angle, strength=1, chest_ease=1):
     x,y,z = point
+    # The cloth bridges the chest, turns under the rib cage and relaxes at
+    # the waist. Use the same dress form for the knit, fleece and coat.
+    front = max(0, cos(angle))
+    side = sin(angle)
+    crest = 4.025+.075*side
+    chest = chest_ease*exp(-((z-crest)/.245)**2)
+    # The cross-section rounds on either side of the sternum. Give the
+    # side seam some ease and let the fabric bridge the centre softly.
+    rounded = exp(-((abs(side)-.54)/.38)**2)
+    x += chest*(.116*side+.055*front+.138*smooth_range(side,-.2,.72))
+    y -= chest*front*(.180+.118*rounded)
+    waist = exp(-((z-3.655)/.142)**2)
+    x -= .023*side*waist
+    y += .034*front*waist
     pucker = 0
     for center, bias, span, height in ((3.49,.22,.043,.023),(3.61,-.26,.038,.021),
                                       (3.75,-.31,.038,.022),(4.08,.17,.055,.013)):
@@ -893,18 +907,21 @@ def hoodie(fabric, rib, seam, lining, gold):
         strand("Topstitch following the pocket",
                [surface(side*(w-.030),z+.006,.020) for z,w in pocket[1:-1]],.0034,seam,
                radii=[.20,1,.23])
-        cord = [surface(side*x,z,relief) for x,z,relief in [
-            (.102,4.312,.018),(.104,4.229,.036),(.096,4.079,.032),
-            (.110,3.990+side*.029,.029)
-        ]]
+        cord_path = [(3.875+side*.023,.110,.018),(3.956,.110,.025),
+                     (4.079,.096,.032),(4.229,.104,.036),(4.312,.102,.018)]
+        cord = []
+        for i in range(21):
+            z = 4.312+(cord_path[0][0]-4.312)*i/20
+            x,relief = interpolate(cord_path,z)
+            cord.append(surface(side*x,z,relief))
         x,y,z = cord[0]
         sphere("Hood eyelet rim",(x,y+.008,z),(.019,.010,.017),rib)
-        strand("Cotton drawcord",cord,.0085,lining,radii=[.64,1,.94,.77])
+        strand("Cotton drawcord",cord,.0085,lining,radii=[.70]+[1]*(len(cord)-2)+[.80])
         x,y,z = cord[-1]
         sphere("Drawcord cap",(x,y,z-.012),(.010,.010,.022),gold)
     strand("Pocket lower seam",[surface(x,3.445,.013) for x in (-.23,-.115,0,.115,.23)],
            .005,rib,radii=[.35,.9,1,.9,.35])
-    flower("Hoodie blossom embroidery",*surface(.283,3.971,.009),.032,seam,lining)
+    flower("Hoodie blossom embroidery",*surface(.225,4.174,.009),.032,seam,lining)
 
     sleeves(fabric,rib)
     rows = [(0,.042,3.253,.397,.243),(0,.043,3.273,.421,.264),
@@ -925,7 +942,7 @@ def coat(fabric, lapel, inner, gold, thread):
     rows = [(x,y,z,w*.93,d*.95) for x,y,z,w,d in TORSO] + [
         (0,-.008,4.433,.158,.147),(0,-.016,4.467,.131,.131)]
     rings("Cream knit with pressed neckline", stitched_rows(rows), inner, cap=False,
-          sculpt=tailored_fold, smooth=1)
+          sculpt=lambda point,angle: tailored_fold(point,angle,chest_ease=.75), smooth=1)
     rings("Folded knit collar around neck", [(0,-.016,4.446,.155,.147),
           (0,-.016,4.474,.139,.140),(0,-.017,4.504,.130,.127),
           (0,-.017,4.509,.115,.116)], inner, cap=False, smooth=1)
@@ -936,7 +953,7 @@ def coat(fabric, lapel, inner, gold, thread):
         (0,.024,4.284,.510,.241),(0,.023,4.356,.417,.219),(0,.014,4.440,.214,.173)
     ]
     def coat_fold(point, angle):
-        x,y,z = tailored_fold(point, angle, .44)
+        x,y,z = tailored_fold(point, angle, strength=.44, chest_ease=.75)
         flex = max(0,min(1,(3.5-z)/1.48))
         wave = (.042*sin(5*angle+.55) + .018*sin(10*angle))*flex
         sweep = (.071+.080*sin(angle-.46))*flex*flex
@@ -959,15 +976,30 @@ def coat(fabric, lapel, inner, gold, thread):
 
     sleeves(fabric,lapel,gold)
     for side in (-1,1):
-        # Narrow at the collar, with a short hard notch before the long lapel.
-        pattern = [(.101,4.438),(.276,4.312),(.226,4.216),(.334,4.186),
-                   (.241,3.990),(.157,3.740),(.130,3.790),(.118,3.990),(.107,4.292)]
-        path = [folded_at(side*x,z,.023 if i in (1,3,4) else .014)
-                for i,(x,z) in enumerate(pattern)]
-        inset_panel("Notched folded lapel",path,lapel,.015)
-        stroke = [(x,y-.006,z) for x,y,z in path[:6]]
-        strand("Notch and lapel topstitch",stroke,.0055,thread,handles="VECTOR",
-               radii=[.23,.85,.90,1,.74,.13])
+        # Fit the lapel over the curved coat front at every level. The
+        # clipped notch and long outer fold follow the same surface as the seam.
+        pattern = [(3.740,.156,.157),(3.790,.130,.176),(3.990,.118,.241),
+                   (4.186,.111,.334),(4.216,.110,.226),(4.312,.107,.276),
+                   (4.438,.100,.101)]
+        levels = sorted({z for z,_,_ in pattern} |
+                        {3.74+i*.022 for i in range(1,32)})
+        vertices, faces, edge_points = [], [], []
+        for j,z in enumerate(levels):
+            inner_x,outer_x = interpolate(pattern,z)
+            for k in range(7):
+                t = k/6
+                x = side*(inner_x+(outer_x-inner_x)*t)
+                vertices.append(folded_at(x,z,.019+.016*sin(pi*t)))
+                if j and k:
+                    i = len(vertices)-1
+                    quad = (i-8,i-7,i,i-1)
+                    faces.append(quad if side>0 else quad[::-1])
+            edge_points.append(vertices[-1])
+        panel = mesh("Notched folded lapel",vertices,faces,lapel)
+        lining = panel.modifiers.new("Folded edge thickness","SOLIDIFY")
+        lining.thickness = .010
+        strand("Notch and lapel topstitch",[(x,y-.005,z) for x,y,z in edge_points],
+               .0045,thread,handles="VECTOR")
         strand("Bound coat opening",[seam_at(side*.425,z,.005)
                for z in (3.754,3.54,3.26,2.93,2.60,2.34,2.157)],.009,lapel,
                radii=[.4,.85,.96,1,.91,.83,.30])
@@ -1316,6 +1348,10 @@ def fit_reference_pose(scene):
         lifted, = silhouette_height(y_fit)
         fitted_width, fitted_depth = tailoring(lifted)
         x_fit = axis_fit+(x_fit-axis_fit)*width_factor*fitted_width
+        if region != "arm":
+            hip = smooth_range(lifted,444,531)*(1-smooth_range(lifted,560,634))
+            x_fit += ((x_fit-axis_fit)*.095-3)*hip
+            fitted_depth += .075*hip
         # Use the same depth adjustment for the body and its clothing so
         # pocket, cuff, and lapel surfaces still meet their matching base.
         depth_axis = (inverse @ Vector((0,.04,point.z))).z
@@ -1323,6 +1359,9 @@ def fit_reference_pose(scene):
         if region == "arm":
             # Let the bent elbows and wrists hang at their original reach.
             lifted += (y_fit-6-lifted)*smooth_range(y,330,545)
+            if side > 0:
+                # The far sleeve passes behind the rib cage in this pose.
+                x_fit -= 9*exp(-((lifted-370)/38)**2)
         # The far shoulder falls away in this three-quarter pose. Shape
         # sleeves, seams and torso together, fading back into the upper arm.
         shoulder = smooth_range(lifted,227,258)*(1-smooth_range(lifted,296,363))
@@ -1389,14 +1428,17 @@ def build():
     hems = trousers(material("Indigo denim", "456385", cloth=True),
                    material("Faded denim cuff", "557696", cloth=True),
                    material("Deep indigo seam", "344960"),material("Canvas topstitch", "b2956f"))
+    knit = ivory.copy()
+    knit.name = "Cream bodice knit"
+    knit["studio_surface"] = "tailored cloth"
     groups = {
         "lilac_hair":make_variant("Hair | Lilac waves",hair,violet),
         "beret_hair":make_variant("Hair | Cream beret waves",beret_hairstyle,violet,ivory,
                                   material("Toasted wool edging","c9a991",cloth=True),gold),
-        "hoodie":make_variant("Mint hoodie",hoodie,material("Sea-glass fleece","89b6a1", cloth=True),
+        "hoodie":make_variant("Mint hoodie",hoodie,material("Sea-glass fleece","89b6a1", cloth=True, surface="tailored cloth"),
             material("Mint rib knit","6c947e",cloth=True),material("Mint embroidery","bdd8bb"),ivory,gold),
-        "coat":make_variant("Night coat",coat,material("Mulberry twill","653957",cloth=True),
-            material("Violet collar","7d4b69",cloth=True),ivory,gold,material("Rose edge","a1748b")),
+        "coat":make_variant("Night coat",coat,material("Mulberry twill","653957",cloth=True,surface="tailored cloth"),
+            material("Violet collar","7d4b69",cloth=True,surface="tailored cloth"),knit,gold,material("Rose edge","a1748b")),
         "sneakers":make_variant("Low canvas shoes",footwear,"sneakers",ivory,sole,gold,material("Laces","fff0d3")),
         "boots":make_variant("Stardust boots",footwear,"boots",material("Ivory satin leather","ead2b5",.41,surface="leather"),
             sole,gold,material("Lilac enamel","76538b",.26))
