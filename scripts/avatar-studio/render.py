@@ -1386,13 +1386,20 @@ def fit_reference_pose(scene):
         fitted_width, fitted_depth = tailoring(lifted)
         x_fit = axis_fit+(x_fit-axis_fit)*width_factor*fitted_width
         if region != "arm":
-            hip = smooth_range(lifted,444,531)*(1-smooth_range(lifted,560,634))
-            x_fit += ((x_fit-axis_fit)*.095-3)*hip
-            fitted_depth += .075*hip
+            # Bring the seat in below the waistband and release the fabric
+            # over the upper thighs. Pockets and coat panels follow the denim.
+            hip = smooth_range(lifted,444,532)*(1-smooth_range(lifted,557,650))
+            x_fit += ((axis_fit-x_fit)*.043-3)*hip
+            back = smooth_range(point.y,0,.27)
+            fitted_depth -= (.035+.042*back)*hip
         # Use the same depth adjustment for the body and its clothing so
         # pocket, cuff, and lapel surfaces still meet their matching base.
         depth_axis = (inverse @ Vector((0,.04,point.z))).z
         depth = depth_axis+(depth-depth_axis)*fitted_depth
+        if region == "coat":
+            # The far hem curves around the bent thigh below the fitted seat.
+            hem = smooth_range(lifted,557,600)*smooth_range(x_fit-axis_fit,24,56)
+            depth += .055*hem
         if region == "arm":
             # Let the bent elbows and wrists hang at their original reach.
             lifted += (y_fit-6-lifted)*smooth_range(y,330,545)
