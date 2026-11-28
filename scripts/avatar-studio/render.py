@@ -1200,8 +1200,9 @@ SILHOUETTE_HEIGHTS = [
 # Final image heights, in pixels, with the width and depth of each section.
 # The neckline and ankle keep their fit. The waist and calf taper gradually.
 TAILORING_PROFILE = [
-    (247, 1, 1), (277, .977, .979), (312, .926, .945),
-    (350, .915, .912), (392, .888, .887), (430, .879, .897),
+    (239, 1, 1), (257, .884, .96), (278, .742, .895),
+    (294, .746, .882), (311, .795, .889), (335, .861, .891),
+    (355, .866, .884), (392, .851, .872), (430, .873, .891),
     (472, .904, .927), (510, .941, .954), (552, .957, .975),
     (592, .948, .981), (642, .949, .991), (710, .934, .997),
     (790, .904, 1), (850, .936, 1), (899, 1, 1),
@@ -1261,10 +1262,21 @@ def fit_reference_pose(scene):
 
     def refit(point, region, side):
         x,y,depth = screen(point)
-        if region == "head":
-            # Keep the face, hair and hat in the same fitting group.
-            return view @ Vector((left+(340+(x-340)*.731)/px,
-                                  top-(97+(y-97)*.710)/py, depth))
+        if region in ("head", "hairstyle"):
+            x_fit = 340+(x-340)*.731
+            y_fit = 97+(y-97)*.710
+            # Tuck the outer volume around the portrait. The eye line and
+            # the inner fringe stay registered to the original face texture.
+            offset = x_fit-340
+            inner = 13+22*smooth_range(y_fit,110,151)
+            outer = smooth_range(abs(offset),inner,inner+29)
+            side_taper = .16-.075*smooth_range(y_fit,225,268)
+            x_fit -= offset*outer*side_taper
+            if region == "hairstyle":
+                # Carry the bend down to the sloping shoulder, leaving the
+                # fringe seated. The nape moves less than the outside locks.
+                y_fit += 22*smooth_range(y_fit,174,246)*(.42+.58*outer)
+            return view @ Vector((left+x_fit/px,top-y_fit/py,depth))
         y_fit, shift, width = body(y)
         x_fit = 340+(x-340)*width+shift
         axis_fit = 340+shift
@@ -1311,6 +1323,12 @@ def fit_reference_pose(scene):
         if region == "arm":
             # Let the bent elbows and wrists hang at their original reach.
             lifted += (y_fit-6-lifted)*smooth_range(y,330,545)
+        # The far shoulder falls away in this three-quarter pose. Shape
+        # sleeves, seams and torso together, fading back into the upper arm.
+        shoulder = smooth_range(lifted,227,258)*(1-smooth_range(lifted,296,363))
+        reach = smooth_range(abs(x_fit-axis_fit),15,81)
+        lifted += shoulder*reach*(9+8*smooth_range(x_fit-axis_fit,-15,49))
+        x_fit -= 4*shoulder
         return view @ Vector((left+x_fit/px,top-lifted/py,depth))
 
     bpy.context.view_layer.update()
@@ -1319,8 +1337,9 @@ def fit_reference_pose(scene):
             continue
         world = obj.matrix_world.copy()
         local = world.inverted()
-        if any(group.name.startswith(("Peach complexion", "Hair |"))
-               for group in obj.users_collection):
+        if any(group.name.startswith("Hair |") for group in obj.users_collection):
+            region = "hairstyle"
+        elif any(group.name.startswith("Peach complexion") for group in obj.users_collection):
             region = "head"
         else:
             region = obj.get("studio_region","body")

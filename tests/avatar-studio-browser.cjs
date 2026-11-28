@@ -48,9 +48,17 @@ const engine = process.env.AVATAR_BROWSER || 'chromium';
           const {data} = canvas.getContext('2d').getImageData(0, 0, canvas.width, canvas.height);
           let pixels = 0;
           for (let i = 3; i < data.length; i += 4) if (data[i] > 200) pixels++;
-          return {pixels, data};
+          const meanWidth = rows => rows.reduce((sum, y) => {
+            const rowAlpha = x => data[(y*canvas.width+x)*4+3];
+            let left = 0, right = canvas.width-1;
+            while (left <= right && rowAlpha(left) <= 190) left++;
+            while (right >= left && rowAlpha(right) <= 190) right--;
+            return sum+Math.max(0,right-left);
+          }, 0)/rows.length;
+          return {pixels, data, wave: meanWidth([209,215,221]), shoulders: meanWidth([290,300,310])};
         };
         const rendered = read(study);
+        const reference = read(current);
         const hash = new Uint8Array(await crypto.subtle.digest('SHA-256', rendered.data));
         const fraction = (x, y, width, height, matches) => {
           const {data} = study.getContext('2d').getImageData(x, y, width, height);
@@ -71,10 +79,13 @@ const engine = process.env.AVATAR_BROWSER || 'chromium';
           for (let i=3; i<data.length; i+=4) if (data[i]>190) opaque++;
           return opaque > 100;
         };
-        return {hash: Array.from(hash).join(','), newPixels: rendered.pixels, oldPixels: read(current).pixels,
+        return {hash: Array.from(hash).join(','), newPixels: rendered.pixels, oldPixels: reference.pixels,
+          waveRatio: rendered.wave/reference.wave, shoulderRatio: rendered.shoulders/reference.shoulders,
           nearFringe, openBrow, exposedEar, jawGap, neckWidth, studyBeret: hasBeret(study), artworkBeret: hasBeret(current)};
       });
       assert(result.newPixels > 60_000 && result.oldPixels > 60_000);
+      assert(Math.abs(result.waveRatio-1) < .10, `${top}/${hair}: wave width differs from the artwork`);
+      assert(Math.abs(result.shoulderRatio-1) < .10, `${top}/${hair}: shoulder width differs from the artwork`);
       assert.equal(result.studyBeret, hair === 'beret', `${top}/${hair}: rendered headwear differs from the hairstyle`);
       assert.equal(result.artworkBeret, hair === 'beret', `${top}/${hair}: reference headwear differs from the hairstyle`);
       assert(result.nearFringe > .72 && result.openBrow > .72,
@@ -129,15 +140,13 @@ const engine = process.env.AVATAR_BROWSER || 'chromium';
       }
       const calfWidths = [820, 827, 835, 844].map(y => width(span(y,170,320))+width(span(y,330,490)));
       const calfWidth = calfWidths.reduce((sum, value) => sum+value, 0)/calfWidths.length;
-      return {crown, inseam, shoulders: width(span(310,190,480)), hips: width(span(552,230,457)), calfWidth,
+      return {crown, inseam, hips: width(span(552,230,457)), calfWidth,
         nearAnkle: center(span(827,160,327)), farAnkle: center(span(827,330,501))};
     }));
     assert(study.crown >= artwork.crown*.82 && study.crown <= artwork.crown*1.17,
       `head width drifted from the same-scale illustration: ${study.crown}/${artwork.crown}`);
     assert(Math.abs(study.inseam-artwork.inseam) <= 20,
       `inseam height drifted from the same-scale illustration: ${study.inseam}/${artwork.inseam}`);
-    assert(study.shoulders >= artwork.shoulders*.9 && study.shoulders <= artwork.shoulders*1.19,
-      `shoulder width drifted from the same-scale illustration: ${study.shoulders}/${artwork.shoulders}`);
     assert(study.calfWidth >= artwork.calfWidth*.9 && study.calfWidth <= artwork.calfWidth*1.19,
       `calf width drifted from the same-scale illustration: ${study.calfWidth}/${artwork.calfWidth}`);
     assert(study.hips >= artwork.hips*.89 && study.hips <= artwork.hips*1.13,
